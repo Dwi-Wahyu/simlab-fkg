@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1774628756915,
+      "tag": "0000_nifty_betty_brant",
+      "breakpoints": true
+    }
+  ]
+}

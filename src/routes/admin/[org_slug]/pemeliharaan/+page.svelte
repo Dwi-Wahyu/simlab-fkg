@@ -1,0 +1,253 @@
+<script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { enhance } from '$app/forms';
+	import { Button } from '$lib/components/ui/button';
+	import * as Table from '$lib/components/ui/table';
+	import { Badge } from '$lib/components/ui/badge';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import {
+		Wrench,
+		Plus,
+		Search,
+		Calendar,
+		Trash2,
+		Edit,
+		Clock,
+		CheckCircle2,
+		AlertCircle,
+		Box
+	} from '@lucide/svelte';
+
+	let { data } = $props();
+
+	// State untuk dialog konfirmasi hapus
+	let showDeleteDialog = $state(false);
+	let deleteId = $state<string | null>(null);
+	let deleteForm: HTMLFormElement | null = $state(null);
+
+	// Handler untuk membuka dialog hapus
+	function confirmDelete(id: string, formElement: HTMLFormElement) {
+		deleteId = id;
+		deleteForm = formElement;
+		showDeleteDialog = true;
+	}
+
+	// Handler untuk aksi hapus
+	function handleDelete() {
+		if (deleteForm) {
+			deleteForm.requestSubmit();
+		}
+		showDeleteDialog = false;
+	}
+
+	// Handler untuk batal hapus
+	function handleCancelDelete() {
+		deleteId = null;
+		deleteForm = null;
+		showDeleteDialog = false;
+	}
+
+	function getStatusColor(status: string) {
+		switch (status) {
+			case 'COMPLETED':
+				return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+			case 'IN_PROGRESS':
+				return 'bg-blue-50 text-blue-700 border-blue-100';
+			case 'PENDING':
+				return 'bg-amber-50 text-amber-700 border-amber-100';
+			default:
+				return 'bg-slate-50 text-slate-700 border-slate-100';
+		}
+	}
+
+	function getStatusIcon(status: string) {
+		switch (status) {
+			case 'COMPLETED':
+				return CheckCircle2;
+			case 'IN_PROGRESS':
+				return Clock;
+			case 'PENDING':
+				return AlertCircle;
+			default:
+				return AlertCircle;
+		}
+	}
+
+	function formatDate(date: string | Date) {
+		return new Intl.DateTimeFormat('id-ID', {
+			dateStyle: 'medium',
+			timeStyle: 'short'
+		}).format(new Date(date));
+	}
+</script>
+
+<svelte:head>
+	<title>Pemeliharaan Alat | MINMAT</title>
+</svelte:head>
+
+<div class="space-y-8 p-6">
+	<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+		<div>
+			<h1 class="text-3xl font-bold tracking-tight text-foreground">Manajemen Pemeliharaan</h1>
+
+			<p class="text-muted-foreground">Kelola jadwal perawatan dan perbaikan peralatan matkomlek</p>
+		</div>
+
+		<Button
+			href="/{data.org_slug}/pemeliharaan/create"
+			class="gap-2 bg-slate-900 text-white shadow-sm transition-all hover:translate-y-[-1px] hover:bg-slate-800"
+		>
+			<Plus size={18} />
+			Tambah Pemeliharaan
+		</Button>
+	</div>
+
+	<div class="flex flex-col items-center justify-between gap-4 md:flex-row">
+		<div class="flex w-full gap-3 md:w-auto">
+			<div class="relative flex-1 md:w-80">
+				<Search class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" size={16} />
+				<input
+					type="text"
+					placeholder="Cari alat, teknisi..."
+					class="w-full rounded-xl border border-slate-200 bg-white py-2 pr-4 pl-10 text-sm transition-all outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900"
+				/>
+			</div>
+			<button
+				class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-slate-50"
+			>
+				<Calendar size={16} />
+				<span class="hidden sm:inline">Filter Tanggal</span>
+			</button>
+		</div>
+	</div>
+
+	<div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+		<Table.Root>
+			<Table.Header class="bg-slate-50/50">
+				<Table.Row>
+					<Table.Head class="w-[300px]">Peralatan</Table.Head>
+					<Table.Head>Tipe</Table.Head>
+					<Table.Head>Deskripsi</Table.Head>
+					<Table.Head>Jadwal</Table.Head>
+					<Table.Head>Status</Table.Head>
+					<Table.Head class="text-right">Aksi</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each data.maintenance as item (item.id)}
+					<Table.Row class="group transition-colors hover:bg-slate-50/50">
+						<Table.Cell>
+							<div class="flex items-center gap-3">
+								<div
+									class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-colors group-hover:bg-blue-50 group-hover:text-blue-500"
+								>
+									<Box size={20} />
+								</div>
+								<div class="flex flex-col">
+									<span class="leading-tight font-bold text-slate-900"
+										>{item.equipment?.item?.name ?? item.equipmentId}</span
+									>
+									<span class="mt-1 font-mono text-[10px] text-slate-400"
+										>SN: {item.equipment?.serialNumber || '-'}</span
+									>
+								</div>
+							</div>
+						</Table.Cell>
+						<Table.Cell>
+							<Badge
+								variant="outline"
+								class="border-slate-200 bg-slate-50 text-[10px] font-bold tracking-wider text-slate-600 uppercase"
+							>
+								{item.maintenanceType}
+							</Badge>
+						</Table.Cell>
+						<Table.Cell class="max-w-xs">
+							<p class="truncate text-sm text-slate-600 italic">"{item.description}"</p>
+						</Table.Cell>
+						<Table.Cell>
+							<div class="flex flex-col">
+								<span class="text-sm font-medium text-slate-900"
+									>{formatDate(item.scheduledDate)}</span
+								>
+							</div>
+						</Table.Cell>
+						<Table.Cell>
+							{@const StatusIcon = getStatusIcon(item.status)}
+							<Badge variant="outline" class="gap-1.5 px-3 py-1 {getStatusColor(item.status)}">
+								<StatusIcon size={14} />
+								{item.status}
+							</Badge>
+						</Table.Cell>
+						<Table.Cell class="text-right">
+							<div class="flex justify-end gap-1">
+								<Button
+									size="icon"
+									variant="ghost"
+									href="/{data.org_slug}/pemeliharaan/{item.id}/edit"
+									class="h-8 w-8 text-slate-400 hover:text-blue-600"
+								>
+									<Edit size={16} />
+								</Button>
+
+								<!-- Form Delete -->
+								<form
+									method="POST"
+									action="?/delete"
+									bind:this={deleteForm}
+									use:enhance={() => {
+										return async ({ result, update }) => {
+											if (result.type === 'success') {
+												await invalidateAll();
+											} else if (result.type === 'failure') {
+												alert(result.data?.message || 'Gagal menghapus');
+											}
+											await update();
+										};
+									}}
+								>
+									<input type="hidden" name="id" value={item.id} />
+									<Button
+										size="icon"
+										variant="ghost"
+										type="button"
+										onclick={() => confirmDelete(item.id, deleteForm!)}
+										class="h-8 w-8 text-slate-400 hover:text-red-600"
+									>
+										<Trash2 size={16} />
+									</Button>
+								</form>
+							</div>
+						</Table.Cell>
+					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={6} class="h-64 text-center">
+							<div class="flex flex-col items-center justify-center text-slate-400 gap-3">
+								<Wrench size={48} strokeWidth={1} class="text-slate-200" />
+								<p class="text-sm">Belum ada data pemeliharaan yang tercatat</p>
+							</div>
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+
+		<div
+			class="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 text-xs font-medium text-slate-500"
+		>
+			<span>Total {data.maintenance.length} jadwal pemeliharaan</span>
+		</div>
+	</div>
+
+	<!-- Dialog Konfirmasi Hapus -->
+	<ConfirmationDialog
+		bind:open={showDeleteDialog}
+		type="error"
+		title="Hapus Pemeliharaan"
+		description="Apakah Anda yakin ingin menghapus data pemeliharaan ini? Tindakan ini akan menghapus riwayat dari sistem dan tidak dapat dikembalikan."
+		cancelLabel="Batal"
+		actionLabel="Ya, Hapus"
+		onAction={handleDelete}
+		onCancel={handleCancelDelete}
+	/>
+</div>
