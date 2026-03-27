@@ -13,10 +13,10 @@ import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { organization } from 'better-auth/plugins';
 
-import { accessControl, superadmin } from '../auth.roles';
-
 const client = mysql.createPool(process.env.DATABASE_URL ?? '');
 const db = drizzle(client, { schema: { ...schema, ...authSchema }, mode: 'default' });
+
+import { accessControl, superadmin } from '../auth.roles';
 
 const allAuthRoles = {
 	superadmin

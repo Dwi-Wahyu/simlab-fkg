@@ -5,14 +5,7 @@ import { env } from '$env/dynamic/private';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import { organization, admin } from 'better-auth/plugins';
-import {
-	accessControl,
-	kakomlek,
-	operatorBinmatDanBekharrah,
-	operatorPusatDanDaerah,
-	pimpinan,
-	superadmin
-} from './auth.roles';
+import { accessControl, superadmin } from './auth.roles';
 
 import * as schema from '$lib/server/db/schema';
 import { apiKey } from '@better-auth/api-key';
@@ -55,11 +48,7 @@ export const auth = betterAuth({
 		organization({
 			ac: accessControl,
 			roles: {
-				superadmin,
-				pimpinan,
-				kakomlek,
-				operatorPusatDanDaerah,
-				operatorBinmatDanBekharrah
+				superadmin
 			}
 		}),
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
