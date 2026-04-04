@@ -4,49 +4,45 @@
 	import { cubicOut } from 'svelte/easing';
 	import type { Component } from 'svelte';
 	import { ChevronDown } from '@lucide/svelte';
-	import { getSidebarState } from '$lib/components/ui/sidebar/context.svelte.ts';
+	import { getSidebarState } from './ui/sidebar/context.svelte';
+	import { IsMobile } from '$lib/hooks/is-mobile-svelte';
 
-	let { name, icon: Icon, children, activePrefix } = $props<{
+	let {
+		name,
+		icon: Icon,
+		children,
+		activePrefix,
+		isOpen,
+		onToggle
+	} = $props<{
 		name: string;
 		icon: Component;
 		activePrefix: string;
 		children: Array<{ name: string; path: string }>;
+		isOpen: boolean;
+		onToggle: () => void;
 	}>();
 
 	const sidebar = getSidebarState();
+	const isMobile = new IsMobile();
 
 	let isGroupActive = $derived(page.url.pathname.startsWith(activePrefix));
-	let isOpen = $state(false);
-
-	$effect(() => {
-		if (isGroupActive && sidebar.open) isOpen = true;
-		if (!sidebar.open) isOpen = false;
-	});
-
-	function handleToggle() {
-		if (!sidebar.open) {
-			sidebar.setOpen(true);
-			isOpen = true;
-		} else {
-			isOpen = !isOpen;
-		}
-	}
 </script>
 
 <li>
 	<button
 		type="button"
-		onclick={handleToggle}
+		onclick={onToggle}
 		class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-white/10
         {isGroupActive ? 'text-yellow-400' : 'opacity-80'}"
 	>
-		<div class="flex items-center gap-3 shrink-0">
+		<div class="flex shrink-0 items-center gap-3">
 			<Icon size={18} strokeWidth={2} class="opacity-70" />
 			{#if sidebar.open}
 				<span class="whitespace-nowrap transition-opacity duration-300">{name}</span>
 			{/if}
 		</div>
-		
+
 		{#if sidebar.open}
 			<ChevronDown
 				size={14}
@@ -66,6 +62,9 @@
 				<li>
 					<a
 						href={child.path}
+						onclick={() => {
+							if (isMobile.current) sidebar.setOpen(false);
+						}}
 						class="block rounded-md px-3 py-2 text-xs font-medium transition-colors hover:bg-white/10
                         {isChildActive
 							? 'font-bold text-yellow-400 opacity-100'

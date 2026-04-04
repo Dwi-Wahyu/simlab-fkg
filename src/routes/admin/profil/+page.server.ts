@@ -7,7 +7,6 @@ import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const currentUser = locals.user;
-	const { org_slug } = params;
 
 	if (!currentUser) throw redirect(302, '/login');
 
@@ -31,8 +30,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		loginHistory: loginHistory.map((log) => ({
 			...log,
 			data: log.newValue ? JSON.parse(log.newValue) : {}
-		})),
-		orgSlug: org_slug
+		}))
 	};
 };
 

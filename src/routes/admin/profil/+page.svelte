@@ -90,13 +90,6 @@
 						{data.user.role.toUpperCase()}
 					</div>
 				</div>
-				<div class="space-y-1">
-					<Label class="text-xs text-muted-foreground uppercase">Kesatuan</Label>
-					<div class="flex items-center gap-2 text-sm">
-						<Mail class="h-4 w-4 text-muted-foreground" />
-						{data.user.organization.name}
-					</div>
-				</div>
 			</Card.Content>
 		</Card.Root>
 

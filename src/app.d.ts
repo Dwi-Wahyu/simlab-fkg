@@ -5,22 +5,16 @@ import type { User, Session } from 'better-auth/minimal';
 declare global {
 	namespace App {
 		interface Locals {
-			user?: User & {
+			user: (User & {
 				role: string;
-			};
-			session?: Session;
-
-			// Menggunakan inferensi otomatis dari instance auth
-			// user: typeof auth.$Infer.Session.user & {
-			// 	organizations: Array<{
-			// 		id: string;
-			// 		name: string;
-			// 		slug: string;
-			// 		role: string;
-			// 		createdAt: Date;
-			// 	}>;
-			// };
-			// session: typeof auth.$Infer.Session.session;
+				laboratorium?: {
+					id: string;
+					name: string;
+					slug: string;
+					logo: string;
+				};
+			}) | null;
+			session: Session | null;
 		}
 
 		// interface Error {}

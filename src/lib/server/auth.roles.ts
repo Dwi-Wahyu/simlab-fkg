@@ -33,10 +33,6 @@ export const peneliti = accessControl.newRole({
 	inventory: ['view', 'update']
 });
 
-export const admin = accessControl.newRole({
-	inventory: ['view', 'update']
-});
-
 export const teknisi = accessControl.newRole({
 	inventory: ['view', 'update']
 });

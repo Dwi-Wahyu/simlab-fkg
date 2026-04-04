@@ -25,3 +25,13 @@ vite.config.ts.timestamp-*
 # contexts
 # context-path.md
 .aider*
+
+ecosystem.config.cjs
+
+# Mengabaikan seluruh isi folder docs
+docs/
+
+# Mengabaikan seluruh isi folder contexts
+contexts/
+
+src/lib/server/db/seeds/*.xlsx

@@ -1,12 +1,16 @@
 import { relations } from 'drizzle-orm';
-import { mysqlTable, varchar, text, timestamp, boolean, index } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, timestamp, boolean, index, int } from 'drizzle-orm/mysql-core';
 
 export const user = mysqlTable('user', {
 	id: varchar('id', { length: 36 }).primaryKey(),
 	name: varchar('name', { length: 255 }).notNull(),
+	username: varchar('username', { length: 255 }).notNull().unique(),
+	displayUsername: varchar('displayUsername', { length: 255 }),
 	email: varchar('email', { length: 255 }).notNull().unique(),
 	emailVerified: boolean('email_verified').default(false).notNull(),
+	role: varchar('role', { length: 255 }).notNull(),
 	image: text('image'),
+	banned: boolean('banned'),
 	createdAt: timestamp('created_at', { fsp: 3 }).defaultNow().notNull(),
 	updatedAt: timestamp('updated_at', { fsp: 3 })
 		.defaultNow()
@@ -93,37 +97,27 @@ export const verification = mysqlTable(
 	(table) => [index('verification_identifier_idx').on(table.identifier)]
 );
 
-// Tabel Kesatuan
-export const organization = mysqlTable('organization', {
+// Laboratorium as organization
+export const laboratorium = mysqlTable('laboratorium', {
 	id: varchar('id', { length: 36 }).primaryKey(),
 	name: text('name').notNull(),
 	slug: varchar('slug', { length: 255 }).unique(),
 	logo: text('logo'),
+	capacity: int('capacity').default(0),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	metadata: text('metadata')
 });
 
-// Tabel Member (Relasi User & Kesatuan)
-export const member = mysqlTable('member', {
+// Tabel Member Laboratorium
+export const laboratoriumMember = mysqlTable('laboratorium_member', {
 	id: varchar('id', { length: 36 }).primaryKey(),
-	organizationId: varchar('organization_id', { length: 36 }).references(() => organization.id, {
+	laboratoriumId: varchar('laboratorium_id', { length: 36 }).references(() => laboratorium.id, {
 		onDelete: 'cascade'
 	}),
 	userId: varchar('user_id', { length: 36 }).references(() => user.id, { onDelete: 'cascade' }),
-	role: varchar('role', { length: 50 }).notNull(),
+	role: varchar('role', { length: 255 }).notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
-
-export const organizationRelations = relations(organization, ({ many, one }) => ({
-	children: many(organization)
-}));
-
-export const userRelations = relations(user, ({ many }) => ({
-	sessions: many(session),
-	accounts: many(account),
-	members: many(member),
-	apiKeys: many(apiKey)
-}));
 
 export const sessionRelations = relations(session, ({ one }) => ({
 	user: one(user, {
@@ -139,14 +133,14 @@ export const accountRelations = relations(account, ({ one }) => ({
 	})
 }));
 
-export const memberRelations = relations(member, ({ one }) => ({
+export const laboratoriumMemberRelations = relations(laboratoriumMember, ({ one }) => ({
 	user: one(user, {
-		fields: [member.userId],
+		fields: [laboratoriumMember.userId],
 		references: [user.id]
 	}),
-	organization: one(organization, {
-		fields: [member.organizationId],
-		references: [organization.id]
+	laboratorium: one(laboratorium, {
+		fields: [laboratoriumMember.laboratoriumId],
+		references: [laboratorium.id]
 	})
 }));
 

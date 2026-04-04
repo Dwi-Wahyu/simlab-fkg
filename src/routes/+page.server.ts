@@ -1,55 +1,42 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import { APIError } from 'better-auth/api';
-import { db } from '$lib/server/db';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
-		return redirect(302, '/dashboard');
+		return redirect(302, '/admin/dashboard');
 	}
 
 	return { user: event.locals.user };
 };
 
 export const actions: Actions = {
-	signInEmail: async (event) => {
+	signIn: async (event) => {
 		const formData = await event.request.formData();
-		const email = formData.get('email')?.toString() ?? '';
+		const username = formData.get('username')?.toString() ?? '';
 		const password = formData.get('password')?.toString() ?? '';
 
 		try {
-			await auth.api.signInEmail({
+			await auth.api.signInUsername({
 				body: {
-					email,
+					username,
 					password,
-					callbackURL: '/dashboard'
-				},
-				asResponse: true
+					callbackURL: '/admin/dashboard'
+				}
 			});
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 
 			if (error instanceof APIError) {
-				return fail(400, { message: error.message || 'Signin failed' });
+				const message =
+					error.status === 401 ? 'Username atau password salah' : (error.message || 'Login gagal');
+				return fail(error.status as number, { message });
 			}
 
-			return fail(500, { message: 'Unexpected error' });
+			return fail(500, { message: 'Terjadi kesalahan sistem' });
 		}
 
-		const userResult = await db.query.user.findFirst({
-			where: (user, { eq }) => eq(user.email, email),
-			with: {
-				members: {
-					with: {
-						organization: true
-					}
-				}
-			}
-		});
-
-		if (!userResult) return fail(400, { message: 'User tidak ditemukan' });
-
-		return redirect(302, `${userResult.members[0].organization?.slug}/dashboard`);
+		return redirect(302, '/admin/dashboard');
 	}
 };

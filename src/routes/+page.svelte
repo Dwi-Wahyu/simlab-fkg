@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance, applyAction } from '$app/forms';
 	import { toast } from 'svelte-sonner';
+	import { User, Lock } from '@lucide/svelte';
+	import { resolve } from '$app/paths';
 
 	let { form } = $props();
 
@@ -8,11 +10,11 @@
 		return async ({ result }: { result: any }) => {
 			if (result.type === 'redirect') {
 				toast.success('Login Berhasil', {
-					description: 'Selamat datang kembali di sistem MINMAT.'
+					description: 'Selamat datang kembali di sistem SIM-Lab.'
 				});
 			} else if (result.type === 'failure') {
 				toast.error('Login Gagal', {
-					description: result.data?.message || 'Periksa kembali email dan password Anda.'
+					description: result.data?.message || 'Periksa kembali username dan password Anda.'
 				});
 			}
 
@@ -23,96 +25,122 @@
 </script>
 
 <div
-	class="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-100 p-6 md:p-16"
+	class="flex min-h-screen w-full flex-col items-center justify-center bg-[#F1F5F9] p-4 font-sans md:flex-row md:p-12"
 >
-	<div class="absolute inset-0 z-0 bg-[url('/backgrounds/login.png')] bg-cover bg-center">
-		<div class="absolute inset-0 bg-black/10"></div>
-	</div>
+	<!-- Left Side -->
+	<div class="flex w-full flex-col items-center justify-center space-y-12 md:w-1/2">
+		<div class="flex flex-col items-center space-y-4 text-center">
+			<div class="flex items-center justify-center">
+				<img src="/logo-unhas.webp" class="h-20 w-16" alt="logo unhas" />
+			</div>
+			<div class="space-y-1">
+				<h1 class="text-5xl font-extrabold tracking-tight text-[#457B64]">SIM-Lab</h1>
+				<p class="text-xl font-semibold text-gray-600">Sistem Informasi Pengelolaan Laboratorium</p>
+				<p class="text-base font-medium text-gray-400">Laboratorium Keterampilan Klinik FKG</p>
+			</div>
+		</div>
 
-	<div class="absolute top-10 left-10 z-10 hidden text-[#2D6A4F] md:block">
-		<h1 class="text-4xl font-black tracking-tight uppercase drop-shadow-sm">
-			Selamat Datang di PUSKOMLEKAD
-		</h1>
-		<h4 class="text-lg font-semibold tracking-wide opacity-90">
-			PUSAT KOMUNIKASI dan ELEKTRONIKA TNI AD
-		</h4>
-	</div>
-
-	<div class="relative z-20 flex w-full max-w-7xl items-center justify-center md:justify-end">
-		<div
-			class="w-full max-w-lg rounded-[2.5rem] border border-white/20 bg-white/95 p-8 shadow-2xl backdrop-blur-md md:p-12"
+		<!-- <div
+			class="relative w-full max-w-lg overflow-hidden rounded-[3rem] border-[12px] border-white shadow-2xl"
 		>
-			<div class="mb-10 flex flex-col items-center text-center">
-				<div
-					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 p-2 shadow-sm"
-				>
-					<img src="/logo-tni-ad.png" class="h-12 w-auto" alt="Logo TNI AD" />
-				</div>
-				<h1 class="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
-					MINMAT MATKOMLEK
-				</h1>
-				<p class="mt-2 text-sm font-medium text-gray-500 italic">
-					Administrasi Material Komunikasi dan Elektronika
+			<img src={'/login-image.jpg'} alt="Microscope" class="h-auto w-full object-cover" />
+		</div> -->
+	</div>
+
+	<!-- Right Side -->
+	<div class="mt-12 flex w-full flex-col items-center justify-center md:mt-0 md:w-1/2">
+		<div
+			class="relative w-full max-w-md overflow-hidden rounded-[3rem] border border-white/50 bg-white p-12 shadow-2xl backdrop-blur-sm"
+		>
+			<!-- Decorative Background Element -->
+			<div class="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-[#E8F1ED] opacity-60"></div>
+
+			<div class="relative z-10 mb-10 space-y-2">
+				<h2 class="text-3xl font-bold tracking-tight text-gray-800">Selamat Datang Kembali</h2>
+				<p class="text-base font-medium text-gray-400">
+					Masukkan kredensial Anda untuk melanjutkan
 				</p>
 			</div>
 
-			<form method="post" action="?/signInEmail" use:enhance={handleSignIn} class="space-y-6">
-				<div class="space-y-1.5">
-					<label
-						for="email"
-						class="ml-1 block text-xs font-bold tracking-wider text-gray-400 uppercase"
-					>
-						Username
-					</label>
-					<input
-						type="email"
-						id="email"
-						name="email"
-						placeholder="Jonathan_Reichert07"
-						class="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-gray-900 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
-						required
-					/>
+			<form
+				method="post"
+				action="?/signIn"
+				use:enhance={handleSignIn}
+				class="relative z-10 space-y-4"
+			>
+				<div class="space-y-2">
+					<label for="username" class="ml-1 text-sm font-bold text-gray-600">Username</label>
+					<div class="group relative">
+						<span
+							class="absolute top-1/2 left-5 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-[#457B64]"
+						>
+							<User size={22} />
+						</span>
+						<input
+							id="username"
+							name="username"
+							placeholder="username"
+							class="w-full rounded-2xl border-none bg-[#F0F4F2] py-5 pr-6 pl-14 text-base font-medium text-gray-800 ring-offset-white transition-all focus:bg-white focus:ring-2 focus:ring-[#457B64] focus:outline-none"
+							required
+						/>
+					</div>
 				</div>
 
-				<div class="space-y-1.5">
-					<div class="flex items-center justify-between">
-						<label
-							for="password"
-							class="ml-1 block text-xs font-bold tracking-wider text-gray-400 uppercase"
+				<div class="space-y-2">
+					<label for="password" class="ml-1 text-sm font-bold text-gray-600">Password</label>
+					<div class="group relative">
+						<span
+							class="absolute top-1/2 left-5 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-[#457B64]"
 						>
-							Password
-						</label>
+							<Lock size={22} />
+						</span>
+						<input
+							type="password"
+							id="password"
+							name="password"
+							placeholder="password"
+							class="w-full rounded-2xl border-none bg-[#F0F4F2] py-5 pr-6 pl-14 text-base font-medium text-gray-800 ring-offset-white transition-all focus:bg-white focus:ring-2 focus:ring-[#457B64] focus:outline-none"
+							required
+						/>
 					</div>
-					<input
-						type="password"
-						id="password"
-						name="password"
-						placeholder="••••••••••••"
-						class="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-gray-900 transition-all focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
-						required
-					/>
 				</div>
 
 				{#if form?.message}
-					<div class="rounded-lg border border-red-100 bg-red-50 p-3">
-						<p class="text-center text-sm font-medium text-red-600">{form.message}</p>
+					<div class="animate-in rounded-xl bg-red-50 p-4 text-center fade-in slide-in-from-top-2">
+						<p class="text-sm font-bold text-red-600">{form.message}</p>
 					</div>
 				{/if}
 
-				<button
-					type="submit"
-					class="group relative flex w-full items-center justify-center overflow-hidden rounded-xl bg-[#2D3436] py-4 font-bold text-white transition-all hover:bg-black active:scale-[0.98]"
-				>
-					<span class="relative z-10">Sign In</span>
-					<div
-						class="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/10 to-transparent transition-transform duration-500 group-hover:translate-x-full"
-					></div>
-				</button>
-			</form>
+				<div class="pt-4">
+					<button
+						type="submit"
+						class="w-full rounded-2xl bg-[#457B64] py-5 text-lg font-bold text-white shadow-xl shadow-[#457B64]/30 transition-all hover:bg-[#3D6D58] hover:shadow-[#457B64]/40 active:scale-[0.98]"
+					>
+						Masuk ke Sistem
+					</button>
+				</div>
 
-			<p class="mt-8 text-center text-xs text-gray-400">
-				&copy; 2026 PUSKOMLEKAD. All rights reserved.
-			</p>
+				<div class="text-center">
+					<a
+						href={resolve('/lupa-password')}
+						class="text-sm font-bold text-[#457B64] transition-colors hover:text-[#3D6D58] hover:underline"
+					>
+						Lupa password?
+					</a>
+				</div>
+			</form>
 		</div>
+
+		<!-- Footer Badge -->
+		<!-- <div
+			class="mt-10 flex items-center space-x-3 rounded-full border border-gray-100 bg-white/80 px-8 py-3 shadow-sm backdrop-blur-sm"
+		>
+			<div class="rounded-full bg-[#E8F1ED] p-1">
+				<ShieldCheck size={18} class="text-[#457B64]" />
+			</div>
+			<span class="text-xs font-bold tracking-wide text-gray-500">
+				Sesuai standar GLP, ISO 15189/17025, dan SPMI
+			</span>
+		</div> -->
 	</div>
 </div>
