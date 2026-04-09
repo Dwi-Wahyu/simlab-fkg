@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { item, stock, movement, warehouse, equipment } from '$lib/server/db/schema';
@@ -7,7 +8,7 @@ import { join } from 'path';
 import { eq } from 'drizzle-orm';
 
 export const load = async ({ locals }) => {
-	if (!locals.user) throw redirect(302, '/');
+	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const labs = await db.query.laboratorium.findMany();
 

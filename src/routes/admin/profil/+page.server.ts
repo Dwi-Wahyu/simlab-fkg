@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { session, auditLog } from '$lib/server/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
@@ -8,7 +9,7 @@ import type { PageServerLoad, Actions } from './$types';
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const currentUser = locals.user;
 
-	if (!currentUser) throw redirect(302, '/login');
+	if (!currentUser) throw redirect(302, `${base}/login`);
 
 	const userId = currentUser.id;
 
@@ -56,7 +57,7 @@ export const actions: Actions = {
 
 			// Jika user menghapus sesinya sendiri, arahkan ke login
 			if (token === locals.session?.token) {
-				throw redirect(302, '/login');
+				throw redirect(302, `${base}/login`);
 			}
 
 			return { success: true, message: 'Sesi berhasil dihapus' };

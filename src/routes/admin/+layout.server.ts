@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { notification } from '$lib/server/db/schema';
 import { and, desc, eq, or, count } from 'drizzle-orm';
@@ -6,7 +7,7 @@ import { redirect } from '@sveltejs/kit';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user) {
-		return redirect(302, '/');
+		return redirect(302, `${base}/`);
 	}
 
 	const latestNotifications = await db.query.notification.findMany({

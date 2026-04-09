@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Plus, User, UserCog, Trash2, Pencil } from '@lucide/svelte';
@@ -60,7 +61,7 @@
 			<h1 class="text-3xl font-bold tracking-tight">Manajemen {data.roleLabel}</h1>
 			<p class="text-muted-foreground">Kelola data {data.roleLabel.toLowerCase()} dan penugasan laboratorium.</p>
 		</div>
-		<Button href="/admin/users/{data.roleSlug}/tambah">
+		<Button href="{base}/admin/users/{data.roleSlug}/tambah">
 			<Plus class="mr-2 h-4 w-4" />
 			Tambah {data.roleLabel}
 		</Button>
@@ -106,7 +107,7 @@
 						<Table.Cell>{new Date(u.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</Table.Cell>
 						<Table.Cell class="text-right">
 							<div class="flex justify-end gap-2">
-								<Button variant="ghost" size="icon" href="/admin/users/{data.roleSlug}/edit/{u.id}">
+								<Button variant="ghost" size="icon" href="{base}/admin/users/{data.roleSlug}/edit/{u.id}">
 									<Pencil class="h-4 w-4" />
 								</Button>
 								

@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { session } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -9,7 +10,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const currentUser = locals.user;
 	const { userId, org_slug } = params;
 
-	if (!currentUser) throw redirect(302, '/login');
+	if (!currentUser) throw redirect(302, `${base}/login`);
 
 	// Cek role superadmin
 	if (currentUser.role !== 'superadmin') {
@@ -74,7 +75,7 @@ export const actions: Actions = {
 
 			// Jika admin menghapus sesinya sendiri, arahkan ke login
 			if (token === locals.session?.token) {
-				throw redirect(302, '/login');
+				throw redirect(302, `${base}/login`);
 			}
 
 			return { success: true, message: 'Sesi berhasil dihapus' };

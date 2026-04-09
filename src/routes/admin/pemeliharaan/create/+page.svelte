@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
@@ -275,7 +276,7 @@
 				</div>
 
 				<div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
-					<Button variant="outline" href="/admin/pemeliharaan" class="h-11 rounded-xl px-6"
+					<Button variant="outline" href="{base}/admin/pemeliharaan" class="h-11 rounded-xl px-6"
 						>Batal</Button
 					>
 					<Button

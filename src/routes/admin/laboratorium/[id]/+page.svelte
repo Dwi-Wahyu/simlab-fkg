@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
@@ -20,7 +21,7 @@
 
 <div class="space-y-6 p-6">
 	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="/admin/laboratorium">
+		<Button variant="outline" size="icon" href="{base}/admin/laboratorium">
 			<ArrowLeft class="size-4" />
 		</Button>
 		<div>

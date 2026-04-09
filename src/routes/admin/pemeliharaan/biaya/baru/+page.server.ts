@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, maintenanceCost, maintenanceCostItem } from '$lib/server/db/schema';
@@ -9,7 +10,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const currentUser = locals.user;
-	if (!currentUser) throw redirect(302, '/');
+	if (!currentUser) throw redirect(302, `${base}/`);
 
 	const labId = currentUser.laboratorium?.id;
 

@@ -2,7 +2,7 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import { User, Lock } from '@lucide/svelte';
-	import { resolve } from '$app/paths';
+	import { base } from '$app/paths';
 
 	let { form } = $props();
 
@@ -25,13 +25,13 @@
 </script>
 
 <div
-	class="flex min-h-screen w-full flex-col items-center justify-center bg-[#F1F5F9] p-4 font-sans md:flex-row md:p-12"
+	class="flex min-h-svh w-full flex-col items-center justify-center bg-[#F1F5F9] p-4 font-sans md:flex-row md:p-12"
 >
 	<!-- Left Side -->
-	<div class="flex w-full flex-col items-center justify-center space-y-12 md:w-1/2">
+	<div class="hidden w-full flex-col items-center justify-center space-y-12 md:flex md:w-1/2">
 		<div class="flex flex-col items-center space-y-4 text-center">
 			<div class="flex items-center justify-center">
-				<img src="/logo-unhas.webp" class="h-20 w-16" alt="logo unhas" />
+				<img src="{base}/logo-unhas.webp" class="h-20 w-16" alt="logo unhas" />
 			</div>
 			<div class="space-y-1">
 				<h1 class="text-5xl font-extrabold tracking-tight text-[#457B64]">SIM-Lab</h1>
@@ -48,9 +48,9 @@
 	</div>
 
 	<!-- Right Side -->
-	<div class="mt-12 flex w-full flex-col items-center justify-center md:mt-0 md:w-1/2">
+	<div class="flex w-full flex-col items-center justify-center md:w-1/2">
 		<div
-			class="relative w-full max-w-md overflow-hidden rounded-[3rem] border border-white/50 bg-white p-12 shadow-2xl backdrop-blur-sm"
+			class="relative w-full max-w-md overflow-hidden rounded-[3rem] border border-white/50 bg-white p-8 shadow-2xl backdrop-blur-sm md:p-12"
 		>
 			<!-- Decorative Background Element -->
 			<div class="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-[#E8F1ED] opacity-60"></div>
@@ -122,7 +122,7 @@
 
 				<div class="text-center">
 					<a
-						href={resolve('/lupa-password')}
+						href="{base}/lupa-password"
 						class="text-sm font-bold text-[#457B64] transition-colors hover:text-[#3D6D58] hover:underline"
 					>
 						Lupa password?

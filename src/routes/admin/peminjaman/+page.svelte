@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tabs from '$lib/components/ui/tabs';
@@ -67,7 +68,7 @@
 				<FileDown class="size-4" />
 				Export
 			</Button>
-			<Button href="/admin/peminjaman/baru" class="gap-2 bg-[#2D5A43] hover:bg-[#234735]">
+			<Button href="{base}/admin/peminjaman/baru" class="gap-2 bg-[#2D5A43] hover:bg-[#234735]">
 				<Plus class="size-4" />
 				Peminjaman Baru
 			</Button>
@@ -178,7 +179,7 @@
 										</Badge>
 									</Table.Cell>
 									<Table.Cell class="text-right">
-										<Button variant="ghost" size="sm" href="/admin/peminjaman/{lending.id}"
+										<Button variant="ghost" size="sm" href="{base}/admin/peminjaman/{lending.id}"
 											>Detail</Button
 										>
 									</Table.Cell>

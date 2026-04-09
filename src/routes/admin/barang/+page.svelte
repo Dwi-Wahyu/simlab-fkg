@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -47,7 +48,7 @@
 				Total {data.pagination.totalItems} jenis barang ditemukan di organisasi Anda.
 			</p>
 		</div>
-		<Button href="/admin/barang/create" class="gap-2">
+		<Button href="{base}/admin/barang/create" class="gap-2">
 			<Plus class="size-4" />
 			Tambah Barang
 		</Button>
@@ -118,7 +119,7 @@
 									</DropdownMenu.Item>
 
 									<DropdownMenu.Item
-										onclick={() => goto(`/admin/barang/edit/${item.id}`)}
+										onclick={() => goto(`${base}/admin/barang/edit/${item.id}`)}
 										class="gap-2"
 									>
 										<Pencil class="size-4" /> Edit Data

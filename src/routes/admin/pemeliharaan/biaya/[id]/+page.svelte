@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -39,7 +40,7 @@
 	<!-- Header -->
 	<div class="flex items-center justify-between gap-4">
 		<div class="flex items-center gap-4">
-			<Button href="/admin/pemeliharaan?tab=biaya" variant="ghost" size="icon">
+			<Button href="{base}/admin/pemeliharaan?tab=biaya" variant="ghost" size="icon">
 				<ArrowLeft size={20} />
 			</Button>
 			<div>
@@ -47,7 +48,7 @@
 				<p class="text-sm text-slate-500">Detail rincian analisis biaya pemeliharaan.</p>
 			</div>
 		</div>
-		<Button href="/admin/pemeliharaan/biaya/{cost.id}/edit" class="gap-2 bg-[#2D5A43] text-white hover:bg-[#234735]">
+		<Button href="{base}/admin/pemeliharaan/biaya/{cost.id}/edit" class="gap-2 bg-[#2D5A43] text-white hover:bg-[#234735]">
 			<Edit size={18} />
 			Edit Data
 		</Button>
@@ -94,7 +95,7 @@
 										{cost.maintenance.maintenanceType} • {formatDate(cost.maintenance.scheduledDate)}
 									</p>
 								</div>
-								<Button variant="ghost" size="sm" href="/admin/pemeliharaan/{cost.maintenance.id}" class="text-xs h-8">
+								<Button variant="ghost" size="sm" href="{base}/admin/pemeliharaan/{cost.maintenance.id}" class="text-xs h-8">
 									Lihat Maintenance
 								</Button>
 							</div>

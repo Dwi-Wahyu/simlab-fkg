@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { lending, lendingItem, equipment, item } from '$lib/server/db/schema';
@@ -9,7 +10,7 @@ import path from 'path';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { id } = params;
-	if (!locals.user) throw redirect(302, '/login');
+	if (!locals.user) throw redirect(302, `${base}/login`);
 
 	const lendingData = await db.query.lending.findFirst({
 		where: eq(lending.id, id),

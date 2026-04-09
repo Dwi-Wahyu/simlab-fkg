@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as Card from '$lib/components/ui/card';
@@ -74,13 +75,13 @@
 		<div class="flex flex-col items-stretch gap-2 md:flex-row md:items-center">
 			<Button
 				variant="outline"
-				href="/admin/penilaian/{data.schedule.id}/rekapitulasi"
+				href="{base}/admin/penilaian/{data.schedule.id}/rekapitulasi"
 				class="w-full md:w-auto"
 			>
 				<FileText class="mr-2 h-4 w-4" />
 				Rekapitulasi Nilai
 			</Button>
-			<Button variant="ghost" href="/admin/penilaian" class="w-full md:w-auto">
+			<Button variant="ghost" href="{base}/admin/penilaian" class="w-full md:w-auto">
 				<ArrowLeft class="mr-2 h-4 w-4" />
 				Kembali
 			</Button>
@@ -238,7 +239,7 @@
 										variant="outline"
 										size="sm"
 										class="w-full"
-										href="/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
+										href="{base}/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
 									>
 										<ClipboardEdit class="mr-2 h-4 w-4" />
 										Catat Nilai
@@ -316,7 +317,7 @@
 									<Button
 										variant="outline"
 										size="sm"
-										href="/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
+										href="{base}/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
 									>
 										<ClipboardEdit class="mr-2 h-4 w-4" />
 										Catat Nilai

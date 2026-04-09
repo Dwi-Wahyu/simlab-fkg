@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -28,13 +29,13 @@
 
 	function handleSuccessAction() {
 		showSuccessDialog = false;
-		goto('/admin/master/modul');
+		goto(`${base}/admin/master/modul`);
 	}
 </script>
 
 <div class="flex flex-col gap-6 p-6">
 	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="/admin/master/modul">
+		<Button variant="outline" size="icon" href="{base}/admin/master/modul">
 			<ChevronLeft class="size-4" />
 		</Button>
 		<div>
@@ -105,7 +106,7 @@
 					</div>
 				</Card.Content>
 				<Card.Footer class="flex justify-end gap-2 border-t px-6 py-4">
-					<Button variant="outline" href="/admin/master/modul" disabled={isLoading}>Batal</Button>
+					<Button variant="outline" href="{base}/admin/master/modul" disabled={isLoading}>Batal</Button>
 					<Button type="submit" disabled={isLoading}>
 						{#if isLoading}
 							<Loader2 class="mr-2 size-4 animate-spin" />

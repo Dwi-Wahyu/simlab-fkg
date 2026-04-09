@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { laboratorium } from '$lib/server/db/schema';
 import { error, redirect } from '@sveltejs/kit';
@@ -7,7 +8,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const userSession = locals.user;
 	if (!userSession || userSession.role !== 'superadmin') {
-		throw redirect(302, '/admin/dashboard');
+		throw redirect(302, `${base}/admin/dashboard`);
 	}
 
 	const lab = await db.query.laboratorium.findFirst({

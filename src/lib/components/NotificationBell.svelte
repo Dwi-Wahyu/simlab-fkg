@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Bell, Check, X } from '@lucide/svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
@@ -195,7 +196,7 @@
 					variant="ghost"
 					class="h-8 w-full text-xs font-medium"
 					size="sm"
-					href="/{organizationId}/notifikasi"
+					href="{base}/{organizationId}/notifikasi"
 				>
 					Tampilkan Semua
 				</Button>

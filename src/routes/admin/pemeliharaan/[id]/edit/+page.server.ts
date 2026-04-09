@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, equipment, user } from '$lib/server/db/schema';
@@ -19,7 +20,7 @@ const maintenanceSchema = z.object({
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { id } = params;
 	const currentUser = locals.user;
-	if (!currentUser) throw redirect(302, '/');
+	if (!currentUser) throw redirect(302, `${base}/`);
 
 	const labId = currentUser.laboratorium?.id;
 	const isGlobalRole = ['superadmin', 'teknisi'].includes(currentUser.role);

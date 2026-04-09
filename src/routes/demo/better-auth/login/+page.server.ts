@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import type { PageServerLoad } from './$types';
@@ -6,7 +7,7 @@ import { APIError } from 'better-auth/api';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
-		return redirect(302, '/demo/better-auth');
+		return redirect(302, `${base}/demo/better-auth`);
 	}
 	return {};
 };
@@ -32,7 +33,7 @@ export const actions: Actions = {
 			return fail(500, { message: 'Unexpected error' });
 		}
 
-		return redirect(302, '/demo/better-auth');
+		return redirect(302, `${base}/demo/better-auth`);
 	},
 	signUpEmail: async (event) => {
 		const formData = await event.request.formData();
@@ -56,6 +57,6 @@ export const actions: Actions = {
 			return fail(500, { message: 'Unexpected error' });
 		}
 
-		return redirect(302, '/demo/better-auth');
+		return redirect(302, `${base}/demo/better-auth`);
 	}
 };

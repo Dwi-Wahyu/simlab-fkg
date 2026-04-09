@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -67,7 +68,7 @@
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div class="flex flex-col gap-1">
 			<div class="flex items-center gap-2">
-				<Button variant="ghost" size="icon" href="/admin/penilaian/{data.schedule.id}" class="h-8 w-8">
+				<Button variant="ghost" size="icon" href="{base}/admin/penilaian/{data.schedule.id}" class="h-8 w-8">
 					<ArrowLeft class="h-4 w-4" />
 				</Button>
 				<h1 class="text-2xl font-bold tracking-tight md:text-3xl">Catat Nilai</h1>
@@ -77,7 +78,7 @@
 			</p>
 		</div>
 		<div class="flex items-center gap-2">
-			<Button variant="outline" href="/admin/penilaian/{data.schedule.id}" class="hidden md:flex">
+			<Button variant="outline" href="{base}/admin/penilaian/{data.schedule.id}" class="hidden md:flex">
 				<ArrowLeft class="mr-2 h-4 w-4" />
 				Kembali ke Daftar
 			</Button>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Eye, QrCode, Pencil } from '@lucide/svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
@@ -16,7 +17,7 @@
 						variant="ghost"
 						size="icon"
 						class="size-8"
-						href="/admin/inventori/{id}/edit"
+						href="{base}/admin/inventori/{id}/edit"
 					>
 						<Pencil class="size-4" />
 						<span class="sr-only">Edit</span>

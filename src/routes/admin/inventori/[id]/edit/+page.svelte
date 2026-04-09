@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { ArrowLeft, Upload, X } from '@lucide/svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -100,7 +101,7 @@
 	function handleDialogAction() {
 		showDialog = false;
 		if (dialogConfig.type === 'success') {
-			goto('/admin/inventori');
+			goto(`${base}/admin/inventori`);
 		}
 	}
 
@@ -127,7 +128,7 @@
 
 <div class="mx-auto max-w-4xl space-y-8 p-6">
 	<div class="flex items-center gap-4">
-		<Button variant="ghost" size="icon" href="/admin/inventori">
+		<Button variant="ghost" size="icon" href="{base}/admin/inventori">
 			<ArrowLeft class="size-5" />
 		</Button>
 		<div>
@@ -280,7 +281,7 @@
 
 				<!-- Buttons -->
 				<div class="mt-4 flex gap-3 md:col-span-2">
-					<Button variant="outline" class="flex-1" href="/admin/inventori">Batal</Button>
+					<Button variant="outline" class="flex-1" href="{base}/admin/inventori">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading}

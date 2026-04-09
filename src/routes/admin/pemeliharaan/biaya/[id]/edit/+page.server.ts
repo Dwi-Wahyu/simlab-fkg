@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, maintenanceCost, maintenanceCostItem } from '$lib/server/db/schema';
@@ -9,7 +10,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const currentUser = locals.user;
-	if (!currentUser) throw redirect(302, '/');
+	if (!currentUser) throw redirect(302, `${base}/`);
 
 	const costId = params.id;
 	const cost = await db.query.maintenanceCost.findFirst({

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import { base } from '$app/paths';
 </script>
 
-<a href={resolve('/demo/better-auth')}>better-auth</a>
+<a href="{base}/demo/better-auth">better-auth</a>

@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { notification } from '$lib/server/db/schema';
 import { desc, eq, or } from 'drizzle-orm';
@@ -5,7 +6,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) throw redirect(302, '/login');
+	if (!locals.user) throw redirect(302, `${base}/login`);
 
 	const allNotifications = await db.query.notification.findMany({
 		where: (notif, { eq, or }) =>

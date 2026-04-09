@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -70,14 +71,14 @@
 	async function handleAction() {
 		showDialog = false;
 		if (form?.success) {
-			await goto('/admin/limbah-k3');
+			await goto(`${base}/admin/limbah-k3`);
 		}
 	}
 </script>
 
 <div class="flex flex-col gap-6 p-6">
 	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="/admin/limbah-k3" title="Kembali">
+		<Button variant="outline" size="icon" href="{base}/admin/limbah-k3" title="Kembali">
 			<ArrowLeft class="h-4 w-4" />
 		</Button>
 		<div class="flex flex-col gap-1">
@@ -187,7 +188,7 @@
 					</div>
 				</Card.Content>
 				<Card.Footer class="flex justify-end gap-2 border-t p-6">
-					<Button variant="outline" href="/admin/limbah-k3" disabled={loading}>Batal</Button>
+					<Button variant="outline" href="{base}/admin/limbah-k3" disabled={loading}>Batal</Button>
 					<Button type="submit" disabled={loading}>
 						{#if loading}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />

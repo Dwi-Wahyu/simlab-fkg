@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
@@ -77,7 +78,7 @@
 									<Button 
 										variant="ghost" 
 										size="sm" 
-										href="/{data.orgSlug}/pengaturan/pengguna/{member.user.id}"
+										href="{base}/{data.orgSlug}/pengaturan/pengguna/{member.user.id}"
 										class="gap-2"
 									>
 										<Settings2 class="h-4 w-4" />

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -73,11 +74,11 @@
 			<p class="text-muted-foreground">Keselamatan kerja, pengelolaan limbah, dan kepatuhan lingkungan.</p>
 		</div>
 		<div class="flex gap-2">
-			<Button href="/admin/limbah-k3/pencatatan-insiden" variant="outline" class="gap-2">
+			<Button href="{base}/admin/limbah-k3/pencatatan-insiden" variant="outline" class="gap-2">
 				<ShieldAlert class="h-4 w-4" />
 				Laporkan Insiden
 			</Button>
-			<Button href="/admin/limbah-k3/pencatatan" class="gap-2">
+			<Button href="{base}/admin/limbah-k3/pencatatan" class="gap-2">
 				<Trash2 class="h-4 w-4" />
 				Catat Limbah
 			</Button>

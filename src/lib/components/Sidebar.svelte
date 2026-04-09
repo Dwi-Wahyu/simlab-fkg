@@ -1,15 +1,8 @@
 <script lang="ts">
 	import {
 		LayoutDashboard,
-		Calendar,
 		Package,
-		Repeat,
-		BookOpen,
-		Wrench,
-		Recycle,
-		FileText,
 		ShieldCheck,
-		ClipboardList,
 		GraduationCap,
 		Settings,
 		Leaf,
@@ -25,6 +18,7 @@
 	import { IsMobile } from '$lib/hooks/is-mobile-svelte';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 
 	const { user } = $props();
 	const sidebar = getSidebarState();
@@ -41,7 +35,7 @@
 	const rawMenus = $derived([
 		{
 			name: 'Dashboard',
-			path: '/admin/dashboard',
+			path: `${base}/admin/dashboard`,
 			icon: LayoutDashboard,
 			isDropdown: false,
 			role: [],
@@ -49,82 +43,87 @@
 		},
 		{
 			name: 'Akademik',
-			path: '/admin/akademik',
+			path: `${base}/admin/akademik`,
 			icon: GraduationCap,
 			isDropdown: true,
-			role: ['superadmin', 'koordinator', 'kepalaLab', 'instruktur', 'admin'],
+			role: ['superadmin', 'koordinator', 'kepalaLab', 'instruktur', 'admin', 'peneliti'],
 			children: [
 				{
 					name: 'Jadwal & Reservasi',
-					path: '/admin/jadwal-praktikum',
+					path: `${base}/admin/jadwal-praktikum`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']
 				},
 				{
-					name: 'Seri Praktikum',
-					path: '/admin/master/seri',
+					name: 'Riwayat Praktikum',
+					path: `${base}/admin/riwayat-praktikum`,
+					role: ['peneliti']
+				},
+				{
+					name: 'Praktikum',
+					path: `${base}/admin/master/seri`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']
 				},
 				{
 					name: 'Penilaian',
-					path: '/admin/penilaian',
+					path: `${base}/admin/penilaian`,
 					role: ['instruktur', 'superadmin', 'koordinator']
 				},
 				{
 					name: 'Modul & Materi',
-					path: '/admin/master/modul',
+					path: `${base}/admin/master/modul`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']
 				},
 				{
 					name: 'Logbook Digital',
-					path: '/admin/logbook',
+					path: `${base}/admin/logbook`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']
 				},
 				{
 					name: 'Daftar Mahasiswa',
-					path: '/admin/users/mahasiswa',
+					path: `${base}/admin/users/mahasiswa`,
 					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'instruktur']
 				}
 			]
 		},
 		{
 			name: 'Sarpras & Inventori',
-			path: '/admin/sarpras',
+			path: `${base}/admin/sarpras`,
 			icon: Package,
 			isDropdown: true,
 			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi'],
 			children: [
 				{
 					name: 'Inventori',
-					path: '/admin/inventori',
+					path: `${base}/admin/inventori`,
 					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi']
 				},
 				{
 					name: 'Peminjaman',
-					path: '/admin/peminjaman',
+					path: `${base}/admin/peminjaman`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']
 				},
 				{
 					name: 'Pemeliharaan & Kalibrasi',
-					path: '/admin/pemeliharaan',
+					path: `${base}/admin/pemeliharaan`,
 					role: ['superadmin', 'koordinator', 'kepalaLab', 'teknisi']
 				}
 			]
 		},
 		{
 			name: 'Kualitas & K3',
-			path: '/admin/kualitas',
+			path: `${base}/admin/kualitas`,
 			icon: ShieldCheck,
 			isDropdown: true,
 			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'spmi'],
 			children: [
 				{
 					name: 'Limbah & K3',
-					path: '/admin/limbah-k3',
+					path: `${base}/admin/limbah-k3`,
 					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'spmi']
 				},
 				{
 					name: 'Quality & Audit',
-					path: '/admin/audit',
+					path: `${base}/admin/audit`,
 					role: ['superadmin', 'koordinator', 'kepalaLab', 'spmi']
 				}
 			]
@@ -134,7 +133,7 @@
 	const systemMenus = $derived([
 		{
 			name: 'Manajemen Lab',
-			path: '/admin/laboratorium',
+			path: `${base}/admin/laboratorium`,
 			icon: FlaskConical,
 			isDropdown: false,
 			role: ['superadmin'],
@@ -142,41 +141,41 @@
 		},
 		{
 			name: 'Manajemen User',
-			path: '/admin/users',
+			path: `${base}/admin/users`,
 			icon: UserCog,
 			isDropdown: true,
 			role: ['superadmin'],
 			children: [
 				{
 					name: 'Koordinator',
-					path: '/admin/users/koordinator',
+					path: `${base}/admin/users/koordinator`,
 					role: ['superadmin']
 				},
 				{
 					name: 'Kepala Lab',
-					path: '/admin/users/kepala-lab',
+					path: `${base}/admin/users/kepala-lab`,
 					role: ['superadmin']
 				},
 				{
 					name: 'Instruktur',
-					path: '/admin/users/instruktur',
+					path: `${base}/admin/users/instruktur`,
 					role: ['superadmin']
 				},
 				{
 					name: 'Teknisi',
-					path: '/admin/users/teknisi',
+					path: `${base}/admin/users/teknisi`,
 					role: ['superadmin']
 				},
 				{
 					name: 'SPMI',
-					path: '/admin/users/spmi',
+					path: `${base}/admin/users/spmi`,
 					role: ['superadmin']
 				}
 			]
 		},
 		{
 			name: 'Audit Log Sistem',
-			path: '/admin/audit-log',
+			path: `${base}/admin/audit-log`,
 			icon: History,
 			isDropdown: false,
 			role: ['superadmin', 'kakomlek'],
@@ -184,19 +183,19 @@
 		},
 		{
 			name: 'Pengaturan Master',
-			path: '/admin/pengaturan',
+			path: `${base}/admin/pengaturan`,
 			icon: Settings,
 			isDropdown: true,
 			role: ['superadmin', 'kepalaLab'],
 			children: [
 				{
 					name: 'Blok Praktikum',
-					path: '/admin/master/blok',
+					path: `${base}/admin/master/blok`,
 					role: ['superadmin']
 				},
 				{
 					name: 'Departemen',
-					path: '/admin/master/departemen',
+					path: `${base}/admin/master/departemen`,
 					role: ['superadmin']
 				}
 			]
@@ -278,7 +277,7 @@
 	<div class="flex items-center justify-between p-6">
 		<div class="flex items-center gap-3">
 			<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-				<img src="/logo-unhas.webp" alt="Logo" class="h-full w-full object-contain" />
+				<img src="{base}/logo-unhas.webp" alt="Logo" class="h-full w-full object-contain" />
 			</div>
 
 			<div

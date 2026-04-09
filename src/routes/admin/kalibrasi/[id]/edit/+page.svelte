@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -68,7 +69,7 @@
 
 	function handleDialogAction() {
 		showSuccessDialog = false;
-		goto('/admin/pemeliharaan?tab=kalibrasi');
+		goto(`${base}/admin/pemeliharaan?tab=kalibrasi`);
 	}
 
 	function formatDateForInput(date: Date | string | null) {
@@ -81,7 +82,7 @@
 <div class="mx-auto max-w-3xl space-y-8 p-6">
 	<!-- Header -->
 	<div class="flex items-center gap-4">
-		<Button href="/admin/pemeliharaan?tab=kalibrasi" variant="ghost" size="icon">
+		<Button href="{base}/admin/pemeliharaan?tab=kalibrasi" variant="ghost" size="icon">
 			<ArrowLeft size={20} />
 		</Button>
 		<div>
@@ -274,7 +275,7 @@
 
 				<!-- Submit Buttons -->
 				<div class="flex items-center justify-end gap-3 pt-4">
-					<Button variant="outline" href="/admin/pemeliharaan?tab=kalibrasi">Batal</Button>
+					<Button variant="outline" href="{base}/admin/pemeliharaan?tab=kalibrasi">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading || !selectedAssetId}

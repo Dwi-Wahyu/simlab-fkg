@@ -15,6 +15,7 @@
 	import { alatColumns, bahanColumns } from './columns.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { base } from '$app/paths';
 
 	let { data } = $props();
 
@@ -43,7 +44,7 @@
 				<FileDown class="size-4" />
 				Export
 			</Button>
-			<Button href="/admin/inventori/tambah" class="gap-2 bg-[#2D5A43] hover:bg-[#234735]">
+			<Button href="{base}/admin/inventori/tambah" class="gap-2 bg-[#2D5A43] hover:bg-[#234735]">
 				<Plus class="size-4" />
 				Tambah Item
 			</Button>

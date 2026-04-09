@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
@@ -108,7 +109,7 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex items-center gap-4">
-			<Button href="/admin/peminjaman" variant="outline" size="icon" class="rounded-full">
+			<Button href="{base}/admin/peminjaman" variant="outline" size="icon" class="rounded-full">
 				<ArrowLeft class="size-5" />
 			</Button>
 			<div>
@@ -370,12 +371,12 @@
 				</Card.Header>
 				<Card.Content class="flex flex-col gap-3">
 					{#if !isReturnMode}
-						<Button href="/admin/peminjaman" variant="outline" class="w-full gap-2 rounded-xl">
+						<Button href="{base}/admin/peminjaman" variant="outline" class="w-full gap-2 rounded-xl">
 							Kembali
 						</Button>
 						{#if data.lending.status !== 'RETURNED'}
 							<Button
-								href="/admin/peminjaman/{data.lending.id}/edit"
+								href="{base}/admin/peminjaman/{data.lending.id}/edit"
 								variant="outline"
 								class="w-full gap-2 rounded-xl"
 							>
@@ -471,7 +472,7 @@
 	onAction={() => {
 		showNotification = false;
 		if (notificationType === 'success') {
-			goto('/admin/peminjaman');
+			goto(`${base}/admin/peminjaman`);
 		}
 	}}
 />

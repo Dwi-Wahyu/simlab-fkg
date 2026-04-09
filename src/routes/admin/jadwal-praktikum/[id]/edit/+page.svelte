@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -92,7 +93,7 @@
 	onAction={() => {
 		showNotification = false;
 		if (notificationType === 'success') {
-			goto('/admin/jadwal-praktikum');
+			goto(`${base}/admin/jadwal-praktikum`);
 		}
 	}}
 />
@@ -343,7 +344,7 @@
 			</Card.Root>
 
 			<div class="flex justify-end gap-4">
-				<Button variant="outline" href="/admin/jadwal-praktikum">Batal</Button>
+				<Button variant="outline" href="{base}/admin/jadwal-praktikum">Batal</Button>
 				<Button type="submit">Simpan Perubahan</Button>
 			</div>
 		</div>

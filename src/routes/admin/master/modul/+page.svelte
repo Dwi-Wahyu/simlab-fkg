@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
@@ -54,7 +55,7 @@
 			<h1 class="text-3xl font-bold tracking-tight">Modul Praktikum</h1>
 			<p class="text-muted-foreground">Manajemen daftar modul praktikum laboratorium.</p>
 		</div>
-		<Button href="/admin/master/modul/tambah">
+		<Button href="{base}/admin/master/modul/tambah">
 			<Plus class="mr-2 size-4" /> Tambah Modul
 		</Button>
 	</div>
@@ -133,7 +134,7 @@
 								<Table.Cell class="max-w-xs truncate">{module.description ?? '-'}</Table.Cell>
 								<Table.Cell class="text-right">
 									<div class="flex justify-end gap-2">
-										<Button variant="ghost" size="icon" href="/admin/master/modul/{module.id}/edit">
+										<Button variant="ghost" size="icon" href="{base}/admin/master/modul/{module.id}/edit">
 											<Pencil class="size-4" />
 										</Button>
 										<Button

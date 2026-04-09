@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as Card from '$lib/components/ui/card';
@@ -78,7 +79,7 @@
 				<Download class="mr-2 h-4 w-4" />
 				Export Excel
 			</Button>
-			<Button variant="ghost" href="/admin/penilaian/{data.schedule.id}" class="hidden md:flex">
+			<Button variant="ghost" href="{base}/admin/penilaian/{data.schedule.id}" class="hidden md:flex">
 				Kembali
 			</Button>
 		</div>

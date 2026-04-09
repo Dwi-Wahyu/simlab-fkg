@@ -10,7 +10,7 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { base } from '$app/paths';
 
 	let { data, form } = $props();
 
@@ -164,7 +164,7 @@
 	function handleDialogAction() {
 		showDialog = false;
 		if (dialogConfig.type === 'success') {
-			goto(resolve('/admin/inventori'));
+			goto(`${base}/admin/inventori`);
 		}
 	}
 
@@ -488,7 +488,7 @@
 
 				<!-- Buttons -->
 				<div class="mt-4 flex gap-3 md:col-span-2">
-					<Button variant="outline" class="flex-1" href="/admin/inventori">Batal</Button>
+					<Button variant="outline" class="flex-1" href="{base}/admin/inventori">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading}

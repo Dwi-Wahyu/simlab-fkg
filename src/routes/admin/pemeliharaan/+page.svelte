@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -159,7 +160,7 @@
 			<Button
 				variant="outline"
 				class="gap-2 border-slate-200 text-slate-700 hover:bg-slate-50"
-				href="/admin/pemeliharaan/biaya/baru"
+				href="{base}/admin/pemeliharaan/biaya/baru"
 			>
 				<TrendingUp size={18} />
 				Catat Biaya
@@ -167,14 +168,14 @@
 			<Button
 				variant="outline"
 				class="gap-2 border-slate-200 text-slate-700 hover:bg-slate-50"
-				href="/admin/kalibrasi/baru"
+				href="{base}/admin/kalibrasi/baru"
 			>
 				<Calendar size={18} />
 				Jadwalkan Kalibrasi
 			</Button>
 			<Button
 				class="gap-2 bg-[#2D5A43] text-white hover:bg-[#234735]"
-				href="/admin/pemeliharaan/create"
+				href="{base}/admin/pemeliharaan/create"
 			>
 				<Plus size={18} />
 				Jadwalkan Pemeliharaan
@@ -277,7 +278,7 @@
 												<Button
 													size="icon"
 													variant="ghost"
-													href="/admin/pemeliharaan/{item.id}/edit"
+													href="{base}/admin/pemeliharaan/{item.id}/edit"
 													class="h-8 w-8 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
 												>
 													<Edit size={16} />
@@ -383,7 +384,7 @@
 												<Button
 													size="icon"
 													variant="ghost"
-													href="/admin/kalibrasi/{cal.id}/edit"
+													href="{base}/admin/kalibrasi/{cal.id}/edit"
 													class="h-8 w-8 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
 												>
 													<Edit size={16} />
@@ -475,7 +476,7 @@
 												<Button
 													size="icon"
 													variant="ghost"
-													href="/admin/pemeliharaan/biaya/{cost.id}"
+													href="{base}/admin/pemeliharaan/biaya/{cost.id}"
 													class="h-8 w-8 text-slate-400 hover:bg-slate-100"
 												>
 													<ChevronRight size={16} />

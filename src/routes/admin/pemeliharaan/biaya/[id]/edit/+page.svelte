@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -115,7 +116,7 @@
 
 	function handleDialogAction() {
 		showSuccessDialog = false;
-		goto('/admin/pemeliharaan?tab=biaya');
+		goto(`${base}/admin/pemeliharaan?tab=biaya`);
 	}
 
 	function formatCurrency(amount: number) {
@@ -144,7 +145,7 @@
 <div class="mx-auto max-w-4xl space-y-8 p-6">
 	<!-- Header -->
 	<div class="flex items-center gap-4">
-		<Button href="/admin/pemeliharaan/biaya/{data.cost.id}" variant="ghost" size="icon">
+		<Button href="{base}/admin/pemeliharaan/biaya/{data.cost.id}" variant="ghost" size="icon">
 			<ArrowLeft size={20} />
 		</Button>
 		<div>
@@ -357,7 +358,7 @@
 
 				<!-- Submit Buttons -->
 				<div class="flex items-center justify-end gap-3 pt-4 border-t">
-					<Button variant="outline" href="/admin/pemeliharaan/biaya/{data.cost.id}">Batal</Button>
+					<Button variant="outline" href="{base}/admin/pemeliharaan/biaya/{data.cost.id}">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading}

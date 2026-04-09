@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -171,7 +172,7 @@
 				Kelola jadwal praktikum, OSCE, dan pelatihan di laboratorium.
 			</p>
 		</div>
-		<Button href="/admin/jadwal-praktikum/tambah">
+		<Button href="{base}/admin/jadwal-praktikum/tambah">
 			<Plus class="mr-2 h-4 w-4" />
 			Tambah Jadwal
 		</Button>
@@ -259,7 +260,7 @@
 									<Button variant="ghost" size="icon" onclick={() => openInfo(schedule)}>
 										<Info class="h-4 w-4" />
 									</Button>
-									<Button variant="ghost" size="icon" href="/admin/jadwal-praktikum/{schedule.id}/edit">
+									<Button variant="ghost" size="icon" href="{base}/admin/jadwal-praktikum/{schedule.id}/edit">
 										<Edit class="h-4 w-4" />
 									</Button>
 									<Button

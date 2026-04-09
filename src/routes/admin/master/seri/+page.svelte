@@ -4,19 +4,9 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
-	import * as Select from '$lib/components/ui/select';
 	import * as SearchableSelect from '$lib/components/ui/searchable-select';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { 
-		Plus, 
-		Search, 
-		Edit, 
-		Trash2, 
-		BookOpen, 
-		FlaskConical,
-		ChevronRight,
-		MoreVertical
-	} from '@lucide/svelte';
+	import { Plus, Search, Edit, Trash2, BookOpen, FlaskConical } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
@@ -43,10 +33,11 @@
 	let notificationDescription = $state('');
 
 	const filteredSeries = $derived(
-		data.series.filter((s: any) => 
-			s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			(s.block?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-			(s.laboratorium?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+		data.series.filter(
+			(s: any) =>
+				s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				(s.block?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+				(s.laboratorium?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
 		)
 	);
 
@@ -78,7 +69,6 @@
 	const labTrigger = $derived(
 		data.labs.find((l: any) => l.id === formLabId)?.name ?? 'Pilih Laboratorium (Opsional)'
 	);
-
 </script>
 
 <NotificationDialog
@@ -92,9 +82,7 @@
 	bind:open={isDeleteDialogOpen}
 	title="Hapus Seri Praktikum?"
 	description="Tindakan ini tidak dapat dibatalkan. Jadwal yang menggunakan seri ini akan kehilangan referensi serinya."
-	confirmLabel="Hapus"
-	confirmVariant="destructive"
-	onConfirm={() => {
+	onAction={() => {
 		const formData = new FormData();
 		formData.append('id', selectedSeriesId);
 		// Manual form submission for confirmation dialog
@@ -107,7 +95,7 @@
 		input.value = selectedSeriesId;
 		form.appendChild(input);
 		document.body.appendChild(form);
-		
+
 		// Use enhance-like behavior but simpler for this manual trigger
 		fetch('?/delete', {
 			method: 'POST',
@@ -119,7 +107,7 @@
 			notificationDescription = 'Seri praktikum telah dihapus.';
 			showNotification = true;
 			// Refresh data could be done better with invalidateAll or just let SvelteKit handle the form action
-			window.location.reload(); 
+			window.location.reload();
 		});
 	}}
 />
@@ -128,105 +116,98 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Master Seri Praktikum</h1>
-			<p class="text-muted-foreground">Kelola grup/seri kegiatan praktikum (misal: "Clinical Skill Lab").</p>
+			<h1 class="text-3xl font-bold tracking-tight">Master Praktikum</h1>
+			<p class="text-muted-foreground">
+				Kelola grup kegiatan praktikum (misal: "Clinical Skill Lab").
+			</p>
 		</div>
 		<Button onclick={openCreate}>
-			<Plus class="mr-2 h-4 w-4" />
-			Tambah Seri Baru
+			<Plus />
+			Tambah Praktikum
 		</Button>
 	</div>
 
-	<!-- Stats / Info -->
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-		<Card.Root>
-			<Card.Content class="p-4 flex flex-col gap-1">
-				<span class="text-xs font-medium text-muted-foreground uppercase">Total Seri</span>
-				<span class="text-2xl font-bold">{data.series.length}</span>
-			</Card.Content>
-		</Card.Root>
+	<div class="relative w-full max-w-sm">
+		<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+		<Input
+			type="search"
+			placeholder="Cari nama seri, blok, atau lab..."
+			class="pl-9"
+			bind:value={searchQuery}
+		/>
 	</div>
 
-	<!-- Main Table -->
-	<Card.Root>
-		<Card.Header>
-			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<Card.Title>Daftar Seri</Card.Title>
-				<div class="relative w-full max-w-sm">
-					<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
-					<Input
-						type="search"
-						placeholder="Cari nama seri, blok, atau lab..."
-						class="pl-9"
-						bind:value={searchQuery}
-					/>
-				</div>
-			</div>
-		</Card.Header>
-		<Card.Content>
-			<div class="rounded-md border">
-				<Table.Root>
-					<Table.Header>
-						<Table.Row>
-							<Table.Head>Nama Seri</Table.Head>
-							<Table.Head>Blok</Table.Head>
-							<Table.Head>Laboratorium</Table.Head>
-							<Table.Head>Keterangan</Table.Head>
-							<Table.Head class="text-right">Aksi</Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#each filteredSeries as series (series.id)}
-							<Table.Row>
-								<Table.Cell class="font-bold">{series.name}</Table.Cell>
-								<Table.Cell>
-									{#if series.block}
-										<div class="flex items-center gap-2">
-											<BookOpen class="h-4 w-4 text-muted-foreground" />
-											{series.block.name}
-										</div>
-									{:else}
-										<span class="text-muted-foreground italic text-xs">-</span>
-									{/if}
-								</Table.Cell>
-								<Table.Cell>
-									{#if series.laboratorium}
-										<div class="flex items-center gap-2">
-											<FlaskConical class="h-4 w-4 text-muted-foreground" />
-											{series.laboratorium.name}
-										</div>
-									{:else}
-										<span class="text-muted-foreground italic text-xs">-</span>
-									{/if}
-								</Table.Cell>
-								<Table.Cell class="max-w-[200px] truncate">
-									<span class="text-xs text-muted-foreground">
-										{series.description || '-'}
-									</span>
-								</Table.Cell>
-								<Table.Cell class="text-right">
-									<div class="flex justify-end gap-2">
-										<Button variant="outline" size="icon" class="h-8 w-8" onclick={() => openEdit(series)}>
-											<Edit class="h-4 w-4" />
-										</Button>
-										<Button variant="outline" size="icon" class="h-8 w-8 text-destructive" onclick={() => openDelete(series.id)}>
-											<Trash2 class="h-4 w-4" />
-										</Button>
-									</div>
-								</Table.Cell>
-							</Table.Row>
-						{:else}
-							<Table.Row>
-								<Table.Cell colspan={5} class="h-24 text-center">
-									Tidak ada data seri praktikum ditemukan.
-								</Table.Cell>
-							</Table.Row>
-						{/each}
-					</Table.Body>
-				</Table.Root>
-			</div>
-		</Card.Content>
-	</Card.Root>
+	<div class="rounded-md border">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Nama Seri</Table.Head>
+					<Table.Head>Blok</Table.Head>
+					<Table.Head>Laboratorium</Table.Head>
+					<Table.Head>Keterangan</Table.Head>
+					<Table.Head class="text-right">Aksi</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each filteredSeries as series (series.id)}
+					<Table.Row>
+						<Table.Cell class="font-bold">{series.name}</Table.Cell>
+						<Table.Cell>
+							{#if series.block}
+								<div class="flex items-center gap-2">
+									<BookOpen class="h-4 w-4 text-muted-foreground" />
+									{series.block.name}
+								</div>
+							{:else}
+								<span class="text-xs text-muted-foreground italic">-</span>
+							{/if}
+						</Table.Cell>
+						<Table.Cell>
+							{#if series.laboratorium}
+								<div class="flex items-center gap-2">
+									<FlaskConical class="h-4 w-4 text-muted-foreground" />
+									{series.laboratorium.name}
+								</div>
+							{:else}
+								<span class="text-xs text-muted-foreground italic">-</span>
+							{/if}
+						</Table.Cell>
+						<Table.Cell class="truncate">
+							<span class="text-xs text-muted-foreground">
+								{series.description || '-'}
+							</span>
+						</Table.Cell>
+						<Table.Cell class="text-right">
+							<div class="flex justify-end gap-2">
+								<Button
+									variant="outline"
+									size="icon"
+									class="h-8 w-8"
+									onclick={() => openEdit(series)}
+								>
+									<Edit class="h-4 w-4" />
+								</Button>
+								<Button
+									variant="outline"
+									size="icon"
+									class="h-8 w-8 text-destructive"
+									onclick={() => openDelete(series.id)}
+								>
+									<Trash2 class="h-4 w-4" />
+								</Button>
+							</div>
+						</Table.Cell>
+					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={5} class="h-24 text-center">
+							Tidak ada data seri praktikum ditemukan.
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</div>
 </div>
 
 <!-- Create Dialog -->
@@ -236,9 +217,9 @@
 			<Dialog.Title>Tambah Seri Baru</Dialog.Title>
 			<Dialog.Description>Buat grup untuk jadwal praktikum.</Dialog.Description>
 		</Dialog.Header>
-		<form 
-			method="POST" 
-			action="?/create" 
+		<form
+			method="POST"
+			action="?/create"
 			use:enhance={() => {
 				return async ({ result }) => {
 					if (result.type === 'success') {
@@ -254,12 +235,23 @@
 		>
 			<div class="space-y-2">
 				<Label for="name">Nama Seri</Label>
-				<Input id="name" name="name" placeholder="Misal: Clinical Skill Lab" required bind:value={formName} />
+				<Input
+					id="name"
+					name="name"
+					placeholder="Misal: Clinical Skill Lab"
+					required
+					bind:value={formName}
+				/>
 			</div>
-			
+
 			<div class="space-y-2">
 				<Label for="description">Keterangan (Opsional)</Label>
-				<Input id="description" name="description" placeholder="Deskripsi singkat..." bind:value={formDescription} />
+				<Input
+					id="description"
+					name="description"
+					placeholder="Deskripsi singkat..."
+					bind:value={formDescription}
+				/>
 			</div>
 
 			<div class="space-y-2">
@@ -285,7 +277,9 @@
 						{labTrigger}
 					</SearchableSelect.Trigger>
 					<SearchableSelect.Content searchPlaceholder="Cari laboratorium...">
-						<SearchableSelect.Item value="" label="Tanpa Laboratorium">Tanpa Lab</SearchableSelect.Item>
+						<SearchableSelect.Item value="" label="Tanpa Laboratorium"
+							>Tanpa Lab</SearchableSelect.Item
+						>
 						{#each data.labs as l (l.id)}
 							<SearchableSelect.Item value={l.id} label={l.name}>{l.name}</SearchableSelect.Item>
 						{/each}
@@ -295,7 +289,7 @@
 			</div>
 
 			<Dialog.Footer>
-				<Button type="button" variant="ghost" onclick={() => isDialogOpen = false}>Batal</Button>
+				<Button type="button" variant="ghost" onclick={() => (isDialogOpen = false)}>Batal</Button>
 				<Button type="submit">Simpan</Button>
 			</Dialog.Footer>
 		</form>
@@ -308,9 +302,9 @@
 		<Dialog.Header>
 			<Dialog.Title>Edit Seri Praktikum</Dialog.Title>
 		</Dialog.Header>
-		<form 
-			method="POST" 
-			action="?/update" 
+		<form
+			method="POST"
+			action="?/update"
 			use:enhance={() => {
 				return async ({ result }) => {
 					if (result.type === 'success') {
@@ -325,12 +319,12 @@
 			class="space-y-4"
 		>
 			<input type="hidden" name="id" value={selectedSeriesId} />
-			
+
 			<div class="space-y-2">
 				<Label for="name-edit">Nama Seri</Label>
 				<Input id="name-edit" name="name" required bind:value={formName} />
 			</div>
-			
+
 			<div class="space-y-2">
 				<Label for="description-edit">Keterangan</Label>
 				<Input id="description-edit" name="description" bind:value={formDescription} />
@@ -359,7 +353,9 @@
 						{labTrigger}
 					</SearchableSelect.Trigger>
 					<SearchableSelect.Content searchPlaceholder="Cari laboratorium...">
-						<SearchableSelect.Item value="" label="Tanpa Laboratorium">Tanpa Lab</SearchableSelect.Item>
+						<SearchableSelect.Item value="" label="Tanpa Laboratorium"
+							>Tanpa Lab</SearchableSelect.Item
+						>
 						{#each data.labs as l (l.id)}
 							<SearchableSelect.Item value={l.id} label={l.name}>{l.name}</SearchableSelect.Item>
 						{/each}
@@ -369,7 +365,9 @@
 			</div>
 
 			<Dialog.Footer>
-				<Button type="button" variant="ghost" onclick={() => isEditDialogOpen = false}>Batal</Button>
+				<Button type="button" variant="ghost" onclick={() => (isEditDialogOpen = false)}
+					>Batal</Button
+				>
 				<Button type="submit">Simpan Perubahan</Button>
 			</Dialog.Footer>
 		</form>

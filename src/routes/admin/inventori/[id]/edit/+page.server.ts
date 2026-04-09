@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { item } from '$lib/server/db/schema';
@@ -7,13 +8,13 @@ import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 
 export const load = async ({ locals, params }) => {
-	if (!locals.user) throw redirect(302, '/');
+	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const { id } = params;
 	const [existingItem] = await db.select().from(item).where(eq(item.id, id)).limit(1);
 
 	if (!existingItem) {
-		throw redirect(302, '/admin/inventori');
+		throw redirect(302, `${base}/admin/inventori`);
 	}
 
 	return {

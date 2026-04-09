@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -33,7 +34,7 @@
 
 <div class="flex flex-col gap-6 p-6">
 	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="/admin/users/{data.roleSlug}">
+		<Button variant="outline" size="icon" href="{base}/admin/users/{data.roleSlug}">
 			<ChevronLeft class="h-4 w-4" />
 		</Button>
 		<div class="flex flex-col gap-1">
@@ -98,7 +99,7 @@
 					{/if}
 
 					<div class="flex justify-end gap-3 pt-4">
-						<Button variant="outline" href="/admin/users/{data.roleSlug}">Batal</Button>
+						<Button variant="outline" href="{base}/admin/users/{data.roleSlug}">Batal</Button>
 						<Button type="submit" disabled={loading} class="min-w-[120px]">
 							{#if loading}
 								<Loader2 class="mr-2 h-4 w-4 animate-spin" />

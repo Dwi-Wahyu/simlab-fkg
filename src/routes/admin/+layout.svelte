@@ -6,9 +6,10 @@
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { setSidebarState } from '@/components/ui/sidebar/context.svelte.js';
 	import { IsMobile } from '$lib/hooks/is-mobile-svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { base } from '$app/paths';
+	import { setSidebarState } from '$lib/components/ui/sidebar/context.svelte.js';
 
 	let { data, children } = $props();
 	const sidebar = setSidebarState();
@@ -58,7 +59,7 @@
 	});
 
 	function handleLogout() {
-		goto('/logout');
+		goto(`${base}/logout`);
 	}
 </script>
 
@@ -121,7 +122,9 @@
 				<!-- Tampilan Mobile (Sembunyi di Desktop) -->
 				<div class="md:hidden">
 					<DropdownMenu.Root>
-						<DropdownMenu.Trigger class="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+						<DropdownMenu.Trigger
+							class="rounded-full ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						>
 							<Avatar
 								src={data.user.image}
 								alt={data.user.name}
@@ -132,7 +135,7 @@
 						<DropdownMenu.Content align="end" class="w-56">
 							<DropdownMenu.Label class="font-normal">
 								<div class="flex flex-col space-y-1">
-									<p class="text-sm font-medium leading-none">{data.user.name}</p>
+									<p class="text-sm leading-none font-medium">{data.user.name}</p>
 									<p class="text-xs leading-none text-muted-foreground">
 										{toTitleCase(data.user.role)}
 									</p>
@@ -140,20 +143,22 @@
 							</DropdownMenu.Label>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Group>
-								<DropdownMenu.Item href="/admin/profil">
+								<DropdownMenu.Item href="{base}/admin/profil">
 									<User class="mr-2 h-4 w-4" />
 									<span>Profil Saya</span>
 								</DropdownMenu.Item>
-								<DropdownMenu.Item href="/admin/notifikasi">
+								<DropdownMenu.Item href="{base}/admin/notifikasi">
 									<Bell class="mr-2 h-4 w-4" />
 									<span>Notifikasi</span>
 									{#if data.unreadCount > 0}
-										<span class="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+										<span
+											class="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white"
+										>
 											{data.unreadCount}
 										</span>
 									{/if}
 								</DropdownMenu.Item>
-								<DropdownMenu.Item href="/admin/pengaturan">
+								<DropdownMenu.Item href="{base}/admin/pengaturan">
 									<Settings class="mr-2 h-4 w-4" />
 									<span>Pengaturan</span>
 								</DropdownMenu.Item>

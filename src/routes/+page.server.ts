@@ -1,11 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { base } from '$app/paths';
 import { auth } from '$lib/server/auth';
 import { APIError } from 'better-auth/api';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
-		return redirect(302, '/admin/dashboard');
+		return redirect(302, `${base}/admin/dashboard`);
 	}
 
 	return { user: event.locals.user };
@@ -22,7 +23,7 @@ export const actions: Actions = {
 				body: {
 					username,
 					password,
-					callbackURL: '/admin/dashboard'
+					callbackURL: `${base}/admin/dashboard`
 				}
 			});
 		} catch (error) {
@@ -37,6 +38,6 @@ export const actions: Actions = {
 			return fail(500, { message: 'Terjadi kesalahan sistem' });
 		}
 
-		return redirect(302, '/admin/dashboard');
+		return redirect(302, `${base}/admin/dashboard`);
 	}
 };

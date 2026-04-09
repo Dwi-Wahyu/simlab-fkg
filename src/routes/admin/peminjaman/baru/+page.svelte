@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
@@ -141,7 +142,7 @@
 
 <div class="mx-auto flex max-w-5xl flex-col gap-6 p-6">
 	<div class="flex items-center gap-4">
-		<Button href="/admin/peminjaman" variant="ghost" size="icon">
+		<Button href="{base}/admin/peminjaman" variant="ghost" size="icon">
 			<ArrowLeft class="size-5" />
 		</Button>
 		<div>
@@ -420,7 +421,7 @@
 				<div class="flex-1 text-sm font-medium">
 					Terpilih: {selectedRequesters.length} orang
 				</div>
-				<Button variant="outline" href="/admin/peminjaman">Batal</Button>
+				<Button variant="outline" href="{base}/admin/peminjaman">Batal</Button>
 				<Button
 					type="submit"
 					disabled={isSubmitting || stockWarnings.length > 0}

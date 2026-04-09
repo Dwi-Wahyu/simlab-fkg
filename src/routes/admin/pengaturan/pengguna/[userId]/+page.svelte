@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -54,7 +55,7 @@
 
 <div class="mx-auto max-w-5xl space-y-8 p-8">
 	<div class="flex items-center gap-4">
-		<Button variant="ghost" size="icon" href="/{data.orgSlug}/pengaturan/pengguna">
+		<Button variant="ghost" size="icon" href="{base}/{data.orgSlug}/pengaturan/pengguna">
 			<ArrowLeft class="h-5 w-5" />
 		</Button>
 		<div>

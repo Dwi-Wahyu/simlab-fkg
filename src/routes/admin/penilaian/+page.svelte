@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
@@ -83,7 +84,7 @@
 								</div>
 							</Table.Cell>
 							<Table.Cell class="text-right">
-								<Button href="/admin/penilaian/{schedule.id}" size="sm">
+								<Button href="{base}/admin/penilaian/{schedule.id}" size="sm">
 									<ClipboardCheck class="mr-2 h-4 w-4" />
 									Catat Nilai
 								</Button>
