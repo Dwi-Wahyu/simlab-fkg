@@ -72,7 +72,19 @@ export const auth = betterAuth({
 		}
 	},
 	plugins: [
-		admin(),
+		admin({
+			adminRoles: ['superadmin'],
+			ac: accessControl,
+			roles: {
+				superadmin,
+				koordinator,
+				kepalaLab,
+				instruktur,
+				peneliti,
+				teknisi,
+				spmi
+			}
+		}),
 		username(),
 		apiKey(),
 		organization({

@@ -7,6 +7,9 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ url }) => {
 	const departmentId = url.searchParams.get('departmentId');
 	const blockId = url.searchParams.get('blockId');
+	const page = parseInt(url.searchParams.get('page') || '1');
+	const pageSize = parseInt(url.searchParams.get('pageSize') || '10');
+	const offset = (page - 1) * pageSize;
 
 	const filters = [];
 	if (departmentId) {
@@ -15,6 +18,19 @@ export const load: PageServerLoad = async ({ url }) => {
 	if (blockId) {
 		filters.push(eq(practicumModule.blockId, blockId));
 	}
+
+	const whereClause = filters.length > 0 ? and(...filters) : undefined;
+
+	// Get total count for pagination
+	const [totalCountResult] = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(practicumModule)
+		.innerJoin(block, eq(practicumModule.blockId, block.id))
+		.innerJoin(department, eq(block.departmentId, department.id))
+		.where(whereClause);
+
+	const totalModules = Number(totalCountResult.count);
+	const totalPages = Math.ceil(totalModules / pageSize);
 
 	const modules = await db
 		.select({
@@ -28,8 +44,10 @@ export const load: PageServerLoad = async ({ url }) => {
 		.from(practicumModule)
 		.innerJoin(block, eq(practicumModule.blockId, block.id))
 		.innerJoin(department, eq(block.departmentId, department.id))
-		.where(filters.length > 0 ? and(...filters) : undefined)
-		.orderBy(practicumModule.createdAt);
+		.where(whereClause)
+		.orderBy(practicumModule.createdAt)
+		.limit(pageSize)
+		.offset(offset);
 
 	const departments = await db.query.department.findMany();
 	
@@ -42,6 +60,12 @@ export const load: PageServerLoad = async ({ url }) => {
 		modules,
 		departments,
 		blocks,
+		pagination: {
+			totalModules,
+			totalPages,
+			currentPage: page,
+			pageSize
+		},
 		filters: {
 			departmentId,
 			blockId

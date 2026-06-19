@@ -1,22 +1,22 @@
 <script lang="ts">
-	import { base } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import * as Card from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
+	/* eslint-disable svelte/prefer-writable-derived, svelte/no-navigation-without-resolve, @typescript-eslint/no-explicit-any */
+
 	import {
-		ArrowLeft,
-		Search,
-		Download,
+		BookOpen,
+		Calendar,
 		ChevronLeft,
 		ChevronRight,
-		Calendar,
+		Download,
 		GraduationCap,
-		Users,
-		BookOpen
+		Search,
+		Users
 	} from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
 
 	let { data } = $props();
 
@@ -63,35 +63,38 @@
 <div class="flex h-full flex-col gap-6 p-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-		<div class="flex flex-col gap-1">
-			<div class="flex items-center gap-2">
-				<h1 class="text-3xl font-bold tracking-tight">
-					{data.schedule.series?.name ?? 'Rekapitulasi Nilai'}
-				</h1>
+		<div class="flex items-center gap-2">
+			<Button variant="ghost" href="/admin/penilaian/{data.schedule.id}" class="hidden md:flex">
+				<ChevronLeft />
+			</Button>
+			<div class="flex flex-col gap-1">
+				<div class="flex items-center gap-2">
+					<h1 class="text-3xl font-bold tracking-tight">
+						{data.schedule.series?.name ?? 'Rekapitulasi Nilai'}
+					</h1>
+				</div>
+				<p class="text-sm text-muted-foreground md:text-base">
+					Laporan seluruh hasil penilaian mahasiswa untuk seri {data.schedule.series?.name ??
+						data.schedule.title}.
+				</p>
 			</div>
-			<p class="text-sm text-muted-foreground md:text-base">
-				Laporan seluruh hasil penilaian mahasiswa untuk seri {data.schedule.series?.name ??
-					data.schedule.title}.
-			</p>
 		</div>
+
 		<div class="flex items-center gap-2">
 			<Button variant="outline" class="hidden md:flex">
-				<Download class="mr-2 h-4 w-4" />
+				<Download />
 				Export Excel
-			</Button>
-			<Button variant="ghost" href="{base}/admin/penilaian/{data.schedule.id}" class="hidden md:flex">
-				Kembali
 			</Button>
 		</div>
 	</div>
 
 	<!-- Schedule Summary Card -->
 	<Card.Root>
-		<Card.Header class="pb-4">
+		<Card.Header>
 			<Card.Title>Informasi Jadwal</Card.Title>
 		</Card.Header>
 		<Card.Content>
-			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 				<div class="flex items-center gap-3">
 					<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
 						<BookOpen class="h-5 w-5 text-primary" />
@@ -144,12 +147,12 @@
 	</Card.Root>
 
 	<!-- Main Table Card -->
-	<Card.Root>
+	<Card.Root mobileAware={true}>
 		<Card.Header>
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<Card.Title>Daftar Nilai Mahasiswa</Card.Title>
 				<form onsubmit={handleSearch} class="relative w-full max-w-sm">
-					<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+					<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
 					<Input
 						type="search"
 						placeholder="Cari nama mahasiswa..."
@@ -170,7 +173,7 @@
 								class="sticky left-0 z-20 w-[250px] border-r bg-background text-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
 								>Mahasiswa</Table.Head
 							>
-							{#each groupedColumns as col}
+							{#each groupedColumns as col (col.scheduleId)}
 								<Table.Head
 									colspan={col.modules.length}
 									class="border-r border-b bg-muted/20 text-center font-bold"
@@ -184,8 +187,8 @@
 						</Table.Row>
 						<!-- Second Level Header: Modules -->
 						<Table.Row>
-							{#each groupedColumns as col}
-								{#each col.modules as mod}
+							{#each groupedColumns as col (col.scheduleId)}
+								{#each col.modules as mod (mod.id)}
 									<Table.Head
 										class="min-w-[100px] border-r py-1 text-center text-[10px] font-semibold tracking-wider uppercase"
 									>
@@ -219,8 +222,8 @@
 										>
 									</div>
 								</Table.Cell>
-								{#each groupedColumns as col}
-									{#each col.modules as mod}
+								{#each groupedColumns as col (col.scheduleId)}
+									{#each col.modules as mod (mod.id)}
 										<Table.Cell class="border-r text-center">
 											{getScore(student.userId, col.scheduleId, mod.id)}
 										</Table.Cell>

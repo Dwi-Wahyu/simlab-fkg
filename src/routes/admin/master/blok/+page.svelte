@@ -152,7 +152,7 @@
 						<Input id="name" name="name" placeholder="Misal: Blok 1" required />
 					</div>
 					<Button type="submit" class="w-full">
-						<Plus class="mr-2 h-4 w-4" />
+						<Plus />
 						Tambah
 					</Button>
 				</form>
@@ -242,9 +242,7 @@
 							</Table.Row>
 						{:else}
 							<Table.Row>
-								<Table.Cell colspan={3} class="h-24 text-center">
-									Belum ada data blok.
-								</Table.Cell>
+								<Table.Cell colspan={3} class="h-24 text-center">Belum ada data blok.</Table.Cell>
 							</Table.Row>
 						{/each}
 					</Table.Body>

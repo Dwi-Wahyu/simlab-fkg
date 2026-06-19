@@ -1,22 +1,26 @@
 <script lang="ts">
-	import { base } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import * as Card from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
-	import * as Select from '$lib/components/ui/select';
-	import * as Accordion from '$lib/components/ui/accordion';
-	import { badgeVariants } from '$lib/components/ui/badge';
 	import {
-		User,
-		ClipboardEdit,
+		ArrowLeft,
+		BookOpen,
 		CheckCircle2,
-		Search,
-		Filter,
+		ChevronLeft,
+		ClipboardEdit,
 		FileText,
-		ArrowLeft
+		Filter,
+		GraduationCap as GraduationIcon,
+		Search,
+		Stethoscope,
+		User,
+		Users
 	} from '@lucide/svelte';
 	import { IsMobile } from '@/hooks/is-mobile-svelte.js';
+	import * as Accordion from '$lib/components/ui/accordion';
+	import { badgeVariants } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import * as Select from '$lib/components/ui/select';
+	import * as Table from '$lib/components/ui/table';
 
 	let { data } = $props();
 	const isMobile = new IsMobile();
@@ -62,6 +66,11 @@
 </script>
 
 <div class="flex h-full flex-col gap-6 p-6">
+	<Button variant="outline" href="/admin/penilaian" class="-mb-2 w-fit">
+		<ChevronLeft />
+		Kembali
+	</Button>
+
 	<!-- Header Section -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
@@ -74,63 +83,84 @@
 		</div>
 		<div class="flex flex-col items-stretch gap-2 md:flex-row md:items-center">
 			<Button
-				variant="outline"
-				href="{base}/admin/penilaian/{data.schedule.id}/rekapitulasi"
+				href="/admin/penilaian/{data.schedule.id}/rekapitulasi"
+				size="lg"
 				class="w-full md:w-auto"
 			>
-				<FileText class="mr-2 h-4 w-4" />
+				<FileText />
 				Rekapitulasi Nilai
-			</Button>
-			<Button variant="ghost" href="{base}/admin/penilaian" class="w-full md:w-auto">
-				<ArrowLeft class="mr-2 h-4 w-4" />
-				Kembali
 			</Button>
 		</div>
 	</div>
 
 	<!-- Info Bar (Horizontal Summary) -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 		<Card.Root>
-			<Card.Content class="flex flex-col gap-1">
-				<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase">Jenis</span
-				>
-				<span class="font-bold">{data.schedule.type}</span>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex flex-col gap-1">
-				<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase">Kelas</span
-				>
-				<span class="font-bold">{data.schedule.class}</span>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex flex-col gap-1">
-				<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase">Modul</span
-				>
-				<div class="mt-1 flex flex-wrap gap-1">
-					{#each modules as mod (mod.id)}
-						<span
-							class={badgeVariants({ variant: 'secondary' }) +
-								'h-4 py-0 text-[10px] wrap-break-word'}>{mod.name}</span
-						>
-					{/each}
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+					<Stethoscope class="h-5 w-5 text-primary" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Jenis</span
+					>
+					<span class="font-bold">{data.schedule.type}</span>
 				</div>
 			</Card.Content>
 		</Card.Root>
 		<Card.Root>
-			<Card.Content class="flex flex-col gap-1">
-				<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-					>Peserta</span
-				>
-				<span class="font-bold">{data.students.length} Mahasiswa</span>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+					<GraduationIcon class="h-5 w-5 text-blue-500" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Kelas</span
+					>
+					<span class="font-bold">{data.schedule.class}</span>
+				</div>
+			</Card.Content>
+		</Card.Root>
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+					<BookOpen class="h-5 w-5 text-amber-500" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Modul</span
+					>
+					<div class="mt-1 flex flex-wrap gap-1">
+						{#each modules as mod (mod.id)}
+							<span
+								class={badgeVariants({ variant: 'secondary' }) +
+									' h-4 py-0 text-[10px] wrap-break-word'}>{mod.name}</span
+							>
+						{/each}
+					</div>
+				</div>
+			</Card.Content>
+		</Card.Root>
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+					<Users class="h-5 w-5 text-green-500" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Peserta</span
+					>
+					<span class="font-bold">{data.students.length} Mahasiswa</span>
+				</div>
 			</Card.Content>
 		</Card.Root>
 	</div>
 
 	<!-- Main Content: Student List -->
-	<Card.Root>
-		<Card.Header>
+	<Card.Root
+		class="border-none bg-transparent py-0 shadow-none ring-0 outline-none md:bg-card md:py-6 md:shadow-sm md:ring-1"
+	>
+		<Card.Header class="px-0 md:px-6">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
 					<Card.Title>Daftar Mahasiswa</Card.Title>
@@ -140,7 +170,7 @@
 				<!-- Filters -->
 				<div class="flex flex-wrap items-center gap-3">
 					<div class="relative w-full max-w-sm md:w-64">
-						<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+						<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
 							type="search"
 							placeholder="Cari nama atau NIM..."
@@ -163,7 +193,7 @@
 				</div>
 			</div>
 		</Card.Header>
-		<Card.Content>
+		<Card.Content class="px-0 md:px-6">
 			{#if isMobile.current}
 				<Accordion.Root type="single" class="w-full">
 					{#each filteredStudents as studentMember (studentMember.id)}
@@ -239,9 +269,9 @@
 										variant="outline"
 										size="sm"
 										class="w-full"
-										href="{base}/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
+										href="/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
 									>
-										<ClipboardEdit class="mr-2 h-4 w-4" />
+										<ClipboardEdit />
 										Catat Nilai
 									</Button>
 								</div>
@@ -316,10 +346,10 @@
 								<Table.Cell class="text-right">
 									<Button
 										variant="outline"
-										size="sm"
-										href="{base}/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
+										size="lg"
+										href="/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
 									>
-										<ClipboardEdit class="mr-2 h-4 w-4" />
+										<ClipboardEdit />
 										Catat Nilai
 									</Button>
 								</Table.Cell>

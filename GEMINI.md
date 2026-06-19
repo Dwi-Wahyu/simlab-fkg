@@ -22,7 +22,8 @@ You MUST use this tool whenever writing Svelte code before sending it to the use
 Generates a Svelte Playground link with the provided code.
 After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
 
-### Project Rules
+### 5. Project Rules
 
-- Selalu gunakan paket `@lucide/svelte` untuk ikon, BUKAN `lucide-svelte`.
-- Contoh import yang benar: `import { Package, Home } from '@lucide/svelte';`
+- Always use the `@lucide/svelte` package for icons, NOT `lucide-svelte`.
+- Correct import example: `import { Package, Home } from '@lucide/svelte';`
+- Do not build to verify, just run bun run check

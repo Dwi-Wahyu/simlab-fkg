@@ -648,6 +648,166 @@ export const practicumScheduleModule = mysqlTable(
 	]
 );
 
+// ─── Logbook Template ────────────────────────────────────────────────────────
+// Stores downloadable/fillable template files associated with a practicum module.
+export const practicumLogbookTemplate = mysqlTable(
+	'practicum_logbook_template',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		moduleId: varchar('module_id', { length: 36 })
+			.notNull()
+			.references(() => practicumModule.id, { onDelete: 'cascade' }),
+		name: varchar('name', { length: 255 }).notNull(), // Display label
+		templateFilePath: text('template_file_path').notNull(), // Storage path / URL
+
+		// ── BARU ──────────────────────────────────────────────────────────
+		// Kunci builder untuk bagian kompleks (tabel rowspan, dsb) yang tidak
+		// bisa direpresentasikan sebagai field datar. null = tidak ada bagian
+		// kompleks (template hanya berisi field teks/gambar biasa).
+		// Lihat TABLE_BUILDERS di generateLogbook.ts untuk daftar key valid.
+		tableBuilderKey: varchar('table_builder_key', { length: 50 }),
+
+		// Catatan internal untuk superadmin di halaman admin, tidak dipakai
+		// oleh generator.
+		description: text('description'),
+
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow()
+	},
+	(table) => [index('logbook_template_module_idx').on(table.moduleId)]
+);
+
+// ─── Logbook Template Field (metadata placeholder per template) ──────────────
+// Satu baris = satu placeholder yang dipakai template docx tersebut.
+// Generator membaca baris-baris ini untuk tahu field apa saja yang perlu
+// diisi dan dari mana nilainya berasal, tanpa hardcode per template.
+export const practicumLogbookTemplateFieldSourceEnum = mysqlEnum(
+	'practicum_logbook_template_field_source',
+	['auto', 'manual']
+);
+
+export const practicumLogbookTemplateFieldTypeEnum = mysqlEnum(
+	'practicum_logbook_template_field_type',
+	['text', 'html', 'image']
+);
+
+export const practicumLogbookTemplateField = mysqlTable(
+	'practicum_logbook_template_field',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		templateId: varchar('template_id', { length: 36 })
+			.notNull(),
+
+		// Nama variabel persis seperti di template docx, tanpa kurung kurawal.
+		// Untuk valueType 'html', generator otomatis menambahkan prefix '~'
+		// saat merender (lihat Langkah 3) — JANGAN simpan '~' di sini.
+		placeholderKey: varchar('placeholder_key', { length: 100 }).notNull(),
+
+		// Label tampilan di form pengisian manual (admin/mahasiswa).
+		label: varchar('label', { length: 255 }).notNull(),
+
+		// 'text'  → placeholder {key} biasa
+		// 'html'  → placeholder {~key}, nilai diparsing sebagai HTML
+		// 'image' → sama seperti 'html', tapi generator tahu harus membungkus
+		//           nilai (base64 data URL) dengan <img> sebelum dirender;
+		//           autoSourcePath untuk tipe ini menunjuk ke kolom path/URL
+		//           gambar, bukan data URL siap pakai.
+		valueType: practicumLogbookTemplateFieldTypeEnum.notNull().default('text'),
+
+		// 'auto'   → nilai diresolusi otomatis dari autoSourcePath, mahasiswa
+		//            tidak diminta mengisi apa pun.
+		// 'manual' → mahasiswa harus mengisi lewat form sebelum generate.
+		source: practicumLogbookTemplateFieldSourceEnum.notNull().default('auto'),
+
+		// Dot-path untuk resolusi otomatis terhadap context object yang
+		// dibangun generator, misal: 'student.name', 'student.image',
+		// 'series.name', 'series.laboratorium.name', 'schedule.semester'.
+		// Wajib diisi jika source = 'auto'. Diabaikan jika source = 'manual'.
+		autoSourcePath: varchar('auto_source_path', { length: 255 }),
+
+		// Wajib diisi oleh mahasiswa jika source = 'manual'. Diabaikan untuk
+		// 'auto'.
+		required: boolean('required').default(false).notNull(),
+
+		// Nilai fallback: dipakai jika source='auto' gagal resolve (path
+		// tidak ada/null), atau jika source='manual' dan required=false lalu
+		// dikosongkan.
+		defaultValue: text('default_value'),
+
+		// Urutan tampil di form pengisian manual.
+		sortOrder: int('sort_order').default(0).notNull(),
+
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow()
+	},
+	(table) => [
+		index('logbook_template_field_template_idx').on(table.templateId),
+		uniqueIndex('logbook_template_field_unique_idx').on(
+			table.templateId,
+			table.placeholderKey
+		),
+		foreignKey({
+			name: 'practicum_logbook_template_field_template_id_fk',
+			columns: [table.templateId],
+			foreignColumns: [practicumLogbookTemplate.id]
+		}).onDelete('cascade')
+	]
+);
+
+// ─── Logbook (per user) ───────────────────────────────────────────────────────
+// One logbook per user (peneliti/mahasiswa). Represents their entire logbook record.
+export const practicumLogbook = mysqlTable(
+	'practicum_logbook',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		userId: varchar('user_id', { length: 36 })
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow(),
+		lastGeneratedAt: timestamp('last_generated_at')
+	},
+	(table) => [index('logbook_user_idx').on(table.userId)]
+);
+
+// ─── Logbook Entry ────────────────────────────────────────────────────────────
+// One entry per practicum schedule session. Stores the uploaded filled file.
+export const practicumLogbookEntry = mysqlTable(
+	'practicum_logbook_entry',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		logbookId: varchar('logbook_id', { length: 36 })
+			.notNull()
+			.references(() => practicumLogbook.id, { onDelete: 'cascade' }),
+		seriesId: varchar('series_id', { length: 36 }).references(() => practicumSeries.id, {
+			onDelete: 'set null'
+		}),
+		scheduleId: varchar('schedule_id', { length: 36 }).references(() => practicumSchedule.id, {
+			onDelete: 'set null'
+		}),
+		// The student's uploaded file (filled logbook document)
+		fileUrl: text('file_url').notNull(),
+		fileName: varchar('file_name', { length: 255 }),
+		notes: text('notes'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow()
+	},
+	(table) => [
+		index('logbook_entry_logbook_idx').on(table.logbookId),
+		index('logbook_entry_series_idx').on(table.seriesId),
+		index('logbook_entry_schedule_idx').on(table.scheduleId),
+		uniqueIndex('logbook_entry_unique_idx').on(table.logbookId, table.scheduleId)
+	]
+);
+
 export const warehouseRelations = relations(warehouse, ({ many, one }) => ({
 	equipments: many(equipment)
 }));
@@ -669,6 +829,10 @@ export const equipmentRelations = relations(equipment, ({ many, one }) => ({
 		references: [item.id]
 	}),
 	warehouse: one(warehouse, { fields: [equipment.warehouseId], references: [warehouse.id] }),
+	laboratorium: one(laboratorium, {
+		fields: [equipment.laboratoriumId],
+		references: [laboratorium.id]
+	}),
 	maintenances: many(maintenance),
 	lendingItems: many(lendingItem),
 	movements: many(movement)
@@ -919,6 +1083,57 @@ export const practicumAssessmentRelations = relations(practicumAssessment, ({ on
 	})
 }));
 
+export const practicumLogbookTemplateRelations = relations(
+	practicumLogbookTemplate,
+	({ one, many }) => ({
+		module: one(practicumModule, {
+			fields: [practicumLogbookTemplate.moduleId],
+			references: [practicumModule.id]
+		}),
+		fields: many(practicumLogbookTemplateField) // BARU
+	})
+);
+
+// BARU
+export const practicumLogbookTemplateFieldRelations = relations(
+	practicumLogbookTemplateField,
+	({ one }) => ({
+		template: one(practicumLogbookTemplate, {
+			fields: [practicumLogbookTemplateField.templateId],
+			references: [practicumLogbookTemplate.id]
+		})
+	})
+);
+
+export const practicumLogbookRelations = relations(practicumLogbook, ({ one, many }) => ({
+	user: one(user, {
+		fields: [practicumLogbook.userId],
+		references: [user.id]
+	}),
+	entries: many(practicumLogbookEntry)
+}));
+
+export const practicumLogbookEntryRelations = relations(practicumLogbookEntry, ({ one }) => ({
+	logbook: one(practicumLogbook, {
+		fields: [practicumLogbookEntry.logbookId],
+		references: [practicumLogbook.id]
+	}),
+	schedule: one(practicumSchedule, {
+		fields: [practicumLogbookEntry.scheduleId],
+		references: [practicumSchedule.id]
+	})
+}));
+
+export const practicumModuleRelations = relations(practicumModule, ({ one, many }) => ({
+	block: one(block, {
+		fields: [practicumModule.blockId],
+		references: [block.id]
+	}),
+	templates: many(practicumLogbookTemplate),
+	assessments: many(practicumAssessment),
+	schedules: many(practicumScheduleModule)
+}));
+
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
 	accounts: many(account),
@@ -931,16 +1146,80 @@ export const userRelations = relations(user, ({ many }) => ({
 	}),
 	instructorAssessments: many(practicumAssessment, {
 		relationName: 'instructor_assessments'
-	})
+	}),
+	logbooks: many(practicumLogbook)
 }));
 
 export const laboratoriumRelations = relations(laboratorium, ({ many }) => ({
 	members: many(laboratoriumMember),
 	practicumSchedules: many(practicumSchedule),
 	equipments: many(equipment),
-	stocks: many(stock),
 	movements: many(movement),
 	safetyIncidents: many(safetyIncident)
+}));
+
+export const practicumLogbookGeneration = mysqlTable(
+	'practicum_logbook_generation',
+	{
+		id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+		userId: varchar('user_id', { length: 36 })
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		seriesId: varchar('series_id', { length: 36 })
+			.notNull()
+			.references(() => practicumSeries.id, { onDelete: 'cascade' }),
+		generatedFileName: varchar('generated_file_name', { length: 255 }),
+		pdfUrl: varchar('pdf_url', { length: 255 }),
+		generatedAt: timestamp('generated_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('logbook_gen_user_idx').on(table.userId),
+		index('logbook_gen_series_idx').on(table.seriesId),
+		uniqueIndex('logbook_gen_unique_idx').on(table.userId, table.seriesId)
+	]
+);
+
+export const practicumLogbookGenerationRelations = relations(
+	practicumLogbookGeneration,
+	({ one }) => ({
+		user: one(user, {
+			fields: [practicumLogbookGeneration.userId],
+			references: [user.id]
+		}),
+		series: one(practicumSeries, {
+			fields: [practicumLogbookGeneration.seriesId],
+			references: [practicumSeries.id]
+		})
+	})
+);
+
+export const auditLogRelations = relations(auditLog, ({ one }) => ({
+	user: one(user, {
+		fields: [auditLog.userId],
+		references: [user.id]
+	})
+}));
+
+export const auditChecklistRelations = relations(auditChecklist, ({ one }) => ({
+	laboratorium: one(laboratorium, {
+		fields: [auditChecklist.laboratoriumId],
+		references: [laboratorium.id]
+	}),
+	auditor: one(user, {
+		fields: [auditChecklist.auditorId],
+		references: [user.id]
+	})
+}));
+
+export const inventoryReportRelations = relations(inventoryReport, ({ one }) => ({
+	laboratorium: one(laboratorium, {
+		fields: [inventoryReport.laboratoriumId],
+		references: [laboratorium.id]
+	}),
+	item: one(item, {
+		fields: [inventoryReport.itemId],
+		references: [item.id]
+	})
 }));
 
 export * from './auth.schema';

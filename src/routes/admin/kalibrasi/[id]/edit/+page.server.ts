@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, equipment } from '$lib/server/db/schema';
@@ -10,7 +9,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const currentUser = locals.user;
-	if (!currentUser) throw redirect(302, `${base}/`);
+	if (!currentUser) throw redirect(302, `/`);
 
 	const calId = params.id;
 	const calibration = await db.query.maintenance.findFirst({
@@ -24,7 +23,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		}
 	});
 
-	if (!calibration) throw redirect(302, `${base}/admin/pemeliharaan?tab=kalibrasi`);
+	if (!calibration) throw redirect(302, `/admin/pemeliharaan?tab=kalibrasi`);
 
 	const labId = currentUser.laboratorium?.id;
 	const assets = await db.query.equipment.findMany({
@@ -84,7 +83,8 @@ export const actions: Actions = {
 		}
 
 		try {
-			await db.update(maintenance)
+			await db
+				.update(maintenance)
 				.set({
 					equipmentId,
 					vendor,

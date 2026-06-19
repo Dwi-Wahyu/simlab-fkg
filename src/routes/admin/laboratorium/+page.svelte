@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import * as Table from '$lib/components/ui/table';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
@@ -107,7 +106,7 @@
 						<Table.Cell class="text-right">
 							<div class="flex justify-end gap-2">
 								<a
-									href="{base}/admin/laboratorium/{lab.id}"
+									href="/admin/laboratorium/{lab.id}"
 									class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
 								>
 									<Eye class="size-4" />

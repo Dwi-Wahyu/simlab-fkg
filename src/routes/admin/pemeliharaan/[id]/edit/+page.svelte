@@ -1,15 +1,11 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
-	import {
-		ArrowLeft,
-		Save
-	} from '@lucide/svelte';
+	import { ArrowLeft, Save } from '@lucide/svelte';
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
@@ -79,21 +75,19 @@
 	<title>Edit Pemeliharaan | SIM LAB</title>
 </svelte:head>
 
-<div class="mx-auto max-w-4xl space-y-8 p-8">
+<div class="mx-auto max-w-4xl space-y-6 p-6">
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-4">
 			<Button
 				variant="outline"
 				size="icon"
-				href="{base}/admin/pemeliharaan"
+				href="/admin/pemeliharaan"
 				class="rounded-full shadow-sm"
 			>
 				<ArrowLeft size={18} />
 			</Button>
 			<div>
-				<h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
-					Edit Pemeliharaan
-				</h1>
+				<h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">Edit Pemeliharaan</h1>
 				<p class="text-sm text-slate-500">Perbarui detail jadwal pemeliharaan peralatan</p>
 			</div>
 		</div>
@@ -107,7 +101,7 @@
 				Informasi Pemeliharaan
 			</Card.Title>
 		</Card.Header>
-		<Card.Content class="p-6">
+		<Card.Content>
 			<form
 				method="POST"
 				use:enhance={() => {
@@ -182,7 +176,8 @@
 							</Select.Trigger>
 							<Select.Content>
 								{#each statusOptions as status}
-									<Select.Item value={status.value} label={status.label}>{status.label}</Select.Item>
+									<Select.Item value={status.value} label={status.label}>{status.label}</Select.Item
+									>
 								{/each}
 							</Select.Content>
 						</Select.Root>
@@ -222,9 +217,7 @@
 
 					<!-- Biaya -->
 					<div class="space-y-2">
-						<Label for="cost" class="text-xs font-bold text-slate-500 uppercase"
-							>Biaya (Rp)</Label
-						>
+						<Label for="cost" class="text-xs font-bold text-slate-500 uppercase">Biaya (Rp)</Label>
 						<Input
 							id="cost"
 							name="cost"
@@ -254,7 +247,7 @@
 				</div>
 
 				<div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
-					<Button variant="outline" href="{base}/admin/pemeliharaan" class="h-11 rounded-xl px-6"
+					<Button variant="outline" href="/admin/pemeliharaan" class="h-11 rounded-xl px-6"
 						>Batal</Button
 					>
 					<Button

@@ -23,6 +23,10 @@
 	} = $props();
 
 	const state = getContext<{ searchValue: string } | undefined>('SEARCHABLE_SELECT_STATE');
+
+	function focusOnMount(node: HTMLInputElement) {
+		node.focus();
+	}
 </script>
 
 <SelectPortal {...portalProps}>
@@ -42,7 +46,7 @@
 			<input
 				class="flex h-10 w-full rounded-md border-none bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
 				placeholder={searchPlaceholder}
-				autofocus
+				use:focusOnMount
 				bind:value={state!.searchValue}
 				onkeydown={(e) => {
 					// Prevent the select from closing when pressing space in the search input

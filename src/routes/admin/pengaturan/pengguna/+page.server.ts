@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { laboratoriumMember, user } from '$lib/server/db/auth.schema';
 import { eq, and } from 'drizzle-orm';
@@ -9,7 +8,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const currentUser = locals.user;
 
 	if (!currentUser) {
-		throw redirect(302, `${base}/login`);
+		throw redirect(302, `/login`);
 	}
 
 	// Cek role superadmin
@@ -39,6 +38,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	});
 
 	return {
-		members: filteredMembers
+		members: filteredMembers,
+		orgSlug: currentUser.organization?.slug
 	};
 };

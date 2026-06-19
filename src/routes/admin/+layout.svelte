@@ -1,19 +1,32 @@
 <script lang="ts">
+	/* eslint-disable svelte/no-navigation-without-resolve */
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
+	import PWAInstallButton from '$lib/components/PWAInstallButton.svelte';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 	import { LogOut, PanelLeft, Bell, User, Settings } from '@lucide/svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { IsMobile } from '$lib/hooks/is-mobile-svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { base } from '$app/paths';
+
 	import { setSidebarState } from '$lib/components/ui/sidebar/context.svelte.js';
 
 	let { data, children } = $props();
-	const sidebar = setSidebarState();
-	const isMobile = new IsMobile();
+
+	const userImage = $derived(
+		data.user?.image
+			? data.user.image.startsWith('http://') ||
+			  data.user.image.startsWith('https://') ||
+			  data.user.image.startsWith('/')
+				? data.user.image
+				: `/uploads/profiles/${data.user.image}`
+			: ''
+	);
+
+	// Inisialisasi sidebar state: tertutup di mobile, terbuka di desktop
+	const initialSidebarOpen = typeof window !== 'undefined' ? window.innerWidth >= 768 : true;
+	const sidebar = setSidebarState(initialSidebarOpen);
 
 	let isLogoutDialogOpen = $state(false);
 
@@ -28,7 +41,6 @@
 			.join(' ');
 	};
 
-	const orgName = $derived(data.user.laboratorium?.name ?? '');
 	const initials = $derived(
 		data.user.name
 			? data.user.name
@@ -43,7 +55,9 @@
 	// Get page title from URL or data
 	const pageTitle = $derived.by(() => {
 		const path = page.url.pathname;
-		if (path.includes('/alat')) return 'Inventori';
+		if (path.includes('/inventaris/alat')) return 'Inventaris Alat';
+		if (path.includes('/inventaris/bhp')) return 'Inventaris Bahan Habis Pakai';
+		if (path.includes('/alat') || path.includes('/inventori')) return 'Inventaris';
 		if (path.includes('/dashboard')) return 'Dashboard';
 		if (path.includes('/jadwal')) return 'Jadwal & Reservasi';
 		if (path.includes('/peminjaman')) return 'Peminjaman';
@@ -59,7 +73,7 @@
 	});
 
 	function handleLogout() {
-		goto(`${base}/logout`);
+		goto(`/logout`);
 	}
 </script>
 
@@ -87,6 +101,8 @@
 			<div class="flex items-center gap-2 md:gap-6">
 				<!-- Tampilan Desktop (Sembunyi di Mobile) -->
 				<div class="hidden items-center gap-6 md:flex">
+					<PWAInstallButton />
+
 					<NotificationBell
 						notifications={data.notifications}
 						unreadCount={data.unreadCount}
@@ -95,20 +111,20 @@
 
 					<div class="h-8 w-px bg-slate-200"></div>
 
-					<div class="flex items-center gap-3">
+					<a href="/admin/profil" class="flex items-center gap-3 group hover:opacity-90 transition-opacity">
 						<Avatar
-							src={data.user.image}
+							src={userImage}
 							alt={data.user.name}
 							{initials}
-							class="h-9 w-9 border-2 border-primary/10"
+							class="h-9 w-9 border-2 border-primary/10 transition-transform group-hover:scale-105"
 						/>
 						<div class="flex flex-col">
-							<span class="text-sm font-bold text-slate-700">{data.user.name}</span>
+							<span class="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{data.user.name}</span>
 							<span class="text-[11px] font-medium text-slate-400">
 								{toTitleCase(data.user.role)}
 							</span>
 						</div>
-					</div>
+					</a>
 
 					<button
 						onclick={() => (isLogoutDialogOpen = true)}
@@ -120,22 +136,24 @@
 				</div>
 
 				<!-- Tampilan Mobile (Sembunyi di Desktop) -->
-				<div class="md:hidden">
+				<div class="flex items-center gap-3 md:hidden">
+					<PWAInstallButton />
+					
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
 							class="rounded-full ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 						>
 							<Avatar
-								src={data.user.image}
+								src={userImage}
 								alt={data.user.name}
 								{initials}
 								class="h-9 w-9 border-2 border-primary/10"
 							/>
 						</DropdownMenu.Trigger>
-						<DropdownMenu.Content align="end" class="w-56">
-							<DropdownMenu.Label class="font-normal">
+						<DropdownMenu.Content align="end" class="w-64 p-1.5">
+							<DropdownMenu.Label class="p-3 font-normal">
 								<div class="flex flex-col space-y-1">
-									<p class="text-sm leading-none font-medium">{data.user.name}</p>
+									<p class="text-sm leading-none font-semibold">{data.user.name}</p>
 									<p class="text-xs leading-none text-muted-foreground">
 										{toTitleCase(data.user.role)}
 									</p>
@@ -143,32 +161,41 @@
 							</DropdownMenu.Label>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Group>
-								<DropdownMenu.Item href="{base}/admin/profil">
-									<User class="mr-2 h-4 w-4" />
+								<a
+									href="/admin/profil"
+									class="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-slate-100 focus:bg-slate-100 rounded-sm outline-none transition-colors"
+								>
+									<User class="size-5 text-slate-500" />
 									<span>Profil Saya</span>
-								</DropdownMenu.Item>
-								<DropdownMenu.Item href="{base}/admin/notifikasi">
-									<Bell class="mr-2 h-4 w-4" />
+								</a>
+								<a
+									href="/admin/notifikasi"
+									class="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-slate-100 focus:bg-slate-100 rounded-sm outline-none transition-colors"
+								>
+									<Bell class="size-5 text-slate-500" />
 									<span>Notifikasi</span>
 									{#if data.unreadCount > 0}
 										<span
-											class="ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white"
+											class="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white"
 										>
 											{data.unreadCount}
 										</span>
 									{/if}
-								</DropdownMenu.Item>
-								<DropdownMenu.Item href="{base}/admin/pengaturan">
-									<Settings class="mr-2 h-4 w-4" />
+								</a>
+								<a
+									href="/admin/pengaturan"
+									class="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-slate-100 focus:bg-slate-100 rounded-sm outline-none transition-colors"
+								>
+									<Settings class="size-5 text-slate-500" />
 									<span>Pengaturan</span>
-								</DropdownMenu.Item>
+								</a>
 							</DropdownMenu.Group>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Item
 								onclick={() => (isLogoutDialogOpen = true)}
-								class="text-destructive focus:bg-destructive/10 focus:text-destructive"
+								class="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
 							>
-								<LogOut class="mr-2 h-4 w-4" />
+								<LogOut class="size-5" />
 								<span>Keluar Sistem</span>
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>

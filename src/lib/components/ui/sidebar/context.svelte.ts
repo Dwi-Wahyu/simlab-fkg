@@ -3,6 +3,10 @@ import { setContext, getContext } from 'svelte';
 class SidebarState {
 	open = $state(true);
 
+	constructor(initialOpen = true) {
+		this.open = initialOpen;
+	}
+
 	toggle() {
 		this.open = !this.open;
 	}
@@ -14,8 +18,8 @@ class SidebarState {
 
 const SIDEBAR_KEY = Symbol('sidebar');
 
-export function setSidebarState() {
-	const state = new SidebarState();
+export function setSidebarState(initialOpen = true) {
+	const state = new SidebarState(initialOpen);
 	setContext(SIDEBAR_KEY, state);
 	return state;
 }

@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, equipment, maintenanceCost } from '$lib/server/db/schema';
@@ -7,7 +6,7 @@ import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const currentUser = locals.user;
-	if (!currentUser) throw redirect(302, `${base}/`);
+	if (!currentUser) throw redirect(302, `/`);
 
 	const labId = currentUser.laboratorium?.id;
 
@@ -23,7 +22,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const maintenanceList = await db.query.maintenance.findMany({
 		where: (m, { and, ne, sql }) => {
 			const base = labFilter(m, { sql });
-			return base ? and(ne(m.maintenanceType, 'KALIBRASI'), base) : ne(m.maintenanceType, 'KALIBRASI');
+			return base
+				? and(ne(m.maintenanceType, 'KALIBRASI'), base)
+				: ne(m.maintenanceType, 'KALIBRASI');
 		},
 		with: {
 			equipment: {
@@ -39,7 +40,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const calibrationList = await db.query.maintenance.findMany({
 		where: (m, { and, eq, sql }) => {
 			const base = labFilter(m, { sql });
-			return base ? and(eq(m.maintenanceType, 'KALIBRASI'), base) : eq(m.maintenanceType, 'KALIBRASI');
+			return base
+				? and(eq(m.maintenanceType, 'KALIBRASI'), base)
+				: eq(m.maintenanceType, 'KALIBRASI');
 		},
 		with: {
 			equipment: {
@@ -82,15 +85,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 		(c) => c.status !== 'COMPLETED' && c.scheduledDate < now
 	).length;
 	const upcomingCount = calibrationList.filter(
-		(c) => c.status !== 'COMPLETED' && c.scheduledDate >= now && c.scheduledDate <= thirtyDaysFromNow
+		(c) =>
+			c.status !== 'COMPLETED' && c.scheduledDate >= now && c.scheduledDate <= thirtyDaysFromNow
 	).length;
 	const maintenanceThisMonth = maintenanceList.filter(
-		(m) => m.scheduledDate.getMonth() === now.getMonth() && m.scheduledDate.getFullYear() === now.getFullYear()
+		(m) =>
+			m.scheduledDate.getMonth() === now.getMonth() &&
+			m.scheduledDate.getFullYear() === now.getFullYear()
 	).length;
-	
+
 	// Total cost from maintenance table (for backwards compatibility if any) + maintenanceCost table
 	const totalCostThisMonth = costs
-		.filter((c) => c.createdAt.getMonth() === now.getMonth() && c.createdAt.getFullYear() === now.getFullYear())
+		.filter(
+			(c) =>
+				c.createdAt.getMonth() === now.getMonth() && c.createdAt.getFullYear() === now.getFullYear()
+		)
 		.reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
 	return {

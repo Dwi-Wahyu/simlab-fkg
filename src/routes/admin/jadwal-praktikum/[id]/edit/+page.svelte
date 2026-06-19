@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { base } from '$app/paths';
+	import { ArrowLeft, Check, Search } from '@lucide/svelte';
+	import { untrack } from 'svelte';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Card from '$lib/components/ui/card';
-	import { ArrowLeft, Search, Check } from '@lucide/svelte';
-	import { enhance } from '$app/forms';
-	import * as Select from '$lib/components/ui/select';
 	import * as SearchableSelect from '$lib/components/ui/searchable-select';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { goto } from '$app/navigation';
+	import * as Select from '$lib/components/ui/select';
 
 	let { data } = $props();
 
@@ -20,23 +20,42 @@
 	let notificationTitle = $state('');
 	let notificationDescription = $state('');
 
-	// Initial values from data.schedule
-	const initialDate = new Date(data.schedule.startTime).toISOString().split('T')[0];
-	const initialStartTime = new Date(data.schedule.startTime).toTimeString().slice(0, 5);
-	const initialEndTime = new Date(data.schedule.endTime).toTimeString().slice(0, 5);
-	const initialInstructorIds = data.schedule.instructors.map((i: any) => i.instructorId);
-	const initialModuleIds = data.schedule.modules.map((m: any) => m.moduleId);
+	// Initial values from data.schedule (reactive using $derived)
+	const initialDate = $derived(new Date(data.schedule.startTime).toISOString().split('T')[0]);
+	const initialStartTime = $derived(new Date(data.schedule.startTime).toTimeString().slice(0, 5));
+	const initialEndTime = $derived(new Date(data.schedule.endTime).toTimeString().slice(0, 5));
 
 	// Form State
-	let selectedType = $state(data.schedule.type);
-	let selectedSeriesId = $state(data.schedule.seriesId || '');
-	let semesterValue = $state(data.schedule.semester ? data.schedule.semester.toString() : '');
-	let selectedClassId = $state(data.schedule.classId || '');
-	let selectedLab = $state(data.schedule.laboratoriumId);
-	let selectedBlock = $state(data.schedule.blockId || '');
-	let selectedModules = $state<string[]>(initialModuleIds);
+	let selectedType = $state(untrack(() => data.schedule.type));
+	let selectedSeriesId = $state(untrack(() => data.schedule.seriesId || ''));
+	let semesterValue = $state(
+		untrack(() => (data.schedule.semester ? data.schedule.semester.toString() : ''))
+	);
+	let selectedClassId = $state(untrack(() => data.schedule.classId || ''));
+	let selectedLab = $state(untrack(() => data.schedule.laboratoriumId));
+	let selectedBlock = $state(untrack(() => data.schedule.blockId || ''));
+	let selectedModules = $state<string[]>(
+		untrack(() => data.schedule.modules.map((m: any) => m.moduleId))
+	);
 	let instructorSearch = $state('');
-	let selectedInstructors = $state<string[]>(initialInstructorIds);
+	let selectedInstructors = $state<string[]>(
+		untrack(() => data.schedule.instructors.map((i: any) => i.instructorId))
+	);
+
+	// Sync form state when schedule data changes (e.g. navigation)
+	$effect(() => {
+		const s = data.schedule;
+		untrack(() => {
+			selectedType = s.type;
+			selectedSeriesId = s.seriesId || '';
+			semesterValue = s.semester ? s.semester.toString() : '';
+			selectedClassId = s.classId || '';
+			selectedLab = s.laboratoriumId;
+			selectedBlock = s.blockId || '';
+			selectedModules = s.modules.map((m: any) => m.moduleId);
+			selectedInstructors = s.instructors.map((i: any) => i.instructorId);
+		});
+	});
 
 	const practicumTypes = [
 		{ value: 'PRAKTIKUM', label: 'Praktikum' },
@@ -93,7 +112,7 @@
 	onAction={() => {
 		showNotification = false;
 		if (notificationType === 'success') {
-			goto(`${base}/admin/jadwal-praktikum`);
+			goto(`/admin/jadwal-praktikum`);
 		}
 	}}
 />
@@ -344,7 +363,7 @@
 			</Card.Root>
 
 			<div class="flex justify-end gap-4">
-				<Button variant="outline" href="{base}/admin/jadwal-praktikum">Batal</Button>
+				<Button variant="outline" href="/admin/jadwal-praktikum">Batal</Button>
 				<Button type="submit">Simpan Perubahan</Button>
 			</div>
 		</div>
@@ -355,7 +374,7 @@
 					<Card.Title>Instruktur</Card.Title>
 					<Card.Description>Pilih satu atau lebih instruktur untuk jadwal ini.</Card.Description>
 					<div class="relative mt-2">
-						<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+						<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
 							type="search"
 							placeholder="Cari nama instruktur..."

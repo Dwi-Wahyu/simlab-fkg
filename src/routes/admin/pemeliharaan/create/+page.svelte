@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
@@ -7,7 +6,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { ArrowLeft, Save } from '@lucide/svelte';
+	import { Save, ChevronLeft } from '@lucide/svelte';
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 
@@ -92,9 +91,22 @@
 	<title>Tambah Pemeliharaan | SIM LAB</title>
 </svelte:head>
 
-<div class="mx-auto max-w-4xl space-y-8 p-8">
+<div class="flex max-w-4xl flex-col gap-6 p-6">
+	<Button
+		variant="outline"
+		href="/admin/pemeliharaan"
+		title="Kembali"
+		class="-mb-2 w-fit"
+		size="sm"
+	>
+		<ChevronLeft class="h-4 w-4" /> Kembali
+	</Button>
+
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-4">
+			<Button variant="outline" size="icon" href="/admin/pemeliharaan" class="hidden md:flex">
+				<ChevronLeft size={24} />
+			</Button>
 			<div>
 				<h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
 					Tambah Pemeliharaan Baru
@@ -104,14 +116,7 @@
 		</div>
 	</div>
 
-	<Card.Root class="overflow-hidden border-slate-200 shadow-sm">
-		<Card.Header class="border-b border-slate-100 bg-slate-50/50">
-			<Card.Title
-				class="flex items-center gap-2 text-sm font-bold tracking-wider text-slate-500 uppercase"
-			>
-				Formulir Pemeliharaan
-			</Card.Title>
-		</Card.Header>
+	<Card.Root mobileAware={true}>
 		<Card.Content>
 			<form
 				method="POST"
@@ -129,9 +134,7 @@
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 					<!-- Equipment -->
 					<div class="space-y-2">
-						<Label for="equipmentId" class="text-xs font-bold text-slate-500 uppercase"
-							>Peralatan</Label
-						>
+						<Label for="equipmentId">Peralatan <span class="text-red-500">*</span></Label>
 						<Select.Root
 							type="single"
 							name="equipmentId"
@@ -161,8 +164,8 @@
 
 					<!-- Tipe -->
 					<div class="space-y-2">
-						<Label for="maintenanceType" class="text-xs font-bold text-slate-500 uppercase"
-							>Tipe Pemeliharaan</Label
+						<Label for="maintenanceType"
+							>Tipe Pemeliharaan <span class="text-red-500">*</span></Label
 						>
 						<Select.Root
 							type="single"
@@ -183,9 +186,7 @@
 
 					<!-- Tanggal Jadwal -->
 					<div class="space-y-2">
-						<Label for="scheduledDate" class="text-xs font-bold text-slate-500 uppercase"
-							>Tanggal Jadwal</Label
-						>
+						<Label for="scheduledDate">Tanggal Jadwal <span class="text-red-500">*</span></Label>
 						<Input
 							id="scheduledDate"
 							name="scheduledDate"
@@ -198,7 +199,7 @@
 
 					<!-- Status -->
 					<div class="space-y-2">
-						<Label for="status" class="text-xs font-bold text-slate-500 uppercase">Status</Label>
+						<Label for="status">Status <span class="text-red-500">*</span></Label>
 						<Select.Root type="single" name="status" bind:value={formData.status} required>
 							<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
 								{selectedStatusTrigger}
@@ -214,9 +215,7 @@
 
 					<!-- Tanggal Selesai -->
 					<div class="space-y-2">
-						<Label for="completionDate" class="text-xs font-bold text-slate-500 uppercase"
-							>Tanggal Selesai (Opsional)</Label
-						>
+						<Label for="completionDate">Tanggal Selesai (Opsional)</Label>
 						<Input
 							id="completionDate"
 							name="completionDate"
@@ -228,9 +227,7 @@
 
 					<!-- Teknisi -->
 					<div class="space-y-2">
-						<Label for="technicianId" class="text-xs font-bold text-slate-500 uppercase"
-							>Teknisi (Opsional)</Label
-						>
+						<Label for="technicianId">Teknisi (Opsional)</Label>
 						<Select.Root type="single" name="technicianId" bind:value={formData.technicianId}>
 							<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
 								{selectedTechnicianTrigger}
@@ -246,7 +243,7 @@
 
 					<!-- Biaya -->
 					<div class="space-y-2">
-						<Label for="cost" class="text-xs font-bold text-slate-500 uppercase">Biaya (Rp)</Label>
+						<Label for="cost">Biaya (Rp)</Label>
 						<Input
 							id="cost"
 							name="cost"
@@ -261,9 +258,7 @@
 
 				<!-- Deskripsi -->
 				<div class="space-y-2">
-					<Label for="description" class="text-xs font-bold text-slate-500 uppercase"
-						>Deskripsi Pekerjaan</Label
-					>
+					<Label for="description">Deskripsi Pekerjaan <span class="text-red-500">*</span></Label>
 					<Textarea
 						id="description"
 						name="description"
@@ -276,13 +271,10 @@
 				</div>
 
 				<div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
-					<Button variant="outline" href="{base}/admin/pemeliharaan" class="h-11 rounded-xl px-6"
+					<Button variant="outline" href="/admin/pemeliharaan" class="h-11 rounded-xl px-6"
 						>Batal</Button
 					>
-					<Button
-						type="submit"
-						class="h-11 gap-2 rounded-xl bg-slate-900 px-8 text-white shadow-sm hover:bg-slate-800"
-					>
+					<Button type="submit">
 						<Save size={18} />
 						Simpan Data
 					</Button>

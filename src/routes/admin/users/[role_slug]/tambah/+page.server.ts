@@ -62,24 +62,24 @@ export const actions: Actions = {
 		}
 
 		try {
-			// 1. Create User via Better Auth
-			const signUpResponse = await auth.api.signUpEmail({
+			// 1. Create User via Better Auth Admin API
+			// This prevents automatic login as the newly created user
+			const createUserResponse = await auth.api.admin.createUser({
+				headers,
 				body: {
 					name,
 					email,
 					password,
-					username
+					username,
+					role // Directly set role via Admin API
 				}
 			});
 
-			if (!signUpResponse) throw new Error('Gagal membuat user');
+			if (!createUserResponse) throw new Error('Gagal membuat user');
 
-			const newUserId = signUpResponse.user.id;
+			const newUserId = createUserResponse.user.id;
 
-			// 2. Update role manually because signUpEmail uses default role
-			await db.update(user).set({ role }).where(eq(user.id, newUserId));
-
-			// 3. Add to Laboratorium
+			// 2. Add to Laboratorium
 			if (laboratoriumId) {
 				await db.insert(laboratoriumMember).values({
 					id: crypto.randomUUID(),

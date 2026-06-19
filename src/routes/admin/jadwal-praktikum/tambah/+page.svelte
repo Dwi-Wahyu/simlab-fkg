@@ -1,16 +1,15 @@
 <script lang="ts">
-	import { base } from '$app/paths';
+	import { ArrowLeft, Check, Search } from '@lucide/svelte';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Card from '$lib/components/ui/card';
-	import { ArrowLeft, Search, Check } from '@lucide/svelte';
-	import { enhance } from '$app/forms';
-	import * as Select from '$lib/components/ui/select';
 	import * as SearchableSelect from '$lib/components/ui/searchable-select';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { goto } from '$app/navigation';
+	import * as Select from '$lib/components/ui/select';
 
 	let { data } = $props();
 
@@ -86,7 +85,7 @@
 	onAction={() => {
 		showNotification = false;
 		if (notificationType === 'success') {
-			goto(`${base}/admin/jadwal-praktikum`);
+			goto(`/admin/jadwal-praktikum`);
 		}
 	}}
 />
@@ -328,7 +327,7 @@
 			</Card.Root>
 
 			<div class="flex justify-end gap-4">
-				<Button variant="outline" href="{base}/admin/jadwal-praktikum">Batal</Button>
+				<Button variant="outline" href="/admin/jadwal-praktikum">Batal</Button>
 				<Button type="submit">Simpan Jadwal</Button>
 			</div>
 		</div>
@@ -339,7 +338,7 @@
 					<Card.Title>Instruktur</Card.Title>
 					<Card.Description>Pilih satu atau lebih instruktur untuk jadwal ini.</Card.Description>
 					<div class="relative mt-2">
-						<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+						<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
 							type="search"
 							placeholder="Cari nama instruktur..."

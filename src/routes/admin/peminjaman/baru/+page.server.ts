@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { user, item, equipment, laboratorium, lending, lendingItem } from '$lib/server/db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
@@ -8,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user || !['staff', 'koordinator', 'superadmin'].includes(locals.user.role)) {
-		throw redirect(302, `${base}/admin/peminjaman`);
+		throw redirect(302, `/admin/peminjaman`);
 	}
 
 	// 1. Fetch potential requesters (Peneliti & Instruktur)
@@ -107,7 +106,10 @@ export const actions: Actions = {
 							});
 
 							// Update equipment status
-							await tx.update(equipment).set({ status: 'IN_USE' }).where(eq(equipment.id, equip.id));
+							await tx
+								.update(equipment)
+								.set({ status: 'IN_USE' })
+								.where(eq(equipment.id, equip.id));
 						}
 					}
 				});

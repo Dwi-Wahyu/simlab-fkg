@@ -1,24 +1,23 @@
 <script lang="ts">
-	import { base } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import * as Card from '$lib/components/ui/card';
-	import { badgeVariants } from '$lib/components/ui/badge';
 	import {
 		ArrowLeft,
-		User,
-		ClipboardEdit,
-		Save,
-		CheckCircle2,
-		Info,
 		Calendar,
-		MapPin
+		CheckCircle2,
+		ChevronLeft,
+		ClipboardEdit,
+		Info,
+		MapPin,
+		Save,
+		User
 	} from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { page } from '$app/state';
+	import { badgeVariants } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Textarea } from '$lib/components/ui/textarea';
 
 	let { data } = $props();
 
@@ -63,13 +62,13 @@
 	onAction={() => (showNotification = false)}
 />
 
-<div class="flex h-full flex-col gap-6 p-4 md:p-6">
+<div class="flex h-full flex-col gap-4 p-4 md:p-6">
 	<!-- Header Section -->
-	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+	<!-- <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div class="flex flex-col gap-1">
 			<div class="flex items-center gap-2">
-				<Button variant="ghost" size="icon" href="{base}/admin/penilaian/{data.schedule.id}" class="h-8 w-8">
-					<ArrowLeft class="h-4 w-4" />
+				<Button variant="ghost" size="icon-sm" href="/admin/penilaian/{data.schedule.id}">
+					<ChevronLeft class="h-4 w-4" />
 				</Button>
 				<h1 class="text-2xl font-bold tracking-tight md:text-3xl">Catat Nilai</h1>
 			</div>
@@ -78,71 +77,35 @@
 			</p>
 		</div>
 		<div class="flex items-center gap-2">
-			<Button variant="outline" href="{base}/admin/penilaian/{data.schedule.id}" class="hidden md:flex">
-				<ArrowLeft class="mr-2 h-4 w-4" />
+			<Button
+				variant="outline"
+				href="/admin/penilaian/{data.schedule.id}"
+				class="hidden md:flex"
+			>
+				<ArrowLeft />
 				Kembali ke Daftar
 			</Button>
 		</div>
-	</div>
+	</div> -->
 
-	<!-- Info Cards -->
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-		<!-- Student Info -->
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4 p-4">
-				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-					<User class="h-6 w-6 text-primary" />
-				</div>
-				<div class="flex flex-col">
-					<span class="text-xs font-medium text-muted-foreground uppercase">Mahasiswa</span>
-					<span class="font-bold">{data.student.name}</span>
-					<span class="text-xs text-muted-foreground">{data.student.username}</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-
-		<!-- Schedule Info -->
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4 p-4">
-				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10">
-					<Calendar class="h-6 w-6 text-amber-500" />
-				</div>
-				<div class="flex flex-col">
-					<span class="text-xs font-medium text-muted-foreground uppercase">Kegiatan</span>
-					<span class="font-bold line-clamp-1">{data.schedule.title}</span>
-					<div class="flex gap-2">
-						<span class="text-xs text-muted-foreground">Kelas {data.schedule.class}</span>
-						<span class="text-xs text-muted-foreground">•</span>
-						<span class="text-xs text-muted-foreground">{data.schedule.type}</span>
-					</div>
-				</div>
-			</Card.Content>
-		</Card.Root>
-
-		<!-- Lab Info -->
-		<Card.Root class="md:col-span-2 lg:col-span-1">
-			<Card.Content class="flex items-center gap-4 p-4">
-				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
-					<MapPin class="h-6 w-6 text-blue-500" />
-				</div>
-				<div class="flex flex-col">
-					<span class="text-xs font-medium text-muted-foreground uppercase">Laboratorium</span>
-					<span class="font-bold">{data.schedule.laboratorium.name}</span>
-					<span class="text-xs text-muted-foreground">FKG Universitas Hasanuddin</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-	</div>
+	<Button variant="outline" class="w-fit" href="/admin/penilaian/{data.schedule.id}">
+		<ChevronLeft />
+		Kembali
+	</Button>
 
 	<!-- Assessment Modules -->
-	<div class="flex flex-col gap-6">
-		<h2 class="text-xl font-semibold tracking-tight">Daftar Modul / Kompetensi</h2>
+	<div class="flex flex-col gap-4">
+		<h2 class="text-lg font-semibold">Daftar Modul / Kompetensi</h2>
 
 		<div class="grid grid-cols-1 gap-6">
 			{#each modules as mod (mod.id)}
 				{@const assessment = getAssessment(mod.id)}
-				<Card.Root class={assessment ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-amber-500'}>
-					<Card.Header class="pb-3">
+				{@const isOriginalInstructor =
+					!assessment ||
+					assessment.instructorId === data.user?.id ||
+					data.user?.role === 'superadmin'}
+				<Card.Root>
+					<Card.Header class="border-b">
 						<div class="flex items-start justify-between">
 							<div class="space-y-1">
 								<Card.Title class="text-lg md:text-xl">{mod.name}</Card.Title>
@@ -150,18 +113,24 @@
 									<Card.Description>{mod.description}</Card.Description>
 								{/if}
 							</div>
-							{#if assessment}
-								<div class={badgeVariants({ variant: 'outline' }) + ' border-green-200 bg-green-50 text-green-700'}>
-									<CheckCircle2 class="mr-1 h-3.5 w-3.5" />
-									Sudah Dinilai
-								</div>
-							{:else}
-								<div class={badgeVariants({ variant: 'outline' }) + ' border-amber-200 bg-amber-50 text-amber-700'}>
-									<Info class="mr-1 h-3.5 w-3.5" />
-									Belum Dinilai
-								</div>
-							{/if}
 						</div>
+						{#if assessment}
+							<div
+								class={badgeVariants({ variant: 'outline' }) +
+									' border-green-200 bg-green-50 text-green-700'}
+							>
+								<CheckCircle2 class="mr-1 h-3.5 w-3.5" />
+								Sudah Dinilai
+							</div>
+						{:else}
+							<div
+								class={badgeVariants({ variant: 'outline' }) +
+									' border-amber-200 bg-amber-50 text-amber-700'}
+							>
+								<Info class="mr-1 h-3.5 w-3.5" />
+								Belum Dinilai
+							</div>
+						{/if}
 					</Card.Header>
 					<Card.Content>
 						<form
@@ -190,19 +159,23 @@
 											placeholder="0"
 											class="h-12 text-lg font-bold"
 											required
+											disabled={!isOriginalInstructor}
 										/>
 									</div>
 								</div>
 
 								<!-- Notes Field -->
 								<div class="space-y-2 md:col-span-3">
-									<Label for="notes-{mod.id}" class="text-sm font-semibold">Catatan / Feedback</Label>
+									<Label for="notes-{mod.id}" class="text-sm font-semibold"
+										>Catatan / Feedback</Label
+									>
 									<Textarea
 										id="notes-{mod.id}"
 										name="notes"
 										value={assessment?.notes ?? ''}
 										placeholder="Masukkan catatan penilaian, masukan, atau kendala yang dihadapi mahasiswa..."
 										class="min-h-[80px] md:min-h-[100px]"
+										disabled={!isOriginalInstructor}
 									/>
 								</div>
 							</div>
@@ -213,11 +186,14 @@
 									<div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 										<div class="flex items-center gap-2">
 											<ClipboardEdit class="h-4 w-4 text-muted-foreground" />
-											<span class="text-muted-foreground">Terakhir dinilai oleh:</span>
+											<span class="text-muted-foreground">Dinilai oleh:</span>
 											<span class="font-semibold">{assessment.instructor?.name}</span>
 										</div>
+
 										<div class="text-xs text-muted-foreground">
-											Diperbarui pada: {new Date(assessment.updatedAt || assessment.createdAt).toLocaleString('id-ID')}
+											Diperbarui pada: {new Date(
+												assessment.updatedAt || assessment.createdAt
+											).toLocaleString('id-ID')}
 										</div>
 									</div>
 								</div>
@@ -225,11 +201,18 @@
 
 							<!-- Action -->
 							<div class="flex justify-end">
-								<Button type="submit" size="lg" class="w-full md:w-auto" disabled={isSaving === mod.id}>
+								<Button
+									type="submit"
+									size="lg"
+									class="w-full md:w-auto"
+									disabled={isSaving === mod.id || !isOriginalInstructor}
+								>
 									{#if isSaving === mod.id}
 										Menyimpan...
+									{:else if !isOriginalInstructor}
+										Terkunci
 									{:else}
-										<Save class="mr-2 h-4 w-4" />
+										<Save />
 										{assessment ? 'Update Nilai' : 'Simpan Nilai'}
 									{/if}
 								</Button>
@@ -239,5 +222,51 @@
 				</Card.Root>
 			{/each}
 		</div>
+
+		<!-- Info Cards -->
+		<!-- <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+					<User class="h-6 w-6 text-primary" />
+				</div>
+				<div class="flex flex-col">
+					<span class="text-xs font-medium text-muted-foreground uppercase">Mahasiswa</span>
+					<span class="font-bold">{data.student.name}</span>
+					<span class="text-xs text-muted-foreground">{data.student.username}</span>
+				</div>
+			</Card.Content>
+		</Card.Root>
+
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10">
+					<Calendar class="h-6 w-6 text-amber-500" />
+				</div>
+				<div class="flex flex-col">
+					<span class="text-xs font-medium text-muted-foreground uppercase">Kegiatan</span>
+					<span class="line-clamp-1 font-bold">{data.schedule.title}</span>
+					<div class="flex gap-2">
+						<span class="text-xs text-muted-foreground">Kelas {data.schedule.class}</span>
+						<span class="text-xs text-muted-foreground">•</span>
+						<span class="text-xs text-muted-foreground">{data.schedule.type}</span>
+					</div>
+				</div>
+			</Card.Content>
+		</Card.Root>
+
+		<Card.Root class="md:col-span-2 lg:col-span-1">
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
+					<MapPin class="h-6 w-6 text-blue-500" />
+				</div>
+				<div class="flex flex-col">
+					<span class="text-xs font-medium text-muted-foreground uppercase">Laboratorium</span>
+					<span class="font-bold">{data.schedule.laboratorium.name}</span>
+					<span class="text-xs text-muted-foreground">FKG Universitas Hasanuddin</span>
+				</div>
+			</Card.Content>
+		</Card.Root>
+	</div> -->
 	</div>
 </div>

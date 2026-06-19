@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, equipment } from '$lib/server/db/schema';
@@ -9,7 +8,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const currentUser = locals.user;
-	if (!currentUser) throw redirect(302, `${base}/`);
+	if (!currentUser) throw redirect(302, `/`);
 
 	const labId = currentUser.laboratorium?.id;
 
@@ -58,10 +57,10 @@ export const actions: Actions = {
 				certificateName = certificateFile.name;
 				const fileName = `${uuidv4()}.${ext}`;
 				const uploadDir = join(process.cwd(), 'static', 'uploads', 'certificates');
-				
+
 				// Ensure directory exists
 				await mkdir(uploadDir, { recursive: true });
-				
+
 				certificatePath = `/uploads/certificates/${fileName}`;
 				const arrayBuffer = await certificateFile.arrayBuffer();
 				await writeFile(join(uploadDir, fileName), Buffer.from(arrayBuffer));

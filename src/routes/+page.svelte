@@ -1,146 +1,330 @@
 <script lang="ts">
-	import { enhance, applyAction } from '$app/forms';
-	import { toast } from 'svelte-sonner';
-	import { User, Lock } from '@lucide/svelte';
-	import { base } from '$app/paths';
+	import {
+		Briefcase,
+		ClipboardCheck,
+		Eye,
+		EyeOff,
+		GraduationCap,
+		Loader2,
+		Lock,
+		LogIn,
+		Search,
+		ShieldAlert,
+		Terminal,
+		User,
+		UserCog,
+		Wrench
+	} from '@lucide/svelte';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { toast } from '$lib/components/toast';
+	import { applyAction, enhance } from '$app/forms';
+	import * as Dialog from '$lib/components/ui/dialog';
 
 	let { form } = $props();
+	let showPassword = $state(false);
+	let isLoading = $state(false);
+	let isDevModeOpen = $state(false);
+
+	let username = $state('');
+	let password = $state('');
+	let loginFormElement = $state<HTMLFormElement>();
+
+	const quickAccessUsers = [
+		{ name: 'Superadmin', username: 'superadmin', role: 'superadmin' },
+		{ name: 'Koordinator', username: 'koordinator', role: 'koordinator' },
+		{ name: 'Kepala Lab', username: 'kepalalab', role: 'kepalaLab' },
+		{ name: 'Instruktur', username: 'instruktur', role: 'instruktur' },
+		{ name: 'Peneliti (Mhs)', username: 'peneliti', role: 'peneliti' },
+		{ name: 'Teknisi', username: 'teknisi', role: 'teknisi' },
+		{ name: 'SPMI', username: 'spmi', role: 'spmi' }
+	];
+
+	function quickLogin(user: (typeof quickAccessUsers)[0]) {
+		username = user.username;
+		password = 'password123';
+		isDevModeOpen = false;
+
+		setTimeout(() => {
+			if (loginFormElement) {
+				loginFormElement.requestSubmit();
+			}
+		}, 50);
+	}
 
 	function handleSignIn() {
-		return async ({ result }: { result: any }) => {
+		isLoading = true;
+		return async ({ result }: { result: ActionResult }) => {
 			if (result.type === 'redirect') {
 				toast.success('Login Berhasil', {
-					description: 'Selamat datang kembali di sistem SIM-Lab.'
+					description: 'Selamat datang di sistem SIM-Lab.'
 				});
-			} else if (result.type === 'failure') {
-				toast.error('Login Gagal', {
-					description: result.data?.message || 'Periksa kembali username dan password Anda.'
-				});
+			} else {
+				isLoading = false;
+				if (result.type === 'failure') {
+					toast.destructive('Login Gagal', {
+						description: result.data?.message || 'Periksa kembali username dan password Anda.'
+					});
+				}
 			}
 
 			// Menjalankan aksi bawaan SvelteKit (termasuk redirect)
 			await applyAction(result);
 		};
 	}
+
+	function togglePassword() {
+		showPassword = !showPassword;
+	}
 </script>
 
 <div
-	class="flex min-h-svh w-full flex-col items-center justify-center bg-[#F1F5F9] p-4 font-sans md:flex-row md:p-12"
+	class="relative flex min-h-screen items-center justify-center font-sans text-[#181d18] md:h-screen md:overflow-hidden"
 >
-	<!-- Left Side -->
-	<div class="hidden w-full flex-col items-center justify-center space-y-12 md:flex md:w-1/2">
-		<div class="flex flex-col items-center space-y-4 text-center">
-			<div class="flex items-center justify-center">
-				<img src="{base}/logo-unhas.webp" class="h-20 w-16" alt="logo unhas" />
-			</div>
-			<div class="space-y-1">
-				<h1 class="text-5xl font-extrabold tracking-tight text-[#457B64]">SIM-Lab</h1>
-				<p class="text-xl font-semibold text-gray-600">Sistem Informasi Pengelolaan Laboratorium</p>
-				<p class="text-base font-medium text-gray-400">Laboratorium Keterampilan Klinik FKG</p>
-			</div>
-		</div>
-
-		<!-- <div
-			class="relative w-full max-w-lg overflow-hidden rounded-[3rem] border-[12px] border-white shadow-2xl"
-		>
-			<img src={'/login-image.jpg'} alt="Microscope" class="h-auto w-full object-cover" />
-		</div> -->
+	<!-- Mobile Background Elements -->
+	<div class="absolute inset-0 z-0 overflow-hidden md:hidden">
+		<div class="absolute inset-0 bg-black/40"></div>
+		<!-- GANTI GAMBAR DI DALAM MOBILE BACKGROUND DENGAN INI -->
+		<img
+			src="/removed_bg.png"
+			class="absolute top-1/2 left-1/2 h-auto w-full -translate-x-1/2 -translate-y-1/2 opacity-30 blur-sm"
+			alt=""
+		/>
 	</div>
 
-	<!-- Right Side -->
-	<div class="flex w-full flex-col items-center justify-center md:w-1/2">
-		<div
-			class="relative w-full max-w-md overflow-hidden rounded-[3rem] border border-white/50 bg-white p-8 shadow-2xl backdrop-blur-sm md:p-12"
+	<main
+		class="relative z-10 mx-auto flex min-h-screen w-full max-w-360 flex-col overflow-hidden bg-white shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] md:h-screen md:flex-row md:bg-white"
+	>
+		<!-- Left Side: Login Form -->
+		<section
+			class="order-2 flex w-full flex-col items-center justify-center bg-white p-8 md:order-1 md:w-1/2 md:p-16"
 		>
-			<!-- Decorative Background Element -->
-			<div class="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-[#E8F1ED] opacity-60"></div>
+			<div class="w-full max-w-md">
+				<header class="mb-6 flex flex-col text-center">
+					<div class="mb-8 hidden flex-col items-center gap-4 md:flex md:flex-row">
+						<img src="/logo-unhas.webp" class="h-12 w-auto object-contain" alt="Logo Unhas" />
+						<div class="flex flex-col">
+							<span class="text-xl leading-tight font-bold text-[#181d18]">
+								Fakultas Kedokteran Gigi
+							</span>
+							<span class="text-start text-base text-muted-foreground">Universitas Hasanuddin</span>
+						</div>
+					</div>
+					<h1 class="mb-1 text-start text-3xl font-bold text-[#181d18] md:text-4xl">
+						Selamat Datang
+					</h1>
+					<p class="text-start text-base text-muted-foreground">
+						Masukkan kredensial Anda untuk melanjutkan
+					</p>
+				</header>
 
-			<div class="relative z-10 mb-10 space-y-2">
-				<h2 class="text-3xl font-bold tracking-tight text-gray-800">Selamat Datang Kembali</h2>
-				<p class="text-base font-medium text-gray-400">
-					Masukkan kredensial Anda untuk melanjutkan
-				</p>
-			</div>
-
-			<form
-				method="post"
-				action="?/signIn"
-				use:enhance={handleSignIn}
-				class="relative z-10 space-y-4"
-			>
-				<div class="space-y-2">
-					<label for="username" class="ml-1 text-sm font-bold text-gray-600">Username</label>
-					<div class="group relative">
-						<span
-							class="absolute top-1/2 left-5 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-[#457B64]"
+				<form
+					bind:this={loginFormElement}
+					method="post"
+					action="?/signIn"
+					use:enhance={handleSignIn}
+					class="space-y-6"
+				>
+					<!-- Username Field -->
+					<div class="group space-y-1">
+						<label class="block px-1 text-sm font-medium text-muted-foreground" for="username">
+							Username
+						</label>
+						<div
+							class="relative flex items-center rounded-2xl transition-all duration-200 focus-within:ring-2 focus-within:ring-[#006a34]/10"
 						>
-							<User size={22} />
-						</span>
-						<input
-							id="username"
-							name="username"
-							placeholder="username"
-							class="w-full rounded-2xl border-none bg-[#F0F4F2] py-5 pr-6 pl-14 text-base font-medium text-gray-800 ring-offset-white transition-all focus:bg-white focus:ring-2 focus:ring-[#457B64] focus:outline-none"
-							required
-						/>
+							<span class="absolute left-4 text-[#6f7a6f] group-focus-within:text-[#006a34]">
+								<User size={20} />
+							</span>
+							<input
+								id="username"
+								name="username"
+								bind:value={username}
+								placeholder="Masukkan username"
+								type="text"
+								class="w-full rounded-2xl border-transparent bg-[#f0f5ed] py-3.5 pr-4 pl-12 text-base text-[#181d18] transition-all outline-none placeholder:text-[#becabd] focus:border-[#006a34] focus:ring-0"
+								required
+							/>
+						</div>
 					</div>
-				</div>
 
-				<div class="space-y-2">
-					<label for="password" class="ml-1 text-sm font-bold text-gray-600">Password</label>
-					<div class="group relative">
-						<span
-							class="absolute top-1/2 left-5 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-[#457B64]"
+					<!-- Password Field -->
+					<div class="group space-y-1">
+						<label class="block px-1 text-sm font-medium text-muted-foreground" for="password">
+							Password
+						</label>
+						<div
+							class="relative flex items-center rounded-2xl transition-all duration-200 focus-within:ring-2 focus-within:ring-[#006a34]/10"
 						>
-							<Lock size={22} />
-						</span>
-						<input
-							type="password"
-							id="password"
-							name="password"
-							placeholder="password"
-							class="w-full rounded-2xl border-none bg-[#F0F4F2] py-5 pr-6 pl-14 text-base font-medium text-gray-800 ring-offset-white transition-all focus:bg-white focus:ring-2 focus:ring-[#457B64] focus:outline-none"
-							required
-						/>
+							<span class="absolute left-4 text-[#6f7a6f] group-focus-within:text-[#006a34]">
+								<Lock size={20} />
+							</span>
+							<input
+								id="password"
+								name="password"
+								bind:value={password}
+								placeholder="Masukkan password"
+								type={showPassword ? 'text' : 'password'}
+								class="w-full rounded-2xl border-transparent bg-[#f0f5ed] py-3.5 pr-12 pl-12 text-base text-[#181d18] transition-all outline-none placeholder:text-[#becabd] focus:border-[#006a34] focus:ring-0"
+								required
+							/>
+							<button
+								type="button"
+								onclick={togglePassword}
+								class="absolute right-4 flex items-center text-[#6f7a6f] transition-colors hover:text-muted-foreground"
+							>
+								{#if showPassword}
+									<EyeOff size={20} />
+								{:else}
+									<Eye size={20} />
+								{/if}
+							</button>
+						</div>
 					</div>
-				</div>
 
-				{#if form?.message}
-					<div class="animate-in rounded-xl bg-red-50 p-4 text-center fade-in slide-in-from-top-2">
-						<p class="text-sm font-bold text-red-600">{form.message}</p>
+					<!-- Options Row -->
+					<div class="flex items-center justify-between py-1 text-sm">
+						<label class="flex cursor-pointer items-center gap-2 select-none">
+							<input
+								type="checkbox"
+								class="h-5 w-5 rounded border-[#becabd] bg-[#ebefe7] text-[#006a34] focus:ring-[#006a34] focus:ring-offset-0"
+							/>
+							<span class="text-muted-foreground">Remember me</span>
+						</label>
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+						<a
+							href="/lupa-password"
+							class="font-semibold text-[#006a34] transition-all hover:underline"
+						>
+							Lupa password?
+						</a>
 					</div>
-				{/if}
 
-				<div class="pt-4">
+					{#if form?.message}
+						<div
+							class="animate-in rounded-xl bg-red-50 p-4 text-center fade-in slide-in-from-top-2"
+						>
+							<p class="text-sm font-bold text-red-600">{form.message}</p>
+						</div>
+					{/if}
+
+					<!-- Submit CTA -->
+					<div class="pt-2">
+						<button
+							type="submit"
+							disabled={isLoading}
+							class="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#006a34] py-4 text-lg font-semibold text-white shadow-sm transition-all hover:bg-[#268549] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+						>
+							{#if isLoading}
+								<Loader2 size={20} class="animate-spin" />
+								Memproses...
+							{:else}
+								<LogIn size={20} />
+								Masuk ke Sistem
+							{/if}
+						</button>
+					</div>
+				</form>
+
+				<!-- Developer Mode Toggle -->
+				<div class="mt-8 flex justify-center">
 					<button
-						type="submit"
-						class="w-full rounded-2xl bg-[#457B64] py-5 text-lg font-bold text-white shadow-xl shadow-[#457B64]/30 transition-all hover:bg-[#3D6D58] hover:shadow-[#457B64]/40 active:scale-[0.98]"
+						type="button"
+						onclick={() => (isDevModeOpen = true)}
+						class="flex items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-[#006a34]"
 					>
-						Masuk ke Sistem
+						<Terminal size={14} />
+						Developer Mode
 					</button>
 				</div>
 
-				<div class="text-center">
-					<a
-						href="{base}/lupa-password"
-						class="text-sm font-bold text-[#457B64] transition-colors hover:text-[#3D6D58] hover:underline"
-					>
-						Lupa password?
-					</a>
-				</div>
-			</form>
-		</div>
+				<!-- Developer Mode Dialog -->
+				<Dialog.Root bind:open={isDevModeOpen}>
+					<Dialog.Content class="sm:max-w-lg">
+						<Dialog.Header>
+							<Dialog.Title>Quick Access (Developer Mode)</Dialog.Title>
+							<Dialog.Description>
+								Pilih salah satu akun di bawah untuk login cepat ke dalam sistem.
+							</Dialog.Description>
+						</Dialog.Header>
+						<div class="grid grid-cols-1 gap-2 py-4 sm:grid-cols-2">
+							{#each quickAccessUsers as user (user.username)}
+								<button
+									type="button"
+									onclick={() => quickLogin(user)}
+									class="flex items-center gap-3 rounded-xl border border-[#becabd]/40 bg-[#f0f5ed]/50 p-3 text-sm font-medium text-[#181d18] transition-all duration-200 hover:scale-[1.02] hover:border-[#006a34]/30 hover:bg-[#006a34]/10 active:scale-[0.98]"
+								>
+									<span class="text-[#006a34]">
+										{#if user.role === 'superadmin'}
+											<ShieldAlert size={18} />
+										{:else if user.role === 'koordinator'}
+											<Briefcase size={18} />
+										{:else if user.role === 'kepalaLab'}
+											<UserCog size={18} />
+										{:else if user.role === 'instruktur'}
+											<GraduationCap size={18} />
+										{:else if user.role === 'peneliti'}
+											<Search size={18} />
+										{:else if user.role === 'teknisi'}
+											<Wrench size={18} />
+										{:else if user.role === 'spmi'}
+											<ClipboardCheck size={18} />
+										{/if}
+									</span>
+									<div class="flex flex-col items-start text-left">
+										<span class="font-bold">{user.name}</span>
+										<span class="text-xs font-normal text-muted-foreground">@{user.username}</span>
+									</div>
+								</button>
+							{/each}
+						</div>
+					</Dialog.Content>
+				</Dialog.Root>
 
-		<!-- Footer Badge -->
-		<!-- <div
-			class="mt-10 flex items-center space-x-3 rounded-full border border-gray-100 bg-white/80 px-8 py-3 shadow-sm backdrop-blur-sm"
-		>
-			<div class="rounded-full bg-[#E8F1ED] p-1">
-				<ShieldCheck size={18} class="text-[#457B64]" />
+				<footer class="mt-16 text-center">
+					<p class="text-xs text-[#6f7a6f]">© 2024 Laboratorium Keterampilan Klinik FKG</p>
+				</footer>
 			</div>
-			<span class="text-xs font-bold tracking-wide text-gray-500">
-				Sesuai standar GLP, ISO 15189/17025, dan SPMI
-			</span>
-		</div> -->
-	</div>
+		</section>
+
+		<!-- Right Side: Branding & Illustration -->
+		<section
+			class="relative order-1 flex h-[35vh] w-full flex-col items-center justify-center overflow-hidden bg-linear-to-b from-primary/60 to-primary md:order-2 md:h-full md:w-1/2"
+		>
+			<div class="absolute inset-0 z-0">
+				<div
+					class="absolute inset-0 opacity-45"
+					style="background-image: radial-gradient(rgba(255, 255, 255, 0.45) 1.5px, transparent 1.5px); background-size: 24px 24px;"
+				></div>
+
+				<img
+					src="/removed_bg.png"
+					alt=""
+					class="relative z-10 h-full w-full object-cover opacity-60 md:translate-y-56 md:object-contain md:object-bottom"
+				/>
+				<div class="absolute inset-0 z-20 bg-black/45"></div>
+			</div>
+
+			<!-- Branding Content -->
+			<div class="relative z-10 w-full max-w-lg px-8 text-center text-white md:px-16 md:pb-76">
+				<div class="space-y-6">
+					<div class="mb-4 flex flex-col items-center justify-center gap-2">
+						<h2 class="text-5xl font-bold tracking-tight text-white md:text-7xl">SIM-Lab</h2>
+						<!-- Institutional Text for Mobile -->
+						<div class="flex flex-col md:hidden">
+							<span class="text-sm leading-tight font-bold text-white/90">
+								Fakultas Kedokteran Gigi
+							</span>
+							<span class="text-xs text-white/70">Universitas Hasanuddin</span>
+						</div>
+					</div>
+					<div class="hidden space-y-4 md:block">
+						<div class="mx-auto h-1 w-12 rounded-full bg-white/40"></div>
+						<p class="text-xl font-medium text-muted md:text-2xl">
+							Sistem Informasi Pengelolaan Laboratorium
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
 </div>

@@ -1,15 +1,15 @@
 <script lang="ts">
+	import { BookOpen, Edit, FlaskConical, Plus, Search, Trash2 } from '@lucide/svelte';
+	import { enhance } from '$app/forms';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Card from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
 	import * as SearchableSelect from '$lib/components/ui/searchable-select';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { Plus, Search, Edit, Trash2, BookOpen, FlaskConical } from '@lucide/svelte';
-	import { enhance } from '$app/forms';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import * as Table from '$lib/components/ui/table';
 
 	let { data } = $props();
 
@@ -128,7 +128,7 @@
 	</div>
 
 	<div class="relative w-full max-w-sm">
-		<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+		<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
 		<Input
 			type="search"
 			placeholder="Cari nama seri, blok, atau lab..."
@@ -137,7 +137,7 @@
 		/>
 	</div>
 
-	<div class="rounded-md border">
+	<div class="rounded-md border bg-card shadow-sm">
 		<Table.Root>
 			<Table.Header>
 				<Table.Row>

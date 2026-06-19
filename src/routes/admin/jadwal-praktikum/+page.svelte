@@ -1,18 +1,25 @@
 <script lang="ts">
-	import { base } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import * as Card from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
-	import { Plus, Calendar, Clock, MapPin, Users, Info, Trash2, Edit } from '@lucide/svelte';
-	import { enhance } from '$app/forms';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { badgeVariants } from '$lib/components/ui/badge';
-	import * as Select from '$lib/components/ui/select';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import {
+		Calendar,
+		ChevronDown,
+		ChevronUp,
+		Clock,
+		Edit,
+		Info,
+		MapPin,
+		Plus,
+		Trash2,
+		Users
+	} from '@lucide/svelte';
 	import { invalidateAll } from '$app/navigation';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import { badgeVariants } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Table from '$lib/components/ui/table';
+	import type { PageData } from './$types';
 
 	let { data, form } = $props();
 	let isInfoModalOpen = $state(false);
@@ -29,7 +36,14 @@
 	let isDeleting = $state(false);
 
 	// Current Schedule for Info
-	let currentSchedule = $state<any>(null);
+	type ScheduleItem = PageData['schedules'][0];
+	let currentSchedule = $state<ScheduleItem | null>(null);
+
+	let expandedSchedules = $state<Record<string, boolean>>({});
+
+	function toggleExpand(id: string) {
+		expandedSchedules[id] = !expandedSchedules[id];
+	}
 
 	function formatTime(date: Date) {
 		return new Intl.DateTimeFormat('id-ID', {
@@ -39,7 +53,7 @@
 		}).format(new Date(date));
 	}
 
-	function openInfo(schedule: any) {
+	function openInfo(schedule: ScheduleItem) {
 		currentSchedule = schedule;
 		isInfoModalOpen = true;
 	}
@@ -86,7 +100,7 @@
 				notificationDescription = 'Terjadi kesalahan saat menghapus jadwal.';
 				showNotification = true;
 			}
-		} catch (e) {
+		} catch {
 			notificationType = 'error';
 			notificationTitle = 'Gagal!';
 			notificationDescription = 'Terjadi kesalahan jaringan.';
@@ -125,7 +139,7 @@
 				<div class="grid grid-cols-3 gap-2">
 					<span class="text-sm font-medium text-muted-foreground">Instruktur</span>
 					<div class="col-span-2 flex flex-col gap-1">
-						{#each currentSchedule.instructors as instr}
+						{#each currentSchedule.instructors as instr (instr.user.name)}
 							<span class="text-sm">• {instr.user.name}</span>
 						{/each}
 					</div>
@@ -164,16 +178,20 @@
 	</Dialog.Content>
 </Dialog.Root>
 
-<div class="flex h-full flex-col gap-6 p-6">
-	<div class="flex items-center justify-between">
+<div class="flex h-full flex-col gap-6 p-4 sm:p-6">
+	<!-- Header -->
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">Jadwal Praktikum</h1>
 			<p class="text-muted-foreground">
 				Kelola jadwal praktikum, OSCE, dan pelatihan di laboratorium.
 			</p>
 		</div>
-		<Button href="{base}/admin/jadwal-praktikum/tambah">
-			<Plus class="mr-2 h-4 w-4" />
+		<Button
+			href="/admin/jadwal-praktikum/tambah"
+			class="w-full justify-center gap-2 bg-[#2D5A43] hover:bg-[#234735] sm:w-auto"
+		>
+			<Plus class="size-4" />
 			Tambah Jadwal
 		</Button>
 	</div>
@@ -184,105 +202,151 @@
 		</div>
 	{/if}
 
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Daftar Kegiatan Terjadwal</Card.Title>
-			<Card.Description>
-				Terdapat {data.schedules.length} kegiatan yang sudah terjadwal.
-			</Card.Description>
-		</Card.Header>
-		<Card.Content>
-			<Table.Root>
-				<Table.Header>
-					<Table.Row>
-						<Table.Head>Kegiatan</Table.Head>
-						<Table.Head>Waktu & Lokasi</Table.Head>
-						<Table.Head>Instruktur</Table.Head>
-						<Table.Head>Peserta</Table.Head>
-						<Table.Head class="text-right">Aksi</Table.Head>
-					</Table.Row>
-				</Table.Header>
-				<Table.Body>
-					{#each data.schedules as schedule (schedule.id)}
-						<Table.Row>
-							<Table.Cell>
-								<div class="flex flex-col gap-1">
-									<span class="font-bold">{schedule.title}</span>
-									<div class="flex gap-2">
-										<span class={badgeVariants({ variant: 'secondary' })}>{schedule.type}</span>
-										<span class={badgeVariants({ variant: 'outline' })}>Kelas {schedule.class}</span
-										>
-									</div>
-								</div>
-							</Table.Cell>
-							<Table.Cell>
-								<div class="flex flex-col gap-1 text-sm">
-									<div class="flex items-center gap-1.5">
-										<Calendar class="h-3.5 w-3.5 text-muted-foreground" />
-										{new Date(schedule.startTime).toLocaleDateString('id-ID', {
-											weekday: 'short',
-											day: 'numeric',
-											month: 'short'
-										})}
-									</div>
-									<div class="flex items-center gap-1.5">
-										<Clock class="h-3.5 w-3.5 text-muted-foreground" />
-										{formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
-									</div>
-									<div class="flex items-center gap-1.5">
-										<MapPin class="h-3.5 w-3.5 text-muted-foreground" />
-										{schedule.laboratorium.name}
-									</div>
-								</div>
-							</Table.Cell>
-							<Table.Cell>
+	<div class="rounded-md border bg-card shadow-sm overflow-hidden">
+		<Table.Root class="block md:table">
+			<Table.Header class="hidden md:table-header-group">
+				<Table.Row class="md:table-row">
+					<Table.Head>Kegiatan</Table.Head>
+					<Table.Head>Waktu & Lokasi</Table.Head>
+					<Table.Head>Instruktur</Table.Head>
+					<Table.Head>Peserta</Table.Head>
+					<Table.Head class="text-right">Aksi</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body class="block md:table-row-group">
+				{#each data.schedules as schedule (schedule.id)}
+					<Table.Row class="flex flex-col border-b last:border-0 md:table-row md:border-b">
+						<!-- Column 1: Kegiatan (always visible on mobile, header-like) -->
+						<Table.Cell
+							class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:p-4"
+						>
+							<div class="flex flex-col gap-1">
+								<span class="text-base font-bold md:text-sm">{schedule.title}</span>
 								<div class="flex flex-wrap gap-2">
-									{#each schedule.instructors as instr}
-										<div class="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5">
-											<div
-												class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground"
-											>
-												{instr.user.name.charAt(0)}
-											</div>
-											<span class="text-xs">{instr.user.name}</span>
-										</div>
-									{/each}
+									<span class={badgeVariants({ variant: 'secondary' })}>{schedule.type}</span>
+									<span class={badgeVariants({ variant: 'outline' })}>Kelas {schedule.class}</span>
 								</div>
-							</Table.Cell>
-							<Table.Cell>
+							</div>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="ml-4 h-8 w-8 shrink-0 md:hidden"
+								onclick={() => toggleExpand(schedule.id)}
+								aria-label="Expand row"
+							>
+								{#if expandedSchedules[schedule.id]}
+									<ChevronUp class="h-4 w-4" />
+								{:else}
+									<ChevronDown class="h-4 w-4" />
+								{/if}
+							</Button>
+						</Table.Cell>
+
+						<!-- Column 2: Waktu & Lokasi -->
+						<Table.Cell
+							class="{expandedSchedules[schedule.id]
+								? 'flex'
+								: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+						>
+							<span class="text-xs font-semibold text-slate-400 md:hidden">Waktu & Lokasi</span>
+							<div class="flex flex-col gap-1 text-sm text-slate-900">
 								<div class="flex items-center gap-1.5">
-									<Users class="h-3.5 w-3.5 text-muted-foreground" />
-									{schedule.participantCount} orang
+									<Calendar class="h-3.5 w-3.5 text-muted-foreground" />
+									{new Date(schedule.startTime).toLocaleDateString('id-ID', {
+										weekday: 'short',
+										day: 'numeric',
+										month: 'short'
+									})}
 								</div>
-							</Table.Cell>
-							<Table.Cell class="text-right">
-								<div class="flex justify-end gap-2">
-									<Button variant="ghost" size="icon" onclick={() => openInfo(schedule)}>
-										<Info class="h-4 w-4" />
-									</Button>
-									<Button variant="ghost" size="icon" href="{base}/admin/jadwal-praktikum/{schedule.id}/edit">
-										<Edit class="h-4 w-4" />
-									</Button>
-									<Button
-										variant="ghost"
-										size="icon"
-										class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-										onclick={() => confirmDelete(schedule.id)}
-									>
-										<Trash2 class="h-4 w-4" />
-									</Button>
+								<div class="flex items-center gap-1.5">
+									<Clock class="h-3.5 w-3.5 text-muted-foreground" />
+									{formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
 								</div>
-							</Table.Cell>
-						</Table.Row>
-					{:else}
-						<Table.Row>
-							<Table.Cell colspan={5} class="h-24 text-center">
-								Belum ada jadwal kegiatan.
-							</Table.Cell>
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			</Table.Root>
-		</Card.Content>
-	</Card.Root>
+								<div class="flex items-center gap-1.5">
+									<MapPin class="h-3.5 w-3.5 text-muted-foreground" />
+									{schedule.laboratorium.name}
+								</div>
+							</div>
+						</Table.Cell>
+
+						<!-- Column 3: Instruktur -->
+						<Table.Cell
+							class="{expandedSchedules[schedule.id]
+								? 'flex'
+								: 'hidden'} flex-col gap-1.5 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+						>
+							<span class="mb-0.5 text-xs font-semibold text-slate-400 md:hidden">Instruktur</span>
+							<div class="flex flex-wrap gap-2">
+								{#each schedule.instructors as instr (instr.user.name)}
+									<div class="flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5">
+										<div
+											class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
+										>
+											{instr.user.name.charAt(0)}
+										</div>
+										<span class="text-xs">{instr.user.name}</span>
+									</div>
+								{:else}
+									<span class="text-xs text-muted-foreground italic">Belum ditentukan</span>
+								{/each}
+							</div>
+						</Table.Cell>
+
+						<!-- Column 4: Peserta -->
+						<Table.Cell
+							class="{expandedSchedules[schedule.id]
+								? 'flex'
+								: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+						>
+							<span class="text-xs font-semibold text-slate-400 md:hidden">Peserta</span>
+							<div class="flex items-center gap-1.5 text-sm text-slate-900">
+								<Users class="h-3.5 w-3.5 text-muted-foreground" />
+								{schedule.participantCount} orang
+							</div>
+						</Table.Cell>
+
+						<!-- Column 5: Aksi -->
+						<Table.Cell
+							class="{expandedSchedules[schedule.id]
+								? 'flex'
+								: 'hidden'} justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:p-4 md:pr-6"
+						>
+							<div class="flex w-full justify-end gap-2 md:w-auto">
+								<Button
+									variant="ghost"
+									size="icon"
+									class="h-8 w-8"
+									onclick={() => openInfo(schedule)}
+								>
+									<Info class="h-4 w-4" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									class="h-8 w-8"
+									href="/admin/jadwal-praktikum/{schedule.id}/edit"
+								>
+									<Edit class="h-4 w-4" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									class="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+									onclick={() => confirmDelete(schedule.id)}
+								>
+									<Trash2 class="h-4 w-4" />
+								</Button>
+							</div>
+						</Table.Cell>
+					</Table.Row>
+				{:else}
+					<Table.Row class="flex flex-col md:table-row">
+						<Table.Cell colspan={5} class="h-24 text-center md:table-cell">
+							Belum ada jadwal kegiatan.
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</div>
 </div>

@@ -20,10 +20,19 @@
 
 {#if show}
 	<div
+		role="button"
+		tabindex="0"
 		transition:fade={{ duration: 200 }}
 		onclick={close}
+		onkeydown={(e) => {
+			if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+				close();
+			}
+		}}
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
 	>
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<div
 			transition:fly={{ y: 20, duration: 400, easing: cubicOut }}
 			onclick={(e) => e.stopPropagation()}

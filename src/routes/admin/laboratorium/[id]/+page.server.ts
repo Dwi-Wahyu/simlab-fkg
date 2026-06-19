@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { laboratorium } from '$lib/server/db/schema';
 import { error, redirect } from '@sveltejs/kit';
@@ -8,7 +7,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const userSession = locals.user;
 	if (!userSession || userSession.role !== 'superadmin') {
-		throw redirect(302, `${base}/admin/dashboard`);
+		throw redirect(302, `/admin/dashboard`);
 	}
 
 	const lab = await db.query.laboratorium.findFirst({
@@ -28,9 +27,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	// Fetch some stats (e.g., number of equipments)
 	// This depends on the equipment table having laboratoriumId
-	const equipmentCount = await db.query.equipment.findMany({
-		where: (equipment, { eq }) => eq(equipment.laboratoriumId, params.id)
-	}).then(res => res.length);
+	const equipmentCount = await db.query.equipment
+		.findMany({
+			where: (equipment, { eq }) => eq(equipment.laboratoriumId, params.id)
+		})
+		.then((res) => res.length);
 
 	return {
 		lab,

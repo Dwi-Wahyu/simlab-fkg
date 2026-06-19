@@ -90,11 +90,20 @@ export const actions: Actions = {
 		});
 
 		if (existing) {
+			// Rule: Only the first instructor who graded can update the grade
+			if (existing.instructorId !== instructorId && locals.user.role !== 'superadmin') {
+				return fail(403, { 
+					message: 'Anda tidak memiliki akses untuk mengubah nilai ini. Hanya instruktur yang memberikan nilai pertama kali yang dapat mengubahnya.' 
+				});
+			}
+
 			await db.update(practicumAssessment)
 				.set({
 					score,
 					notes,
-					instructorId,
+					instructorId: existing.instructorId, // Keep original instructor ID or update if superadmin? 
+					// Requirement says "hanya dapat diupdate oleh instruktur penilai pertama", 
+					// so we keep the instructorId as is or explicitly allow only that person.
 					updatedAt: new Date()
 				})
 				.where(eq(practicumAssessment.id, existing.id));

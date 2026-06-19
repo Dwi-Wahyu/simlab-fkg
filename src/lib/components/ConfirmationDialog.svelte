@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Check, Info, Loader2, X } from '@lucide/svelte';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
-	import { Check, X, Info, Loader2 } from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
 
 	let {
@@ -42,9 +42,9 @@
 			icon: X
 		},
 		info: {
-			color: 'text-blue-500',
-			bg: 'bg-blue-500',
-			border: 'border-t-blue-500',
+			color: 'text-gray-500',
+			bg: 'bg-gray-500',
+			border: 'border-t-gray-500',
 			icon: Info
 		}
 	};
@@ -56,9 +56,7 @@
 </script>
 
 <AlertDialog.Root bind:open>
-	<AlertDialog.Content
-		class={cn('overflow-visible border-t-4 p-0 sm:max-w-[400px]', config.border)}
-	>
+	<AlertDialog.Content class={cn('overflow-visible border-t-4 p-0 sm:max-w-100', config.border)}>
 		<div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
 			<div class={cn('rounded-full border-4 border-white p-3 text-white shadow-xl', config.bg)}>
 				{#if config.icon}
@@ -92,7 +90,7 @@
 				</AlertDialog.Cancel>
 
 				<AlertDialog.Action
-					class={cn('min-w-[120px]', config.bg, 'hover:opacity-90')}
+					class={cn('min-w-30', config.bg, 'hover:opacity-90')}
 					onclick={(e) => {
 						e.preventDefault();
 						onAction();

@@ -6,14 +6,13 @@ import * as schema from '../schema';
 import * as authSchema from '../auth.schema';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { Faker, id_ID } from '@faker-js/faker';
-import XLSX from 'xlsx';
-import path from 'path';
 
 const faker = new Faker({ locale: [id_ID] });
 
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { organization, admin, username, customSession } from 'better-auth/plugins';
+import { hashPassword } from 'better-auth/crypto';
 
 // Impor semua role dari auth.roles.ts
 import {
@@ -26,7 +25,7 @@ import {
 	teknisi,
 	spmi
 } from '../../auth.roles';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 const client = mysql.createPool(process.env.DATABASE_URL ?? '');
 const db = drizzle(client, { schema: { ...schema, ...authSchema }, mode: 'default' });
@@ -100,168 +99,90 @@ export const auth = betterAuth({
 	]
 });
 
-async function seedMahasiswa() {
-	console.log('\nSedang melakukan seeding mahasiswa dari Excel...');
-	const filePath = path.resolve('src/lib/server/db/seeds/list-mahasiswa-clean.xlsx');
-	const workbook = XLSX.readFile(filePath);
-
-	for (const sheetName of workbook.SheetNames) {
-		console.log(`Memproses kelas: ${sheetName}`);
-		const worksheet = workbook.Sheets[sheetName];
-		// range: 1 means start from row 2
-		const data = XLSX.utils.sheet_to_json<any>(worksheet, { header: 'A', range: 1 });
-
-		// Ekstrak angka tahun dari nama yang sudah dibersihkan
-		const yearMatch = sheetName.match(/\d+/);
-		let batch = '2024'; // Default fallback
-
-		if (yearMatch) {
-			const yearStr = yearMatch[0];
-			// Jika tahun hanya 2 digit (misal: "24"), ubah jadi "2024"
-			batch = yearStr.length === 2 ? `20${yearStr}` : yearStr;
-		}
-
-		// Bersihkan nama kelas dari angka tahun
-		const cleanClassName = sheetName.replace(/\d+/, '').trim();
-
-		// Membuat format Tahun Akademik: "2024/2025"
-		const academicYear = `${batch}/${parseInt(batch) + 1}`;
-
-		const classId = crypto.randomUUID();
-		await db.insert(schema.practicumClass).values({
-			id: classId,
-			name: cleanClassName,
-			batch: batch,
-			academicYear: academicYear
-		});
-
-		let count = 0;
-		for (const row of data) {
-			const nim = row['B'];
-			const name = row['C'];
-
-			if (!nim || !name || nim === 'NIM') continue;
-
-			const email = `${nim.toLowerCase()}@student.unhas.ac.id`;
-			const username = nim.toLowerCase();
-
-			try {
-				const userResponse = await auth.api.signUpEmail({
-					body: {
-						email: email,
-						username: username,
-						password: 'password123',
-						name: name.toString().toUpperCase()
-					}
-				});
-
-				if (userResponse) {
-					await db
-						.update(authSchema.user)
-						.set({ role: 'peneliti' })
-						.where(eq(authSchema.user.id, userResponse.user.id));
-
-					await db.insert(schema.practicumClassMember).values({
-						id: crypto.randomUUID(),
-						classId: classId,
-						userId: userResponse.user.id
-					});
-					count++;
-				}
-			} catch (e) {
-				// Cek apakah user sudah ada (misal duplicate email/username)
-				console.error(`Gagal membuat user ${nim}:`, e);
-			}
-		}
-		console.log(`- Berhasil menambahkan ${count} mahasiswa ke kelas ${sheetName}`);
-	}
-}
-
 async function main() {
 	console.log('Sedang melakukan seeding...');
 
-	console.log('Menghapus data lama...');
-	await db.delete(schema.practicumClassMember);
-	await db.delete(schema.practicumClass);
-	await db.delete(schema.practicumScheduleModule);
-	await db.delete(schema.practicumScheduleInstructor);
-	await db.delete(schema.practicumSchedule);
-	await db.delete(schema.practicumModule);
-	await db.delete(schema.block);
-	await db.delete(schema.department);
-	await db.delete(schema.notification);
-	await db.delete(schema.auditLog);
-	await db.delete(schema.lendingItem);
-	await db.delete(schema.lending);
-	await db.delete(schema.equipment);
-	await db.delete(schema.stock);
-	await db.delete(schema.movement);
-	await db.delete(schema.itemUnitConversion);
-	await db.delete(schema.item);
-	await db.delete(schema.warehouse);
-	await db.delete(authSchema.laboratoriumMember);
-	await db.delete(authSchema.session);
-	await db.delete(authSchema.apiKey);
-	await db.delete(authSchema.account);
-	await db.delete(authSchema.user);
-	await db.delete(authSchema.laboratorium);
-	console.log('Data lama berhasil dihapus.');
-
 	console.log('Mendaftarkan superadmin...');
-	const signUpResponse = await auth.api.signUpEmail({
-		body: {
-			email: 'superadmin@gmail.com',
-			username: 'superadmin',
-			password: 'password123',
-			name: 'Global Superadmin'
-		}
+	const existingSuperadmin = await db.query.user.findFirst({
+		where: eq(authSchema.user.email, 'superadmin@gmail.com')
 	});
 
-	if (!signUpResponse) throw new Error('Gagal mendaftarkan superadmin');
+	let globalSuperadminId: string;
 
-	const globalSuperadminId = signUpResponse.user.id;
+	if (!existingSuperadmin) {
+		const signUpResponse = await auth.api.signUpEmail({
+			body: {
+				email: 'superadmin@gmail.com',
+				username: 'superadmin',
+				password: process.env.DEFAULT_PASSWORD ?? 'password',
+				name: 'Global Superadmin'
+			}
+		});
 
-	await db
-		.update(authSchema.user)
-		.set({ role: 'superadmin' })
-		.where(eq(authSchema.user.id, globalSuperadminId));
+		if (!signUpResponse) throw new Error('Gagal mendaftarkan superadmin');
+		globalSuperadminId = signUpResponse.user.id;
+
+		await db
+			.update(authSchema.user)
+			.set({ role: 'superadmin' })
+			.where(eq(authSchema.user.id, globalSuperadminId));
+	} else {
+		globalSuperadminId = existingSuperadmin.id;
+		const hashedPwd = await hashPassword(process.env.DEFAULT_PASSWORD ?? 'password');
+		await db.update(authSchema.account)
+			.set({ password: hashedPwd })
+			.where(eq(authSchema.account.userId, globalSuperadminId));
+		console.log('Password superadmin di-reset ke default.');
+	}
 
 	// Buat Laboratorium Utama secara langsung di DB untuk menghindari 401
 	console.log('Membuat laboratorium...');
-	const labIdMolar = crypto.randomUUID();
-	const labIdPreMolar = crypto.randomUUID();
-	await db.insert(authSchema.laboratorium).values({
-		id: labIdMolar,
-		name: 'Laboratorium Molar',
-		slug: 'molar',
-		createdAt: new Date()
-	});
+	const labs = [
+		{ name: 'Laboratorium Molar', slug: 'molar' },
+		{ name: 'Laboratorium Premolar', slug: 'premolar' }
+	];
 
-	await db.insert(authSchema.laboratorium).values({
-		id: labIdPreMolar,
-		name: 'Laboratorium Premolar',
-		slug: 'premolar',
-		createdAt: new Date()
-	});
+	const labIds: Record<string, string> = {};
 
-	// Jadikan superadmin sebagai owner di laboratorium tersebut
-	await db.insert(authSchema.laboratoriumMember).values({
-		id: crypto.randomUUID(),
-		laboratoriumId: labIdMolar,
-		userId: globalSuperadminId,
-		createdAt: new Date(),
-		role: 'superadmin'
-	});
+	for (const labData of labs) {
+		const existingLab = await db.query.laboratorium.findFirst({
+			where: eq(authSchema.laboratorium.slug, labData.slug)
+		});
 
-	await db.insert(authSchema.laboratoriumMember).values({
-		id: crypto.randomUUID(),
-		laboratoriumId: labIdPreMolar,
-		userId: globalSuperadminId,
-		createdAt: new Date(),
-		role: 'superadmin'
-	});
+		if (!existingLab) {
+			const id = crypto.randomUUID();
+			await db.insert(authSchema.laboratorium).values({
+				id,
+				...labData,
+				createdAt: new Date()
+			});
+			labIds[labData.slug] = id;
+		} else {
+			labIds[labData.slug] = existingLab.id;
+		}
 
-	console.log('Laboratorium dan Superadmin berhasil dibuat.');
+		// Jadikan superadmin sebagai owner di laboratorium tersebut jika belum ada
+		const existingMember = await db.query.laboratoriumMember.findFirst({
+			where: and(
+				eq(authSchema.laboratoriumMember.laboratoriumId, labIds[labData.slug]),
+				eq(authSchema.laboratoriumMember.userId, globalSuperadminId)
+			)
+		});
+
+		if (!existingMember) {
+			await db.insert(authSchema.laboratoriumMember).values({
+				id: crypto.randomUUID(),
+				laboratoriumId: labIds[labData.slug],
+				userId: globalSuperadminId,
+				createdAt: new Date(),
+				role: 'superadmin'
+			});
+		}
+	}
+
+	const labIdMolar = labIds['molar'];
+
+	console.log('Laboratorium dan Superadmin berhasil diproses.');
 
 	console.log('Membuat departemen dan blok...');
 	const departmentData = [
@@ -288,87 +209,83 @@ async function main() {
 	];
 
 	for (const dept of departmentData) {
-		const deptId = crypto.randomUUID();
-
-		// Insert Departemen
-		await db.insert(schema.department).values({
-			id: deptId,
-			name: dept.name
+		let existingDept = await db.query.department.findFirst({
+			where: eq(schema.department.name, dept.name)
 		});
+
+		let deptId: string;
+		if (!existingDept) {
+			deptId = crypto.randomUUID();
+			await db.insert(schema.department).values({
+				id: deptId,
+				name: dept.name
+			});
+		} else {
+			deptId = existingDept.id;
+		}
 
 		// Insert Blok yang sesuai dengan departemen tersebut
 		for (const blockName of dept.blocks) {
-			const blockId = crypto.randomUUID();
-			await db.insert(schema.block).values({
-				id: blockId,
-				name: blockName,
-				departmentId: deptId
+			let existingBlock = await db.query.block.findFirst({
+				where: and(eq(schema.block.name, blockName), eq(schema.block.departmentId, deptId))
 			});
+
+			let blockId: string;
+			if (!existingBlock) {
+				blockId = crypto.randomUUID();
+				await db.insert(schema.block).values({
+					id: blockId,
+					name: blockName,
+					departmentId: deptId
+				});
+			} else {
+				blockId = existingBlock.id;
+			}
 
 			// Insert Modul untuk setiap blok (minimal 1)
-			await db.insert(schema.practicumModule).values({
-				id: crypto.randomUUID(),
-				name: `Modul 1 - Dasar ${blockName}`,
-				description: `Pengenalan dasar-dasar pada materi ${blockName}`,
-				blockId: blockId
-			});
+			const modules = [
+				{
+					name: `Modul 1 - Dasar ${blockName}`,
+					description: `Pengenalan dasar-dasar pada materi ${blockName}`
+				},
+				{
+					name: `Modul 2 - Lanjutan ${blockName}`,
+					description: `Pendalaman materi dan teknik ${blockName}`
+				}
+			];
 
-			await db.insert(schema.practicumModule).values({
-				id: crypto.randomUUID(),
-				name: `Modul 2 - Lanjutan ${blockName}`,
-				description: `Pendalaman materi dan teknik ${blockName}`,
-				blockId: blockId
-			});
-		}
-	}
+			for (const mod of modules) {
+				const existingMod = await db.query.practicumModule.findFirst({
+					where: and(eq(schema.practicumModule.name, mod.name), eq(schema.practicumModule.blockId, blockId))
+				});
 
-	// Loop untuk membuat User bagi setiap Role
-	console.log('Membuat user untuk setiap role...');
-	const roles = Object.keys(allAuthRoles);
-
-	for (const roleName of roles) {
-		if (roleName === 'superadmin') continue;
-
-		const email = `${roleName.toLowerCase()}@gmail.com`;
-
-		// Buat User lewat API agar password di-hash
-		const userResponse = await auth.api.signUpEmail({
-			body: {
-				email: email,
-				username: roleName.toLowerCase(),
-				password: 'password123',
-				name: faker.person.fullName()
+				if (!existingMod) {
+					await db.insert(schema.practicumModule).values({
+						id: crypto.randomUUID(),
+						...mod,
+						blockId: blockId
+					});
+				}
 			}
-		});
-
-		await db
-			.update(authSchema.user)
-			.set({ role: roleName })
-			.where(eq(authSchema.user.id, userResponse.user.id));
-
-		if (userResponse && roleName === 'koordinator') {
-			// Tambahkan User ke Laboratorium dengan Role tersebut langsung ke DB
-			await db.insert(authSchema.laboratoriumMember).values({
-				id: crypto.randomUUID(),
-				laboratoriumId: labIdMolar,
-				userId: userResponse.user.id,
-				role: roleName,
-				createdAt: new Date()
-			});
-
-			console.log(`- Berhasil membuat user ${email} dengan role: ${roleName}`);
 		}
 	}
-
-	await seedMahasiswa();
 
 	console.log('Membuat data inventori (Warehouse, Item, Equipment)...');
-	const warehouseId = crypto.randomUUID();
-	await db.insert(schema.warehouse).values({
-		id: warehouseId,
-		name: 'Gudang Utama FKG',
-		location: 'Lantai 1 Gedung A'
+	let existingWarehouse = await db.query.warehouse.findFirst({
+		where: eq(schema.warehouse.name, 'Gudang Utama FKG')
 	});
+
+	let warehouseId: string;
+	if (!existingWarehouse) {
+		warehouseId = crypto.randomUUID();
+		await db.insert(schema.warehouse).values({
+			id: warehouseId,
+			name: 'Gudang Utama FKG',
+			location: 'Lantai 1 Gedung A'
+		});
+	} else {
+		warehouseId = existingWarehouse.id;
+	}
 
 	const items = [
 		{
@@ -404,26 +321,41 @@ async function main() {
 	];
 
 	for (const itemData of items) {
-		const itemId = crypto.randomUUID();
-		await db.insert(schema.item).values({
-			id: itemId,
-			...itemData,
-			createdAt: new Date()
+		let existingItem = await db.query.item.findFirst({
+			where: eq(schema.item.name, itemData.name)
 		});
 
-		// Buat 10 unit equipment untuk setiap item
-		for (let i = 1; i <= 10; i++) {
-			await db.insert(schema.equipment).values({
-				id: crypto.randomUUID(),
-				itemId: itemId,
-				warehouseId: warehouseId,
-				laboratoriumId: labIdMolar,
-				serialNumber: `${itemData.name.substring(0, 3).toUpperCase()}-${faker.string.alphanumeric(8).toUpperCase()}`,
-				brand: faker.company.name(),
-				status: 'READY',
-				condition: 'BAIK',
+		let itemId: string;
+		if (!existingItem) {
+			itemId = crypto.randomUUID();
+			await db.insert(schema.item).values({
+				id: itemId,
+				...itemData,
 				createdAt: new Date()
 			});
+		} else {
+			itemId = existingItem.id;
+		}
+
+		// Buat 10 unit equipment untuk setiap item jika belum ada sama sekali
+		const existingEquipments = await db.query.equipment.findMany({
+			where: eq(schema.equipment.itemId, itemId)
+		});
+
+		if (existingEquipments.length === 0) {
+			for (let i = 1; i <= 10; i++) {
+				await db.insert(schema.equipment).values({
+					id: crypto.randomUUID(),
+					itemId: itemId,
+					warehouseId: warehouseId,
+					laboratoriumId: labIdMolar,
+					serialNumber: `${itemData.name.substring(0, 3).toUpperCase()}-${faker.string.alphanumeric(8).toUpperCase()}`,
+					brand: faker.company.name(),
+					status: 'READY',
+					condition: 'BAIK',
+					createdAt: new Date()
+				});
+			}
 		}
 	}
 

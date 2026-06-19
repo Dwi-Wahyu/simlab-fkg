@@ -26,9 +26,6 @@ vite.config.ts.timestamp-*
 # context-path.md
 .aider*
 
-ecosystem.config.cjs
-svelte.config.js
-
 # Mengabaikan seluruh isi folder docs
 # docs/
 
@@ -36,3 +33,4 @@ svelte.config.js
 # contexts/
 
 src/lib/server/db/seeds/*.xlsx
+static/generated/

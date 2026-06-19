@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { Bell, Check, X } from '@lucide/svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
@@ -83,12 +82,7 @@
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
-			<Button
-				variant="ghost"
-				size="icon"
-				class="relative h-10 w-10 rounded-full"
-				{...props}
-			>
+			<Button variant="ghost" size="icon" class="relative h-10 w-10 rounded-full" {...props}>
 				<Bell class="h-5 w-5" />
 				{#if unreadCount > 0}
 					<span
@@ -100,7 +94,7 @@
 			</Button>
 		{/snippet}
 	</DropdownMenu.Trigger>
-	<DropdownMenu.Content align="end" class="w-80 p-0 overflow-hidden">
+	<DropdownMenu.Content align="end" class="w-80 overflow-hidden p-0">
 		<div class="flex items-center justify-between border-b p-4">
 			<h3 class="text-sm font-semibold">Notifikasi</h3>
 			{#if notifications.length > 0}
@@ -196,7 +190,7 @@
 					variant="ghost"
 					class="h-8 w-full text-xs font-medium"
 					size="sm"
-					href="{base}/{organizationId}/notifikasi"
+					href="/{organizationId}/notifikasi"
 				>
 					Tampilkan Semua
 				</Button>

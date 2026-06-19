@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -9,7 +8,7 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import {
-		ArrowLeft,
+		ChevronLeft,
 		Upload,
 		Plus,
 		Trash2,
@@ -136,7 +135,7 @@
 
 	function handleDialogAction() {
 		showSuccessDialog = false;
-		goto(`${base}/admin/pemeliharaan?tab=biaya`);
+		goto(`/admin/pemeliharaan?tab=biaya`);
 	}
 
 	function formatCurrency(amount: number) {
@@ -154,15 +153,28 @@
 	});
 </script>
 
-<div class="mx-auto max-w-4xl space-y-8 p-6">
-	<!-- Header -->
-	<div class="flex items-center gap-4">
-		<Button href="{base}/admin/pemeliharaan?tab=biaya" variant="ghost" size="icon">
-			<ArrowLeft size={20} />
-		</Button>
-		<div>
-			<h1 class="text-2xl font-bold text-slate-900">Catat Analisis Biaya Baru</h1>
-			<p class="text-sm text-slate-500">Input rincian pengeluaran untuk operasional laboratorium.</p>
+<div class="mx-auto max-w-4xl flex flex-col gap-6 p-6">
+	<Button
+		variant="outline"
+		href="/admin/pemeliharaan?tab=biaya"
+		title="Kembali"
+		class="-mb-2 w-fit"
+		size="sm"
+	>
+		<ChevronLeft class="h-4 w-4" /> Kembali
+	</Button>
+
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-4">
+			<Button variant="outline" size="icon" href="/admin/pemeliharaan?tab=biaya" class="hidden md:flex">
+				<ChevronLeft size={24} />
+			</Button>
+			<div>
+				<h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
+					Catat Analisis Biaya Baru
+				</h1>
+				<p class="text-sm text-slate-500">Input rincian pengeluaran untuk operasional laboratorium.</p>
+			</div>
 		</div>
 	</div>
 
@@ -238,7 +250,9 @@
 
 					<div class="space-y-3">
 						{#each items as item, i}
-							<div class="flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+							<div
+								class="flex animate-in items-start gap-3 duration-200 fade-in slide-in-from-top-2"
+							>
 								<div class="flex-1">
 									<Input placeholder="Deskripsi item (misal: Suku Cadang)" bind:value={item.name} />
 								</div>
@@ -247,10 +261,13 @@
 									<button
 										type="button"
 										onclick={() => openNoteDialog(i)}
-										class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#2D5A43] transition-colors"
+										class="absolute top-1/2 right-2 -translate-y-1/2 text-slate-400 transition-colors hover:text-[#2D5A43]"
 										title="Tambahkan Catatan"
 									>
-										<MessageSquare size={16} class={item.notes ? 'fill-[#2D5A43] text-[#2D5A43]' : ''} />
+										<MessageSquare
+											size={16}
+											class={item.notes ? 'fill-[#2D5A43] text-[#2D5A43]' : ''}
+										/>
 									</button>
 								</div>
 								<Button
@@ -268,15 +285,19 @@
 
 					<!-- Total -->
 					<div class="flex justify-end pt-4">
-						<div class="bg-slate-50 border rounded-lg px-6 py-3 flex items-center justify-between w-full max-w-md">
-							<span class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Keseluruhan</span>
+						<div
+							class="flex w-full max-w-md items-center justify-between rounded-lg border bg-slate-50 px-6 py-3"
+						>
+							<span class="text-sm font-medium tracking-wider text-slate-500 uppercase"
+								>Total Keseluruhan</span
+							>
 							<span class="text-xl font-bold text-slate-900">{formatCurrency(totalAmount)}</span>
 						</div>
 					</div>
 					<input type="hidden" name="items" value={JSON.stringify(items)} />
 				</div>
 
-				<div class="grid gap-6 md:grid-cols-2 pt-4 border-t">
+				<div class="grid gap-6 border-t pt-4 md:grid-cols-2">
 					<div class="space-y-2">
 						<Label for="status">Status Pembayaran <span class="text-red-500">*</span></Label>
 						<Select.Root type="single" bind:value={selectedStatus}>
@@ -311,15 +332,17 @@
 										<img
 											src={filePreviewUrl}
 											alt="Preview"
-											class="h-12 w-12 object-cover rounded border"
+											class="h-12 w-12 rounded border object-cover"
 										/>
 									{:else}
-										<div class="bg-slate-100 p-2 rounded">
+										<div class="rounded bg-slate-100 p-2">
 											<FileText size={24} class="text-slate-400" />
 										</div>
 									{/if}
 									<div class="text-left">
-										<p class="max-w-[200px] truncate text-sm font-semibold text-slate-700">{fileName}</p>
+										<p class="max-w-[200px] truncate text-sm font-semibold text-slate-700">
+											{fileName}
+										</p>
 										<p class="text-xs text-slate-500">{fileSize}</p>
 									</div>
 								</div>
@@ -362,12 +385,12 @@
 				</div>
 
 				<!-- Submit Buttons -->
-				<div class="flex items-center justify-end gap-3 pt-4 border-t">
-					<Button variant="outline" href="{base}/admin/pemeliharaan?tab=biaya">Batal</Button>
+				<div class="flex items-center justify-end gap-3 border-t pt-4">
+					<Button variant="outline" href="/admin/pemeliharaan?tab=biaya">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading}
-						class="bg-[#2D5A43] text-white hover:bg-[#234735] min-w-[160px]"
+						class="min-w-[160px] bg-[#2D5A43] text-white hover:bg-[#234735]"
 					>
 						{isLoading ? 'Menyimpan...' : 'Simpan Analisis'}
 					</Button>

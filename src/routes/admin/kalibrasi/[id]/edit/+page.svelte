@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -7,7 +6,17 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { ArrowLeft, Upload, Calendar, Building2, Wallet, FileCheck, Clock, FileText, Check } from '@lucide/svelte';
+	import {
+		ArrowLeft,
+		Upload,
+		Calendar,
+		Building2,
+		Wallet,
+		FileCheck,
+		Clock,
+		FileText,
+		Check
+	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { goto } from '$app/navigation';
@@ -69,7 +78,7 @@
 
 	function handleDialogAction() {
 		showSuccessDialog = false;
-		goto(`${base}/admin/pemeliharaan?tab=kalibrasi`);
+		goto(`/admin/pemeliharaan?tab=kalibrasi`);
 	}
 
 	function formatDateForInput(date: Date | string | null) {
@@ -82,7 +91,7 @@
 <div class="mx-auto max-w-3xl space-y-8 p-6">
 	<!-- Header -->
 	<div class="flex items-center gap-4">
-		<Button href="{base}/admin/pemeliharaan?tab=kalibrasi" variant="ghost" size="icon">
+		<Button href="/admin/pemeliharaan?tab=kalibrasi" variant="ghost" size="icon">
 			<ArrowLeft size={20} />
 		</Button>
 		<div>
@@ -155,12 +164,12 @@
 							<Calendar size={16} class="text-slate-400" />
 							Tanggal Kalibrasi <span class="text-red-500">*</span>
 						</Label>
-						<Input 
-							type="date" 
-							name="completionDate" 
-							id="completionDate" 
+						<Input
+							type="date"
+							name="completionDate"
+							id="completionDate"
 							value={formatDateForInput(data.calibration.completionDate)}
-							required 
+							required
 						/>
 					</div>
 
@@ -169,12 +178,12 @@
 							<Clock size={16} class="text-slate-400" />
 							Masa Berlaku <span class="text-red-500">*</span>
 						</Label>
-						<Input 
-							type="date" 
-							name="expiryDate" 
-							id="expiryDate" 
+						<Input
+							type="date"
+							name="expiryDate"
+							id="expiryDate"
 							value={formatDateForInput(data.calibration.expiryDate)}
-							required 
+							required
 						/>
 					</div>
 
@@ -183,13 +192,13 @@
 							<Wallet size={16} class="text-slate-400" />
 							Biaya (Rp)
 						</Label>
-						<Input 
-							type="number" 
-							name="cost" 
-							id="cost" 
+						<Input
+							type="number"
+							name="cost"
+							id="cost"
 							value={data.calibration.cost}
-							placeholder="0" 
-							min="0" 
+							placeholder="0"
+							min="0"
 						/>
 					</div>
 				</div>
@@ -204,7 +213,7 @@
 						class="group relative flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 transition-all hover:border-[#2D5A43] hover:bg-white"
 					>
 						{#if fileName}
-							<div class="flex w-full flex-col items-center gap-4 animate-in fade-in zoom-in-95">
+							<div class="flex w-full animate-in flex-col items-center gap-4 zoom-in-95 fade-in">
 								{#if filePreviewUrl && (filePreviewUrl.startsWith('data:image/') || filePreviewUrl.startsWith('/uploads/'))}
 									<div class="relative">
 										<img
@@ -257,8 +266,16 @@
 							</div>
 						{/if}
 					</div>
-					<input type="hidden" name="existingCertificatePath" value={data.calibration.certificatePath} />
-					<input type="hidden" name="existingCertificateName" value={data.calibration.certificateName} />
+					<input
+						type="hidden"
+						name="existingCertificatePath"
+						value={data.calibration.certificatePath}
+					/>
+					<input
+						type="hidden"
+						name="existingCertificateName"
+						value={data.calibration.certificateName}
+					/>
 				</div>
 
 				<!-- Description -->
@@ -275,7 +292,7 @@
 
 				<!-- Submit Buttons -->
 				<div class="flex items-center justify-end gap-3 pt-4">
-					<Button variant="outline" href="{base}/admin/pemeliharaan?tab=kalibrasi">Batal</Button>
+					<Button variant="outline" href="/admin/pemeliharaan?tab=kalibrasi">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading || !selectedAssetId}

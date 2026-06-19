@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, maintenanceCost, maintenanceCostItem } from '$lib/server/db/schema';
@@ -10,7 +9,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const currentUser = locals.user;
-	if (!currentUser) throw redirect(302, `${base}/`);
+	if (!currentUser) throw redirect(302, `/`);
 
 	const costId = params.id;
 	const cost = await db.query.maintenanceCost.findFirst({
@@ -98,7 +97,8 @@ export const actions: Actions = {
 		try {
 			await db.transaction(async (tx) => {
 				// 1. Update Header
-				await tx.update(maintenanceCost)
+				await tx
+					.update(maintenanceCost)
 					.set({
 						maintenanceId: maintenanceId === 'none' ? null : maintenanceId,
 						name,
@@ -114,7 +114,7 @@ export const actions: Actions = {
 
 				// 2. Refresh Items (Delete then Insert)
 				await tx.delete(maintenanceCostItem).where(eq(maintenanceCostItem.costId, costId));
-				
+
 				for (const item of itemsData) {
 					await tx.insert(maintenanceCostItem).values({
 						id: uuidv4(),

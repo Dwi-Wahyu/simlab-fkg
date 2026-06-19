@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 // import { db } from '$lib/server/db';
 // import { item } from '$lib/server/db/schema';
 // import { error, fail } from '@sveltejs/kit';

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -10,7 +9,7 @@
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { goto } from '$app/navigation';
 
-	let { data, form }: { data: PageData, form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let loading = $state(false);
 	let isSuccessOpen = $state(false);
@@ -33,8 +32,8 @@
 />
 
 <div class="flex flex-col gap-6 p-6">
-	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="{base}/admin/users/{data.roleSlug}">
+	<div class="mx-auto flex w-full max-w-2xl items-center gap-4">
+		<Button variant="outline" size="icon" href="/admin/users/{data.roleSlug}">
 			<ChevronLeft class="h-4 w-4" />
 		</Button>
 		<div class="flex flex-col gap-1">
@@ -83,7 +82,7 @@
 						<select
 							id="laboratoriumId"
 							name="laboratoriumId"
-							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<option value="">Pilih Laboratorium</option>
 							{#each data.laboratoriums as lab}
@@ -99,7 +98,7 @@
 					{/if}
 
 					<div class="flex justify-end gap-3 pt-4">
-						<Button variant="outline" href="{base}/admin/users/{data.roleSlug}">Batal</Button>
+						<Button variant="outline" href="/admin/users/{data.roleSlug}">Batal</Button>
 						<Button type="submit" disabled={loading} class="min-w-[120px]">
 							{#if loading}
 								<Loader2 class="mr-2 h-4 w-4 animate-spin" />

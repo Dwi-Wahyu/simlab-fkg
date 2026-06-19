@@ -4,36 +4,19 @@ import { eq, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const students = await db.query.user.findMany({
-		where: eq(user.role, 'peneliti'),
-		with: {
-			practicumClasses: {
-				with: {
-					class: true
-				}
-			}
-		}
-	});
-
-	// Fetch filter options
-	const allClasses = await db.select().from(practicumClass);
-	const uniqueBatches = [...new Set(allClasses.map((c) => c.batch))].sort().reverse();
-	const uniqueClassNames = [...new Set(allClasses.map((c) => c.name))].sort();
+	// Fetch filter options - optimize by only selecting needed columns
+	const allClasses = await db.select({
+		batch: practicumClass.batch,
+		name: practicumClass.name
+	}).from(practicumClass);
+	
+	const uniqueBatches = [...new Set(allClasses.map((c) => c.batch))].filter(Boolean).sort().reverse();
+	const uniqueClassNames = [...new Set(allClasses.map((c) => c.name))].filter(Boolean).sort();
 
 	return {
-		students: students.map((s) => ({
-			id: s.id,
-			name: s.name,
-			username: s.username,
-			email: s.email,
-			practicumClasses: s.practicumClasses.map((pc) => ({
-				batch: pc.class?.batch || '',
-				name: pc.class?.name || ''
-			}))
-		})),
 		filterOptions: {
-			batches: uniqueBatches,
-			classNames: uniqueClassNames
+			batches: uniqueBatches as string[],
+			classNames: uniqueClassNames as string[]
 		}
 	};
 };

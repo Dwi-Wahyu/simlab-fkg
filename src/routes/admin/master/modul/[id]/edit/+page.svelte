@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -29,23 +28,23 @@
 
 	function handleSuccessAction() {
 		showSuccessDialog = false;
-		goto(`${base}/admin/master/modul`);
+		goto(`/admin/master/modul`);
 	}
 </script>
 
 <div class="flex flex-col gap-6 p-6">
-	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="{base}/admin/master/modul">
-			<ChevronLeft class="size-4" />
-		</Button>
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Edit Modul Praktikum</h1>
-			<p class="text-muted-foreground">Perbarui informasi modul praktikum.</p>
+	<div class="mx-auto w-full max-w-2xl space-y-6">
+		<div class="flex items-center gap-4">
+			<Button variant="outline" size="icon" href="/admin/master/modul" class="shrink-0">
+				<ChevronLeft class="size-4" />
+			</Button>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold tracking-tight">Edit Modul Praktikum</h1>
+				<p class="text-muted-foreground">Perbarui informasi modul praktikum.</p>
+			</div>
 		</div>
-	</div>
 
-	<div class="mx-auto w-full max-w-2xl">
-		<Card.Root>
+		<Card.Root mobileAware={true}>
 			<form
 				method="POST"
 				use:enhance={() => {
@@ -58,10 +57,6 @@
 					};
 				}}
 			>
-				<Card.Header>
-					<Card.Title>Informasi Modul</Card.Title>
-					<Card.Description>Lengkapi detail modul praktikum di bawah ini.</Card.Description>
-				</Card.Header>
 				<Card.Content class="space-y-4">
 					<div class="grid gap-2">
 						<Label for="name">Nama Modul</Label>
@@ -106,7 +101,7 @@
 					</div>
 				</Card.Content>
 				<Card.Footer class="flex justify-end gap-2 border-t px-6 py-4">
-					<Button variant="outline" href="{base}/admin/master/modul" disabled={isLoading}>Batal</Button>
+					<Button variant="outline" href="/admin/master/modul" disabled={isLoading}>Batal</Button>
 					<Button type="submit" disabled={isLoading}>
 						{#if isLoading}
 							<Loader2 class="mr-2 size-4 animate-spin" />

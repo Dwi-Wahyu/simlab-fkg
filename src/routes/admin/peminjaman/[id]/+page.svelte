@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
@@ -109,7 +108,7 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex items-center gap-4">
-			<Button href="{base}/admin/peminjaman" variant="outline" size="icon" class="rounded-full">
+			<Button href="/admin/peminjaman" variant="outline" size="icon" class="rounded-full">
 				<ArrowLeft class="size-5" />
 			</Button>
 			<div>
@@ -127,66 +126,88 @@
 	<div class="grid gap-6 lg:grid-cols-3">
 		<!-- Info Utama -->
 		<div class="space-y-6 lg:col-span-2">
-			<Card.Root>
-				<Card.Header>
-					<Card.Title class="text-lg">Informasi Peminjaman</Card.Title>
-				</Card.Header>
+			<Card.Root mobileAware={true}>
 				<Card.Content>
-					<div class="grid gap-y-6 gap-x-12 sm:grid-cols-2">
+					<div class="grid gap-x-12 gap-y-6 sm:grid-cols-2">
 						<div class="space-y-1">
 							<Label class="text-xs font-bold text-slate-500 uppercase">ID Peminjaman</Label>
-							<p class="text-sm font-mono font-medium text-slate-600">{data.lending.id}</p>
+							<p class="font-mono text-sm font-medium text-slate-600">{data.lending.id}</p>
 						</div>
+
+						<Separator class="md:hidden" />
 
 						<div class="space-y-1">
 							<Label class="text-xs font-bold text-slate-500 uppercase">Laboratorium</Label>
 							<p class="text-sm font-medium text-slate-900">{data.lending.laboratorium?.name}</p>
 						</div>
 
+						<Separator class="md:hidden" />
+
 						<div class="space-y-1">
 							<Label class="text-xs font-bold text-slate-500 uppercase">Peminjam</Label>
 							<div>
-								<p class="text-sm font-medium text-slate-900">{data.lending.requestedByUser?.name}</p>
-								<p class="text-[10px] text-slate-500 uppercase tracking-tight">
+								<p class="text-sm font-medium text-slate-900">
+									{data.lending.requestedByUser?.name}
+								</p>
+								<p class="text-[10px] tracking-tight text-slate-500 uppercase">
 									{data.lending.requestedByUser?.role} — {data.lending.requestedByUser?.username}
 								</p>
 							</div>
 						</div>
 
+						<Separator class="md:hidden" />
+
 						<div class="space-y-1">
 							<Label class="text-xs font-bold text-slate-500 uppercase">Status Saat Ini</Label>
 							<div>
-								<Badge variant="outline" class={cn('px-2 py-0.5 text-[10px] font-bold uppercase', badge.class)}>
+								<Badge
+									variant="outline"
+									class={cn('px-2 py-0.5 text-[10px] font-bold uppercase', badge.class)}
+								>
 									{badge.label}
 								</Badge>
 							</div>
 						</div>
 
+						<Separator class="md:hidden" />
+
 						<div class="space-y-1">
 							<Label class="text-xs font-bold text-slate-500 uppercase">Waktu Pinjam</Label>
-							<p class="text-sm font-medium text-slate-900">{formatDateTime(data.lending.startDate)}</p>
+							<p class="text-sm font-medium text-slate-900">
+								{formatDateTime(data.lending.startDate)}
+							</p>
 						</div>
+
+						<Separator class="md:hidden" />
 
 						<div class="space-y-1">
 							<Label class="text-xs font-bold text-slate-500 uppercase">Batas Kembali</Label>
-							<p class="text-sm font-medium text-slate-900">{formatDateTime(data.lending.endDate)}</p>
+							<p class="text-sm font-medium text-slate-900">
+								{formatDateTime(data.lending.endDate)}
+							</p>
 						</div>
 
 						{#if data.latenessMinutes > 0 && data.lending.status === 'DIPINJAM'}
-							<div class="sm:col-span-2 rounded-lg border border-red-100 bg-red-50/50 p-3 text-red-700">
-								<p class="text-xs font-bold uppercase tracking-wider">Peringatan Keterlambatan</p>
+							<Separator class="md:hidden" />
+							<div
+								class="rounded-lg border border-red-100 bg-red-50/50 p-3 text-red-700 sm:col-span-2"
+							>
+								<p class="text-xs font-bold tracking-wider uppercase">Peringatan Keterlambatan</p>
 								<p class="mt-1 text-sm">
 									Melewati batas waktu selama
-									<strong>{Math.floor(data.latenessMinutes / 60)} jam {data.latenessMinutes % 60} menit</strong
+									<strong
+										>{Math.floor(data.latenessMinutes / 60)} jam {data.latenessMinutes % 60} menit</strong
 									>.
 								</p>
 							</div>
 						{/if}
 
-						<div class="space-y-1 sm:col-span-2 pt-4 border-t border-slate-50">
+						<Separator class="md:hidden" />
+
+						<div class="space-y-1 pt-4 sm:col-span-2 sm:border-t sm:border-slate-50">
 							<Label class="text-xs font-bold text-slate-500 uppercase">Keperluan</Label>
-							<div class="flex items-center gap-2 mt-1">
-								<Badge variant="secondary" class="uppercase text-[10px]">
+							<div class="mt-1 flex items-center gap-2">
+								<Badge variant="secondary" class="text-[10px] uppercase">
 									{data.lending.purpose.replace('_', ' ')}
 								</Badge>
 								<span class="text-sm text-slate-600">— {data.lending.unit}</span>
@@ -197,7 +218,7 @@
 			</Card.Root>
 
 			<!-- Daftar Alat -->
-			<Card.Root>
+			<Card.Root mobileAware={true}>
 				<Card.Header class="flex flex-row items-center justify-between">
 					<Card.Title class="text-lg">Daftar Alat yang Dipinjam</Card.Title>
 					<Badge variant="secondary" class="rounded-full">{data.lending.items.length} Item</Badge>
@@ -371,12 +392,12 @@
 				</Card.Header>
 				<Card.Content class="flex flex-col gap-3">
 					{#if !isReturnMode}
-						<Button href="{base}/admin/peminjaman" variant="outline" class="w-full gap-2 rounded-xl">
+						<Button href="/admin/peminjaman" variant="outline" class="w-full gap-2 rounded-xl">
 							Kembali
 						</Button>
 						{#if data.lending.status !== 'RETURNED'}
 							<Button
-								href="{base}/admin/peminjaman/{data.lending.id}/edit"
+								href="/admin/peminjaman/{data.lending.id}/edit"
 								variant="outline"
 								class="w-full gap-2 rounded-xl"
 							>
@@ -472,7 +493,7 @@
 	onAction={() => {
 		showNotification = false;
 		if (notificationType === 'success') {
-			goto(`${base}/admin/peminjaman`);
+			goto(`/admin/peminjaman`);
 		}
 	}}
 />

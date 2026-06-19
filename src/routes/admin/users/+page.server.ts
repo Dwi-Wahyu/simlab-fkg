@@ -11,21 +11,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw error(403, 'Forbidden: Akses khusus Superadmin');
 	}
 
-	const users = await db.query.user.findMany({
-		orderBy: [desc(user.createdAt)],
-		with: {
-			members: {
-				with: {
-					laboratorium: true
-				}
-			}
-		}
-	});
-
 	const laboratoriums = await db.query.laboratorium.findMany();
 
 	return {
-		users,
 		laboratoriums
 	};
 };
@@ -48,24 +36,31 @@ export const actions: Actions = {
 		}
 
 		try {
-			// 1. Create User
-			const newUser = await auth.api.signUpEmail({
+			// 1. Create User via Better Auth Admin API
+			// This prevents automatic login as the newly created user
+			const newUserResponse = await auth.api.admin.createUser({
+				headers,
 				body: {
 					name,
 					email,
 					password,
+					// Use email as username if not provided, or it will be handled by the plugin
+					username: email.split('@')[0], 
+					role: 'user' // Default global role
 				}
 			});
 
-			if (!newUser) throw new Error('Gagal membuat user');
+			if (!newUserResponse) throw new Error('Gagal membuat user');
+
+			const newUser = newUserResponse.user;
 
 			// 2. Add to Laboratorium if provided
 			if (laboratoriumId && labRole) {
 				await auth.api.addMember({
 					headers,
 					body: {
-						organizationId: laboratoriumId, // Better Auth internal plugin still uses 'organizationId'
-						userId: newUser.user.id,
+						organizationId: laboratoriumId, 
+						userId: newUser.id,
 						role: labRole
 					}
 				});

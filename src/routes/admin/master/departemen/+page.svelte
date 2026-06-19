@@ -123,7 +123,7 @@
 						<Input id="name" name="name" placeholder="Misal: Konservasi Gigi" required />
 					</div>
 					<Button type="submit" class="w-full">
-						<Plus class="mr-2 h-4 w-4" />
+						<Plus />
 						Tambah
 					</Button>
 				</form>

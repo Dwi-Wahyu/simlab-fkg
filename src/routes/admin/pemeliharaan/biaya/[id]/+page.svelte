@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -40,7 +39,7 @@
 	<!-- Header -->
 	<div class="flex items-center justify-between gap-4">
 		<div class="flex items-center gap-4">
-			<Button href="{base}/admin/pemeliharaan?tab=biaya" variant="ghost" size="icon">
+			<Button href="/admin/pemeliharaan?tab=biaya" variant="ghost" size="icon">
 				<ArrowLeft size={20} />
 			</Button>
 			<div>
@@ -48,7 +47,10 @@
 				<p class="text-sm text-slate-500">Detail rincian analisis biaya pemeliharaan.</p>
 			</div>
 		</div>
-		<Button href="{base}/admin/pemeliharaan/biaya/{cost.id}/edit" class="gap-2 bg-[#2D5A43] text-white hover:bg-[#234735]">
+		<Button
+			href="/admin/pemeliharaan/biaya/{cost.id}/edit"
+			class="gap-2 bg-[#2D5A43] text-white hover:bg-[#234735]"
+		>
 			<Edit size={18} />
 			Edit Data
 		</Button>
@@ -63,21 +65,25 @@
 			<Card.Content class="space-y-4">
 				<div class="grid grid-cols-2 gap-4">
 					<div>
-						<p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status Pembayaran</p>
+						<p class="text-xs font-medium tracking-wider text-slate-400 uppercase">
+							Status Pembayaran
+						</p>
 						<Badge variant="outline" class="mt-1 px-3 py-1 {getStatusColor(cost.status)}">
 							{cost.status.replace('_', ' ')}
 						</Badge>
 					</div>
 					<div>
-						<p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Tanggal Dicatat</p>
+						<p class="text-xs font-medium tracking-wider text-slate-400 uppercase">
+							Tanggal Dicatat
+						</p>
 						<p class="mt-1 font-medium text-slate-900">{formatDate(cost.createdAt)}</p>
 					</div>
 					<div>
-						<p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Jatuh Tempo</p>
+						<p class="text-xs font-medium tracking-wider text-slate-400 uppercase">Jatuh Tempo</p>
 						<p class="mt-1 font-medium text-slate-900">{formatDate(cost.dueDate)}</p>
 					</div>
 					<div>
-						<p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Biaya</p>
+						<p class="text-xs font-medium tracking-wider text-slate-400 uppercase">Total Biaya</p>
 						<p class="mt-1 text-xl font-bold text-[#2D5A43]">{formatCurrency(cost.amount)}</p>
 					</div>
 				</div>
@@ -85,17 +91,26 @@
 				<Separator />
 
 				<div>
-					<p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Terkait Maintenance</p>
+					<p class="text-xs font-medium tracking-wider text-slate-400 uppercase">
+						Terkait Maintenance
+					</p>
 					{#if cost.maintenance}
 						<div class="mt-2 rounded-lg border bg-slate-50 p-3">
 							<div class="flex items-center justify-between">
 								<div>
 									<p class="font-bold text-slate-900">{cost.maintenance.equipment?.item?.name}</p>
 									<p class="text-xs text-slate-500 uppercase">
-										{cost.maintenance.maintenanceType} • {formatDate(cost.maintenance.scheduledDate)}
+										{cost.maintenance.maintenanceType} • {formatDate(
+											cost.maintenance.scheduledDate
+										)}
 									</p>
 								</div>
-								<Button variant="ghost" size="sm" href="{base}/admin/pemeliharaan/{cost.maintenance.id}" class="text-xs h-8">
+								<Button
+									variant="ghost"
+									size="sm"
+									href="/admin/pemeliharaan/{cost.maintenance.id}"
+									class="h-8 text-xs"
+								>
 									Lihat Maintenance
 								</Button>
 							</div>
@@ -107,8 +122,10 @@
 
 				{#if cost.notes}
 					<div>
-						<p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Keterangan Umum</p>
-						<p class="mt-1 text-sm text-slate-600 leading-relaxed">{cost.notes}</p>
+						<p class="text-xs font-medium tracking-wider text-slate-400 uppercase">
+							Keterangan Umum
+						</p>
+						<p class="mt-1 text-sm leading-relaxed text-slate-600">{cost.notes}</p>
 					</div>
 				{/if}
 			</Card.Content>
@@ -122,28 +139,43 @@
 			<Card.Content>
 				{#if cost.attachmentPath}
 					<div class="flex flex-col items-center gap-4">
-						<div class="rounded-xl bg-slate-100 p-6 text-slate-400 w-full flex justify-center">
+						<div class="flex w-full justify-center rounded-xl bg-slate-100 p-6 text-slate-400">
 							<FileText size={64} strokeWidth={1} />
 						</div>
-						<div class="text-center w-full">
-							<p class="truncate text-sm font-semibold text-slate-700 mb-1" title={cost.attachmentName}>
+						<div class="w-full text-center">
+							<p
+								class="mb-1 truncate text-sm font-semibold text-slate-700"
+								title={cost.attachmentName}
+							>
 								{cost.attachmentName || 'lampiran-bukti'}
 							</p>
 							<p class="text-[10px] text-slate-400 uppercase">Dokumen Bukti Pembayaran</p>
 						</div>
-						<div class="flex flex-col w-full gap-2 mt-2">
-							<Button variant="outline" href={cost.attachmentPath} target="_blank" class="w-full gap-2 text-xs h-9">
+						<div class="mt-2 flex w-full flex-col gap-2">
+							<Button
+								variant="outline"
+								href={cost.attachmentPath}
+								target="_blank"
+								class="h-9 w-full gap-2 text-xs"
+							>
 								<ExternalLink size={14} />
 								Buka File
 							</Button>
-							<Button variant="secondary" href={cost.attachmentPath} download={cost.attachmentName} class="w-full gap-2 text-xs h-9">
+							<Button
+								variant="secondary"
+								href={cost.attachmentPath}
+								download={cost.attachmentName}
+								class="h-9 w-full gap-2 text-xs"
+							>
 								<Download size={14} />
 								Unduh File
 							</Button>
 						</div>
 					</div>
 				{:else}
-					<div class="flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-xl text-slate-400 bg-slate-50/50">
+					<div
+						class="flex h-48 flex-col items-center justify-center rounded-xl border-2 border-dashed bg-slate-50/50 text-slate-400"
+					>
 						<FileText size={32} strokeWidth={1} class="mb-2 opacity-50" />
 						<p class="text-xs">Tidak ada lampiran</p>
 					</div>
@@ -160,18 +192,18 @@
 		<Card.Content class="p-0">
 			<div class="overflow-x-auto">
 				<table class="w-full text-left text-sm">
-					<thead class="bg-slate-50 border-y">
+					<thead class="border-y bg-slate-50">
 						<tr>
 							<th class="px-6 py-3 font-semibold text-slate-900">Nama Item</th>
 							<th class="px-6 py-3 font-semibold text-slate-900">Catatan</th>
-							<th class="px-6 py-3 font-semibold text-slate-900 text-right">Nominal</th>
+							<th class="px-6 py-3 text-right font-semibold text-slate-900">Nominal</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y">
 						{#each cost.items as item (item.id)}
-							<tr class="hover:bg-slate-50/50 transition-colors">
+							<tr class="transition-colors hover:bg-slate-50/50">
 								<td class="px-6 py-4 font-medium text-slate-900">{item.name}</td>
-								<td class="px-6 py-4 text-slate-500 max-w-xs">
+								<td class="max-w-xs px-6 py-4 text-slate-500">
 									<p class="truncate" title={item.notes}>{item.notes || '-'}</p>
 								</td>
 								<td class="px-6 py-4 text-right font-bold text-slate-900">
@@ -186,10 +218,14 @@
 							</tr>
 						{/each}
 					</tbody>
-					<tfoot class="bg-slate-50 font-bold border-t">
+					<tfoot class="border-t bg-slate-50 font-bold">
 						<tr>
-							<td colspan="2" class="px-6 py-4 text-slate-900 uppercase tracking-wider">Total Keseluruhan</td>
-							<td class="px-6 py-4 text-right text-lg text-[#2D5A43]">{formatCurrency(cost.amount)}</td>
+							<td colspan="2" class="px-6 py-4 tracking-wider text-slate-900 uppercase"
+								>Total Keseluruhan</td
+							>
+							<td class="px-6 py-4 text-right text-lg text-[#2D5A43]"
+								>{formatCurrency(cost.amount)}</td
+							>
 						</tr>
 					</tfoot>
 				</table>

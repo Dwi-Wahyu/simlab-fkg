@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { lending, lendingItem, equipment, item } from '$lib/server/db/schema';
@@ -10,7 +9,7 @@ import path from 'path';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { id } = params;
-	if (!locals.user) throw redirect(302, `${base}/login`);
+	if (!locals.user) throw redirect(302, `/login`);
 
 	const lendingData = await db.query.lending.findFirst({
 		where: eq(lending.id, id),
@@ -54,7 +53,7 @@ export const actions: Actions = {
 	returnItems: async ({ request, params }) => {
 		const { id } = params;
 		const formData = await request.formData();
-		
+
 		const itemReturnDataRaw = formData.get('itemReturnData') as string;
 		if (!itemReturnDataRaw) return fail(400, { message: 'Data pengembalian tidak valid' });
 
@@ -70,18 +69,18 @@ export const actions: Actions = {
 			await db.transaction(async (tx) => {
 				for (const itemData of itemReturnData) {
 					let evidencePath = null;
-					
+
 					// Handle file upload if any
 					const file = formData.get(`evidence_${itemData.lendingItemId}`) as File;
 					if (file && file.size > 0) {
 						const ext = path.extname(file.name);
 						const fileName = `${uuidv4()}${ext}`;
 						const uploadDir = path.join(process.cwd(), 'static', 'uploads', 'lending', 'evidence');
-						
+
 						if (!fs.existsSync(uploadDir)) {
 							fs.mkdirSync(uploadDir, { recursive: true });
 						}
-						
+
 						const filePath = path.join(uploadDir, fileName);
 						const buffer = Buffer.from(await file.arrayBuffer());
 						fs.writeFileSync(filePath, buffer);
@@ -89,7 +88,8 @@ export const actions: Actions = {
 					}
 
 					// Update lending item
-					await tx.update(lendingItem)
+					await tx
+						.update(lendingItem)
 						.set({
 							returnStatus: itemData.status,
 							returnNotes: itemData.notes,
@@ -99,7 +99,8 @@ export const actions: Actions = {
 						.where(eq(lendingItem.id, itemData.lendingItemId));
 
 					// Update equipment status and condition
-					await tx.update(equipment)
+					await tx
+						.update(equipment)
 						.set({
 							status: 'READY',
 							condition: itemData.status
@@ -108,9 +109,7 @@ export const actions: Actions = {
 				}
 
 				// Update overall lending status
-				await tx.update(lending)
-					.set({ status: 'RETURNED' })
-					.where(eq(lending.id, id));
+				await tx.update(lending).set({ status: 'RETURNED' }).where(eq(lending.id, id));
 			});
 
 			return { success: true };

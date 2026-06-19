@@ -18,13 +18,48 @@
 		History
 	} from '@lucide/svelte';
 	import { enhance } from '$app/forms';
+	import { toast } from '$lib/components/toast';
 
 	let { data, form } = $props();
+
+	const userImage = $derived(
+		data.user.image
+			? data.user.image.startsWith('http://') ||
+			  data.user.image.startsWith('https://') ||
+			  data.user.image.startsWith('/')
+				? data.user.image
+				: `/uploads/profiles/${data.user.image}`
+			: ''
+	);
 
 	// State for session revocation dialog
 	let revokeDialogOpen = $state(false);
 	let selectedToken = $state('');
 	let isRevoking = $state(false);
+
+	function handleFileChange(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const files = target.files;
+		if (files && files.length > 0) {
+			const file = files[0];
+			const allowedExtensions = ['jpg', 'jpeg', 'png'];
+			const fileExt = file.name.split('.').pop()?.toLowerCase();
+			if (!fileExt || !allowedExtensions.includes(fileExt)) {
+				toast.destructive('Gagal', {
+					description: 'Format file tidak valid. Hanya JPG, PNG, atau JPEG yang diperbolehkan.'
+				});
+				target.value = ''; // Reset input
+				return;
+			}
+			if (file.size > 5 * 1024 * 1024) {
+				toast.destructive('Gagal', {
+					description: 'Ukuran file terlalu besar. Maksimal 5MB.'
+				});
+				target.value = ''; // Reset input
+				return;
+			}
+		}
+	}
 
 	function formatDate(date: Date | string | number) {
 		return new Date(date).toLocaleString('id-ID', {
@@ -72,8 +107,8 @@
 				<div
 					class="mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-muted"
 				>
-					{#if data.user.image}
-						<img src={data.user.image} alt={data.user.name} class="h-full w-full object-cover" />
+					{#if userImage}
+						<img src={userImage} alt={data.user.name} class="h-full w-full object-cover" />
 					{:else}
 						<UserRound class="h-12 w-12 text-muted-foreground" />
 					{/if}
@@ -95,6 +130,71 @@
 
 		<!-- Manajemen Sesi & Password -->
 		<div class="space-y-8 md:col-span-2">
+			<!-- Ubah Profil -->
+			<Card.Root>
+				<Card.Header>
+					<div class="flex items-center gap-2">
+						<UserRound class="h-5 w-5 text-[#2D5A43]" />
+						<Card.Title>Ubah Profil</Card.Title>
+					</div>
+					<Card.Description>
+						Perbarui nama lengkap, username, dan foto profil Anda.
+					</Card.Description>
+				</Card.Header>
+				<Card.Content>
+					<form action="?/updateProfile" method="POST" enctype="multipart/form-data" use:enhance class="space-y-4">
+						<div class="grid gap-4 sm:grid-cols-2">
+							<div class="space-y-2">
+								<Label for="name">Nama Lengkap</Label>
+								<Input
+									id="name"
+									name="name"
+									type="text"
+									value={data.user.name}
+									placeholder="Masukkan nama lengkap"
+									required
+								/>
+							</div>
+							<div class="space-y-2">
+								<Label for="username">Username</Label>
+								<Input
+									id="username"
+									name="username"
+									type="text"
+									value={data.user.username}
+									placeholder="Masukkan username"
+									required
+								/>
+							</div>
+						</div>
+						<div class="space-y-2">
+							<Label for="email">Email</Label>
+							<Input
+								id="email"
+								name="email"
+								type="email"
+								value={data.user.email}
+								disabled
+								class="bg-slate-50 cursor-not-allowed text-slate-500"
+							/>
+							<p class="text-[11px] text-muted-foreground">Email terikat pada akun dan tidak dapat diubah secara langsung.</p>
+						</div>
+						<div class="space-y-2">
+							<Label for="image">Foto Profil</Label>
+							<Input
+								id="image"
+								name="image"
+								type="file"
+								accept=".jpg,.jpeg,.png"
+								onchange={handleFileChange}
+							/>
+							<p class="text-xs text-muted-foreground">Format: JPG, JPEG, atau PNG. Maksimal 5MB.</p>
+						</div>
+						<Button type="submit" class="w-full bg-[#2D5A43] hover:bg-[#234735]">Update Profil</Button>
+					</form>
+				</Card.Content>
+			</Card.Root>
+
 			<!-- Ubah Password -->
 			<Card.Root>
 				<Card.Header>

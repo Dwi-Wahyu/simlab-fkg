@@ -1,5 +1,5 @@
 <!-- <script lang="ts">
-	import { base } from '$app/paths';
+	
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import Button from '@/components/ui/button/button.svelte';
@@ -46,13 +46,13 @@
 	}
 </script>
 
-<div class="mx-auto max-w-4xl space-y-8 p-8">
+<div class="mx-auto max-w-4xl space-y-6 p-6">
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-4">
 			<Button
 				variant="outline"
 				size="icon"
-				href="{base}/{data.org_slug}/barang"
+				href="/{data.org_slug}/barang"
 				class="rounded-full shadow-sm"
 			>
 				<ArrowLeft size={18} />
@@ -119,7 +119,7 @@
 
 				<div class="mt-4 flex gap-3 md:col-span-2">
 					<a
-						href="{base}/{data.user.organization.slug}/barang"
+						href="/{data.user.organization.slug}/barang"
 						class="flex-1 rounded-lg border border-gray-300 py-3 text-center font-medium transition hover:bg-gray-50"
 					>
 						Batal
@@ -211,7 +211,7 @@
 
 		<div class="mt-4 flex gap-3 md:col-span-2">
 			<a
-				href="{base}/{data.user.organization.slug}/barang"
+				href="/{data.user.organization.slug}/barang"
 				class="flex-1 rounded-lg border border-gray-300 py-3 text-center font-medium transition hover:bg-gray-50"
 			>
 				Batal

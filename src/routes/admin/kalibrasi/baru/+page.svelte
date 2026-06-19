@@ -1,16 +1,20 @@
 <script lang="ts">
-	import { base } from '$app/paths';
+	import {
+		Check,
+		ChevronLeft,
+		FileText,
+		Upload
+	} from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { ArrowLeft, Upload, Calendar, Building2, Wallet, FileCheck, Clock, FileText, Check } from '@lucide/svelte';
-	import { toast } from 'svelte-sonner';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { goto } from '$app/navigation';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 
 	let { data, form } = $props();
 
@@ -69,24 +73,37 @@
 
 	function handleDialogAction() {
 		showSuccessDialog = false;
-		goto(`${base}/admin/pemeliharaan?tab=kalibrasi`);
+		goto(`/admin/pemeliharaan?tab=kalibrasi`);
 	}
 </script>
 
-<div class="mx-auto max-w-3xl space-y-8 p-6">
-	<!-- Header -->
-	<div class="flex items-center gap-4">
-		<Button href="{base}/admin/pemeliharaan?tab=kalibrasi" variant="ghost" size="icon">
-			<ArrowLeft size={20} />
-		</Button>
-		<div>
-			<h1 class="text-2xl font-bold text-slate-900">Catat Kalibrasi Baru</h1>
-			<p class="text-sm text-slate-500">Rekam hasil kalibrasi alat dari vendor eksternal.</p>
+<div class="mx-auto max-w-3xl flex flex-col gap-6 p-6">
+	<Button
+		variant="outline"
+		href="/admin/pemeliharaan?tab=kalibrasi"
+		title="Kembali"
+		class="-mb-2 w-fit"
+		size="sm"
+	>
+		<ChevronLeft class="h-4 w-4" /> Kembali
+	</Button>
+
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-4">
+			<Button variant="outline" size="icon" href="/admin/pemeliharaan?tab=kalibrasi" class="hidden md:flex">
+				<ChevronLeft size={24} />
+			</Button>
+			<div>
+				<h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
+					Catat Kalibrasi Baru
+				</h1>
+				<p class="text-sm text-slate-500">Rekam hasil kalibrasi alat dari vendor eksternal.</p>
+			</div>
 		</div>
 	</div>
 
-	<Card.Root>
-		<Card.Content class="p-8">
+	<Card.Root mobileAware={true}>
+		<Card.Content>
 			<form
 				method="POST"
 				enctype="multipart/form-data"
@@ -106,7 +123,7 @@
 				<!-- Alat Section -->
 				<div class="grid gap-6 md:grid-cols-2">
 					<div class="space-y-2">
-						<Label for="equipmentId" class="flex items-center gap-2">
+						<Label for="equipmentId">
 							Alat <span class="text-red-500">*</span>
 						</Label>
 						<Select.Root type="single" bind:value={selectedAssetId}>
@@ -128,10 +145,7 @@
 					</div>
 
 					<div class="space-y-2">
-						<Label for="vendor" class="flex items-center gap-2">
-							<Building2 size={16} class="text-slate-400" />
-							Vendor Pelaksana
-						</Label>
+						<Label for="vendor">Vendor Pelaksana</Label>
 						<Input
 							type="text"
 							name="vendor"
@@ -144,41 +158,33 @@
 				<!-- Date & Cost Section -->
 				<div class="grid gap-6 md:grid-cols-3">
 					<div class="space-y-2">
-						<Label for="completionDate" class="flex items-center gap-2">
-							<Calendar size={16} class="text-slate-400" />
+						<Label for="completionDate">
 							Tanggal Kalibrasi <span class="text-red-500">*</span>
 						</Label>
 						<Input type="date" name="completionDate" id="completionDate" required />
 					</div>
 
 					<div class="space-y-2">
-						<Label for="expiryDate" class="flex items-center gap-2">
-							<Clock size={16} class="text-slate-400" />
+						<Label for="expiryDate">
 							Masa Berlaku <span class="text-red-500">*</span>
 						</Label>
 						<Input type="date" name="expiryDate" id="expiryDate" required />
 					</div>
 
 					<div class="space-y-2">
-						<Label for="cost" class="flex items-center gap-2">
-							<Wallet size={16} class="text-slate-400" />
-							Biaya (Rp)
-						</Label>
+						<Label for="cost">Biaya (Rp)</Label>
 						<Input type="number" name="cost" id="cost" placeholder="0" min="0" />
 					</div>
 				</div>
 
 				<!-- Certificate Upload -->
 				<div class="space-y-2">
-					<Label for="certificate" class="flex items-center gap-2">
-						<FileCheck size={16} class="text-slate-400" />
-						Sertifikat Kalibrasi (PDF/Gambar)
-					</Label>
+					<Label for="certificate">Sertifikat Kalibrasi (PDF/Gambar)</Label>
 					<div
 						class="group relative flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 transition-all hover:border-[#2D5A43] hover:bg-white"
 					>
 						{#if fileName}
-							<div class="flex w-full flex-col items-center gap-4 animate-in fade-in zoom-in-95">
+							<div class="flex w-full animate-in flex-col items-center gap-4 zoom-in-95 fade-in">
 								{#if filePreviewUrl}
 									<div class="relative">
 										<img
@@ -246,7 +252,7 @@
 
 				<!-- Submit Buttons -->
 				<div class="flex items-center justify-end gap-3 pt-4">
-					<Button variant="outline" href="{base}/admin/pemeliharaan?tab=kalibrasi">Batal</Button>
+					<Button variant="outline" href="/admin/pemeliharaan?tab=kalibrasi">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading || !selectedAssetId}

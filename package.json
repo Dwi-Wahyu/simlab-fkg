@@ -1,5 +1,5 @@
 {
-	"name": "minmat-puskomlekad-web",
+	"name": "simlab-fkg",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -19,6 +19,9 @@
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
 		"db:seed": "bun run src/lib/server/db/seeds/index.ts",
+		"db:seed-users": "bun run src/lib/server/db/seeds/users.ts",
+		"db:seed-mahasiswa": "bun run src/lib/server/db/seeds/mahasiswa.ts",
+		"db:seed-logbook-templates": "bun run src/lib/server/db/seeds/logbook-templates.ts",
 		"auth:schema": "better-auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"
 	},
 	"overrides": {
@@ -26,6 +29,7 @@
 	},
 	"devDependencies": {
 		"@better-auth/cli": "~1.4.21",
+		"@biomejs/biome": "2.5.0",
 		"@eslint/compat": "^2.0.2",
 		"@eslint/js": "^9.39.2",
 		"@faker-js/faker": "^10.3.0",
@@ -43,6 +47,7 @@
 		"@types/d3-scale": "^4.0.9",
 		"@types/d3-shape": "^3.1.8",
 		"@types/node": "^22",
+		"@vite-pwa/sveltekit": "^1.1.0",
 		"@vitest/browser-playwright": "^4.1.0",
 		"better-auth": "1.5.6",
 		"bits-ui": "^2.16.4",
@@ -55,6 +60,7 @@
 		"globals": "^17.3.0",
 		"mode-watcher": "^1.1.0",
 		"mysql2": "^3.16.3",
+		"pizzip": "^3.2.0",
 		"playwright": "^1.58.2",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.4.1",
@@ -77,6 +83,7 @@
 		"clsx": "^2.1.1",
 		"d3-scale": "^4.0.2",
 		"d3-shape": "^3.2.0",
+		"docx-templates": "^4.15.0",
 		"layerchart": "^2.0.0-next.48",
 		"tailwind-merge": "^3.5.0",
 		"tailwind-variants": "^3.2.2",

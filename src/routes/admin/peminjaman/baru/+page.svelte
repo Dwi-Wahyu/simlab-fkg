@@ -1,17 +1,15 @@
 <script lang="ts">
-	import { base } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import * as Select from '$lib/components/ui/select';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Separator } from '$lib/components/ui/separator';
-	import { Calendar, ArrowLeft, Plus, Minus, Trash2, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { ChevronLeft, ChevronRight, Minus, Plus } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
 
 	let { data } = $props();
 
@@ -82,10 +80,6 @@
 		];
 	};
 
-	const removeItem = (id: string) => {
-		selectedItems = selectedItems.filter((i) => i.itemId !== id);
-	};
-
 	const updateQty = (id: string, delta: number) => {
 		selectedItems = selectedItems.map((i) => {
 			if (i.itemId === id) {
@@ -142,8 +136,8 @@
 
 <div class="mx-auto flex max-w-5xl flex-col gap-6 p-6">
 	<div class="flex items-center gap-4">
-		<Button href="{base}/admin/peminjaman" variant="ghost" size="icon">
-			<ArrowLeft class="size-5" />
+		<Button href="/admin/peminjaman" variant="outline" size="icon">
+			<ChevronLeft class="size-5" />
 		</Button>
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">Peminjaman Baru</h1>
@@ -187,7 +181,7 @@
 				if (result.type === 'success') {
 					showSuccessNotification();
 				} else if (result.type === 'failure') {
-					showErrorNotification(result.data?.message || 'Terjadi kesalahan');
+					showErrorNotification((result.data as any)?.message || 'Terjadi kesalahan');
 				}
 			};
 		}}
@@ -199,10 +193,10 @@
 				<Card.Root>
 					<Card.Header>
 						<Card.Title>Daftar Peminjam</Card.Title>
-						<Card.Description>Mahasiswa (Peneliti) & Dosen (Instruktur)</Card.Description>
+						<Card.Description>Mahasiswa & Dosen</Card.Description>
 					</Card.Header>
 					<Card.Content>
-						<div class="grid h-[460px] gap-2 overflow-y-auto p-1 content-start">
+						<div class="grid content-start gap-2 overflow-y-auto p-1">
 							{#each paginatedPeminjam as requester (requester.id)}
 								<div
 									class="flex items-center space-x-3 rounded-lg border p-2 transition-colors hover:bg-muted/50"
@@ -243,7 +237,7 @@
 								<ChevronLeft class="size-3" />
 								Sebelumnya
 							</Button>
-							<span class="text-xs font-medium px-2">{peminjamPage}</span>
+							<span class="px-2 text-xs font-medium">{peminjamPage}</span>
 							<Button
 								variant="outline"
 								size="sm"
@@ -266,7 +260,7 @@
 					<Card.Description>Pilih alat dan tentukan jumlah per orang</Card.Description>
 				</Card.Header>
 				<Card.Content>
-					<div class="grid h-[460px] gap-4 overflow-y-auto p-1 content-start">
+					<div class="grid content-start gap-4 overflow-y-auto p-1">
 						{#each paginatedAlat as item (item.id)}
 							{@const isSelected = selectedItems.some((i) => i.itemId === item.id)}
 							<div
@@ -323,7 +317,7 @@
 										<div class="pl-8 text-[10px] font-semibold text-destructive">
 											Total dibutuhkan: {total} (Melebihi stok!)
 										</div>
-				{:else if selectedRequesters.length > 0}
+									{:else if selectedRequesters.length > 0}
 										<div class="pl-8 text-[10px] text-muted-foreground">
 											Total dibutuhkan: {total} unit
 										</div>
@@ -333,7 +327,8 @@
 						{/each}
 					</div>
 					<input type="hidden" name="items" value={JSON.stringify(selectedItems)} />
-				</Card.Content>				<Card.Footer class="flex items-center justify-between border-t pt-4">
+				</Card.Content>
+				<Card.Footer class="flex items-center justify-between border-t pt-4">
 					<div class="text-[10px] text-muted-foreground">
 						{getPaginationInfo(data.items.length, alatPage, 'alat')}
 					</div>
@@ -348,7 +343,7 @@
 							<ChevronLeft class="size-3" />
 							Sebelumnya
 						</Button>
-						<span class="text-xs font-medium px-2">{alatPage}</span>
+						<span class="px-2 text-xs font-medium">{alatPage}</span>
 						<Button
 							variant="outline"
 							size="sm"
@@ -372,7 +367,7 @@
 			<Card.Content>
 				<div class="grid gap-6 md:grid-cols-3">
 					<div class="space-y-2">
-						<Label class="text-xs font-bold text-slate-500 uppercase">Laboratorium</Label>
+						<Label>Laboratorium <span class="text-red-500">*</span></Label>
 						<Select.Root type="single" bind:value={labId}>
 							<Select.Trigger class="w-full">
 								{labTriggerContent}
@@ -387,21 +382,19 @@
 					</div>
 
 					<div class="space-y-2">
-						<Label class="text-xs font-bold text-slate-500 uppercase">Tanggal Mulai</Label>
+						<Label>Tanggal Mulai <span class="text-red-500">*</span></Label>
 						<Input type="datetime-local" name="startDate" bind:value={startDate} required />
 					</div>
 
 					<div class="space-y-2">
-						<Label class="text-xs font-bold text-slate-500 uppercase"
-							>Batas Pengembalian (Opsional)</Label
-						>
+						<Label>Batas Pengembalian</Label>
 						<Input type="datetime-local" name="endDate" bind:value={endDate} />
 					</div>
 				</div>
 
 				<div class="mt-6 grid gap-6 md:grid-cols-2">
 					<div class="space-y-2">
-						<Label class="text-xs font-bold text-slate-500 uppercase">Keperluan</Label>
+						<Label>Keperluan <span class="text-red-500">*</span></Label>
 						<Select.Root type="single" bind:value={purpose}>
 							<Select.Trigger class="w-full">
 								{purposeTriggerContent}
@@ -421,7 +414,7 @@
 				<div class="flex-1 text-sm font-medium">
 					Terpilih: {selectedRequesters.length} orang
 				</div>
-				<Button variant="outline" href="{base}/admin/peminjaman">Batal</Button>
+				<Button variant="outline" href="/admin/peminjaman">Batal</Button>
 				<Button
 					type="submit"
 					disabled={isSubmitting || stockWarnings.length > 0}

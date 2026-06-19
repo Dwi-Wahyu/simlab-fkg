@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { base } from '$app/paths';
+	/* eslint-disable svelte/no-navigation-without-resolve */
 	import { invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -20,11 +20,14 @@
 		DollarSign,
 		ChevronRight,
 		Filter,
-		FileUp
+		FileUp,
+		ChevronDown,
+		ChevronUp
 	} from '@lucide/svelte';
 
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import Input from '@/components/ui/input/input.svelte';
 
 	let { data } = $props();
 
@@ -82,14 +85,16 @@
 
 	let activeTab = $state('pemeliharaan');
 
+	let expandedPemeliharaan = $state<Record<string, boolean>>({});
+	let expandedKalibrasi = $state<Record<string, boolean>>({});
+	let expandedBiaya = $state<Record<string, boolean>>({});
+
 	// State untuk dialog konfirmasi hapus
 	let showDeleteDialog = $state(false);
-	let deleteId = $state<string | null>(null);
 	let deleteForm: HTMLFormElement | null = $state(null);
 
 	// Handler untuk membuka dialog hapus
-	function confirmDelete(id: string, formElement: HTMLFormElement) {
-		deleteId = id;
+	function confirmDelete(formElement: HTMLFormElement) {
 		deleteForm = formElement;
 		showDeleteDialog = true;
 	}
@@ -102,7 +107,6 @@
 	}
 
 	function handleCancelDelete() {
-		deleteId = null;
 		deleteForm = null;
 		showDeleteDialog = false;
 	}
@@ -146,7 +150,7 @@
 	<title>Pemeliharaan & Kalibrasi | SIM LAB</title>
 </svelte:head>
 
-<div class="mx-auto max-w-7xl space-y-8 p-6">
+<div class="mx-auto max-w-7xl space-y-8 p-4 sm:p-6">
 	<!-- Header -->
 	<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 		<div>
@@ -154,32 +158,6 @@
 			<p class="text-slate-500">
 				Monitor kesehatan alat laboratorium dan jadwal kalibrasi periodik.
 			</p>
-		</div>
-
-		<div class="flex flex-wrap justify-end gap-2">
-			<Button
-				variant="outline"
-				class="gap-2 border-slate-200 text-slate-700 hover:bg-slate-50"
-				href="{base}/admin/pemeliharaan/biaya/baru"
-			>
-				<TrendingUp size={18} />
-				Catat Biaya
-			</Button>
-			<Button
-				variant="outline"
-				class="gap-2 border-slate-200 text-slate-700 hover:bg-slate-50"
-				href="{base}/admin/kalibrasi/baru"
-			>
-				<Calendar size={18} />
-				Jadwalkan Kalibrasi
-			</Button>
-			<Button
-				class="gap-2 bg-[#2D5A43] text-white hover:bg-[#234735]"
-				href="{base}/admin/pemeliharaan/create"
-			>
-				<Plus size={18} />
-				Jadwalkan Pemeliharaan
-			</Button>
 		</div>
 	</div>
 
@@ -200,34 +178,56 @@
 	</div>
 
 	<!-- Tabs Area -->
-	<Card.Root>
-		<Card.Content class="px-0">
-			<Tabs.Root value={activeTab} onValueChange={handleTabChange} class="w-full">
-				<div class="flex items-center justify-between px-5">
-					<Tabs.List class="h-auto bg-transparent p-0">
-						<Tabs.Trigger value="pemeliharaan">Pemeliharaan</Tabs.Trigger>
-						<Tabs.Trigger value="kalibrasi">Kalibrasi</Tabs.Trigger>
-						<Tabs.Trigger value="biaya">Analisis Biaya</Tabs.Trigger>
-					</Tabs.List>
+	<Tabs.Root bind:value={activeTab} onValueChange={handleTabChange} class="w-full space-y-4">
+		<Tabs.List variant="default" class=" w-full">
+			<Tabs.Trigger value="pemeliharaan" class="h-10 cursor-pointer">Pemeliharaan</Tabs.Trigger>
+			<Tabs.Trigger value="kalibrasi" class="h-10 cursor-pointer">Kalibrasi</Tabs.Trigger>
+			<Tabs.Trigger value="biaya" class="h-10 cursor-pointer">Analisis Biaya</Tabs.Trigger>
+		</Tabs.List>
 
-					<div class="flex items-center gap-2 pb-4">
-						<div class="relative hidden sm:block">
-							<Filter class="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" size={14} />
-							<input
-								type="text"
-								placeholder="Cari..."
-								class="w-64 rounded-lg border border-slate-200 bg-slate-50/50 py-1.5 pr-4 pl-9 text-xs transition-all focus:border-[#2D5A43] focus:ring-2 focus:ring-[#2D5A43]/10"
-							/>
-						</div>
+		<Card.Root mobileAware={true}>
+			<Card.Header
+				class=" flex flex-col gap-4 py-4 pt-0 sm:flex-row sm:items-center sm:justify-between md:pt-4"
+			>
+				<Card.Title class="hidden text-xl md:block">
+					{#if activeTab === 'pemeliharaan'}
+						Jadwal Pemeliharaan
+					{:else if activeTab === 'kalibrasi'}
+						Jadwal Kalibrasi
+					{:else}
+						Analisis Biaya Pemeliharaan
+					{/if}
+				</Card.Title>
+				<div class="flex w-full flex-col items-center gap-4 sm:w-auto md:flex-row">
+					<div class="relative w-full flex-1 md:w-64 md:flex-none">
+						<Filter class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+						<Input type="text" placeholder="Cari..." class="w-full pl-9" />
 					</div>
+					{#if activeTab === 'pemeliharaan'}
+						<Button class="w-full md:w-fit" href="/admin/pemeliharaan/create">
+							<Plus size={16} />
+							Jadwalkan Pemeliharaan
+						</Button>
+					{:else if activeTab === 'kalibrasi'}
+						<Button class="w-full md:w-fit" href="/admin/kalibrasi/baru">
+							<Calendar size={16} />
+							Jadwalkan Kalibrasi
+						</Button>
+					{:else}
+						<Button class="w-full md:w-fit" href="/admin/pemeliharaan/biaya/baru">
+							<TrendingUp size={16} />
+							Catat Biaya
+						</Button>
+					{/if}
 				</div>
-
+			</Card.Header>
+			<Card.Content class="p-0">
 				<!-- Pemeliharaan Content -->
 				<Tabs.Content value="pemeliharaan" class="m-0 p-0">
 					<div class="overflow-x-auto">
-						<Table.Root>
-							<Table.Header class="bg-slate-50/50">
-								<Table.Row>
+						<Table.Root class="block md:table">
+							<Table.Header class="hidden md:table-header-group">
+								<Table.Row class="md:table-row">
 									<Table.Head class="px-6 py-4">Peralatan</Table.Head>
 									<Table.Head>Tipe</Table.Head>
 									<Table.Head>Jadwal</Table.Head>
@@ -235,13 +235,18 @@
 									<Table.Head class="pr-6 text-right">Aksi</Table.Head>
 								</Table.Row>
 							</Table.Header>
-							<Table.Body>
+							<Table.Body class="block md:table-row-group">
 								{#each data.maintenance as item (item.id)}
-									<Table.Row class="group transition-colors hover:bg-slate-50/50">
-										<Table.Cell class="px-6 py-4">
+									<Table.Row
+										class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
+									>
+										<!-- Column 1: Peralatan -->
+										<Table.Cell
+											class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
+										>
 											<div class="flex items-center gap-3">
 												<div
-													class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500"
+													class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500"
 												>
 													<Box size={20} />
 												</div>
@@ -249,13 +254,37 @@
 													<span class="font-bold text-slate-900"
 														>{item.equipment?.item?.name ?? item.equipmentId}</span
 													>
-													<span class="font-mono text-[10px] text-slate-400"
-														>SN: {item.equipment?.serialNumber || '-'}</span
-													>
+													<div class="mt-0.5 flex flex-wrap items-center gap-1.5">
+														<span class="font-mono text-[10px] text-slate-400"
+															>SN: {item.equipment?.serialNumber || '-'}</span
+														>
+														<Badge
+															variant="outline"
+															class="border-slate-200 bg-slate-50 text-[9px] font-bold tracking-wider text-slate-600 uppercase md:hidden"
+														>
+															{item.maintenanceType}
+														</Badge>
+													</div>
 												</div>
 											</div>
+											<Button
+												variant="ghost"
+												size="icon"
+												class="ml-4 h-8 w-8 shrink-0 md:hidden"
+												onclick={() =>
+													(expandedPemeliharaan[item.id] = !expandedPemeliharaan[item.id])}
+												aria-label="Expand row"
+											>
+												{#if expandedPemeliharaan[item.id]}
+													<ChevronUp class="h-4 w-4" />
+												{:else}
+													<ChevronDown class="h-4 w-4" />
+												{/if}
+											</Button>
 										</Table.Cell>
-										<Table.Cell>
+
+										<!-- Column 2: Tipe (hidden on mobile) -->
+										<Table.Cell class="hidden border-b-0 p-4 md:table-cell md:border-b md:p-4">
 											<Badge
 												variant="outline"
 												class="border-slate-200 bg-slate-50 text-[10px] font-bold tracking-wider text-slate-600 uppercase"
@@ -263,22 +292,45 @@
 												{item.maintenanceType}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell>
+
+										<!-- Column 3: Jadwal -->
+										<Table.Cell
+											class="{expandedPemeliharaan[item.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Jadwal</span>
 											<span class="text-sm font-medium text-slate-900"
 												>{formatDate(item.scheduledDate)}</span
 											>
 										</Table.Cell>
-										<Table.Cell>
-											<Badge variant="outline" class="px-3 py-1 {getStatusColor(item.status)}">
+
+										<!-- Column 4: Status -->
+										<Table.Cell
+											class="{expandedPemeliharaan[item.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Status</span>
+											<Badge
+												variant="outline"
+												class="w-fit px-3 py-1 {getStatusColor(item.status)}"
+											>
 												{item.status}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="pr-6 text-right">
-											<div class="flex justify-end gap-1">
+
+										<!-- Column 5: Aksi -->
+										<Table.Cell
+											class="{expandedPemeliharaan[item.id]
+												? 'flex'
+												: 'hidden'} justify-end border-b-0 bg-slate-50/50 p-4 pr-6 md:table-cell md:border-b md:bg-transparent md:p-4 md:pr-6 md:text-right"
+										>
+											<div class="flex w-full justify-end gap-1 md:w-auto">
 												<Button
 													size="icon"
 													variant="ghost"
-													href="{base}/admin/pemeliharaan/{item.id}/edit"
+													href="/admin/pemeliharaan/{item.id}/edit"
 													class="h-8 w-8 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
 												>
 													<Edit size={16} />
@@ -298,7 +350,7 @@
 														size="icon"
 														variant="ghost"
 														type="button"
-														onclick={() => confirmDelete(item.id, deleteForm!)}
+														onclick={(e) => confirmDelete(e.currentTarget.form!)}
 														class="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
 													>
 														<Trash2 size={16} />
@@ -308,8 +360,8 @@
 										</Table.Cell>
 									</Table.Row>
 								{:else}
-									<Table.Row>
-										<Table.Cell colspan={5} class="h-64 text-center">
+									<Table.Row class="flex flex-col md:table-row">
+										<Table.Cell colspan={5} class="h-64 text-center md:table-cell">
 											<div class="flex flex-col items-center justify-center gap-3 text-slate-400">
 												<Wrench size={48} strokeWidth={1} class="text-slate-200" />
 												<p class="text-sm">Belum ada data pemeliharaan</p>
@@ -325,9 +377,9 @@
 				<!-- Kalibrasi Content -->
 				<Tabs.Content value="kalibrasi" class="m-0 p-0">
 					<div class="overflow-x-auto">
-						<Table.Root>
-							<Table.Header class="bg-slate-50/50">
-								<Table.Row>
+						<Table.Root class="block md:table">
+							<Table.Header class="hidden md:table-header-group">
+								<Table.Row class="md:table-row">
 									<Table.Head class="px-6 py-4">Peralatan</Table.Head>
 									<Table.Head>Terakhir Kalibrasi</Table.Head>
 									<Table.Head>Masa Berlaku</Table.Head>
@@ -336,10 +388,15 @@
 									<Table.Head class="pr-6 text-right">Aksi</Table.Head>
 								</Table.Row>
 							</Table.Header>
-							<Table.Body>
+							<Table.Body class="block md:table-row-group">
 								{#each data.calibrations as cal (cal.id)}
-									<Table.Row class="group transition-colors hover:bg-slate-50/50">
-										<Table.Cell class="px-6 py-4">
+									<Table.Row
+										class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
+									>
+										<!-- Column 1: Peralatan -->
+										<Table.Cell
+											class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
+										>
 											<div class="flex flex-col">
 												<span class="font-bold text-slate-900"
 													>{cal.equipment?.item?.name || 'Alat'}</span
@@ -348,27 +405,78 @@
 													>{cal.equipment?.serialNumber || '-'}</span
 												>
 											</div>
+											<Button
+												variant="ghost"
+												size="icon"
+												class="ml-4 h-8 w-8 shrink-0 md:hidden"
+												onclick={() => (expandedKalibrasi[cal.id] = !expandedKalibrasi[cal.id])}
+												aria-label="Expand row"
+											>
+												{#if expandedKalibrasi[cal.id]}
+													<ChevronUp class="h-4 w-4" />
+												{:else}
+													<ChevronDown class="h-4 w-4" />
+												{/if}
+											</Button>
 										</Table.Cell>
-										<Table.Cell>
+
+										<!-- Column 2: Terakhir Kalibrasi -->
+										<Table.Cell
+											class="{expandedKalibrasi[cal.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden"
+												>Terakhir Kalibrasi</span
+											>
 											<span class="text-sm text-slate-600">
 												{cal.completionDate ? formatDate(cal.completionDate) : '-'}
 											</span>
 										</Table.Cell>
-										<Table.Cell>
+
+										<!-- Column 3: Masa Berlaku -->
+										<Table.Cell
+											class="{expandedKalibrasi[cal.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden"
+												>Masa Berlaku</span
+											>
 											<span class="text-sm font-semibold text-slate-900">
 												{cal.expiryDate ? formatDate(cal.expiryDate) : '-'}
 											</span>
 										</Table.Cell>
-										<Table.Cell>
+
+										<!-- Column 4: Vendor -->
+										<Table.Cell
+											class="{expandedKalibrasi[cal.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Vendor</span>
 											<span class="text-sm text-slate-600">{cal.vendor || '-'}</span>
 										</Table.Cell>
-										<Table.Cell>
-											<Badge variant="outline" class="px-3 py-1 {getStatusColor(cal.status)}">
+
+										<!-- Column 5: Status -->
+										<Table.Cell
+											class="{expandedKalibrasi[cal.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Status</span>
+											<Badge variant="outline" class="w-fit px-3 py-1 {getStatusColor(cal.status)}">
 												{cal.status}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="pr-6 text-right">
-											<div class="flex justify-end gap-1">
+
+										<!-- Column 6: Aksi -->
+										<Table.Cell
+											class="{expandedKalibrasi[cal.id]
+												? 'flex'
+												: 'hidden'} justify-end border-b-0 bg-slate-50/50 p-4 pr-6 md:table-cell md:border-b md:bg-transparent md:p-4 md:pr-6 md:text-right"
+										>
+											<div class="flex w-full justify-end gap-1 md:w-auto">
 												{#if cal.certificatePath}
 													<Button
 														size="icon"
@@ -384,7 +492,7 @@
 												<Button
 													size="icon"
 													variant="ghost"
-													href="{base}/admin/kalibrasi/{cal.id}/edit"
+													href="/admin/kalibrasi/{cal.id}/edit"
 													class="h-8 w-8 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
 												>
 													<Edit size={16} />
@@ -393,8 +501,8 @@
 										</Table.Cell>
 									</Table.Row>
 								{:else}
-									<Table.Row>
-										<Table.Cell colspan={6} class="h-64 text-center">
+									<Table.Row class="flex flex-col md:table-row">
+										<Table.Cell colspan={6} class="h-64 text-center md:table-cell">
 											<div class="flex flex-col items-center justify-center gap-3 text-slate-400">
 												<Calendar size={48} strokeWidth={1} class="text-slate-200" />
 												<p class="text-sm">Belum ada data kalibrasi</p>
@@ -410,9 +518,9 @@
 				<!-- Biaya Content -->
 				<Tabs.Content value="biaya" class="m-0 p-0">
 					<div class="overflow-x-auto">
-						<Table.Root>
-							<Table.Header class="bg-slate-50/50">
-								<Table.Row>
+						<Table.Root class="block md:table">
+							<Table.Header class="hidden md:table-header-group">
+								<Table.Row class="md:table-row">
 									<Table.Head class="px-6 py-4">Tanggal</Table.Head>
 									<Table.Head>Nama Biaya</Table.Head>
 									<Table.Head>Peralatan / Maintenance</Table.Head>
@@ -421,29 +529,68 @@
 									<Table.Head class="pr-6 text-right">Aksi</Table.Head>
 								</Table.Row>
 							</Table.Header>
-							<Table.Body>
+							<Table.Body class="block md:table-row-group">
 								{#each data.costs as cost (cost.id)}
-									<Table.Row class="group transition-colors hover:bg-slate-50/50">
-										<Table.Cell class="px-6 py-4">
+									<Table.Row
+										class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
+									>
+										<!-- Column 1: Nama Biaya (main layout on mobile) -->
+										<Table.Cell
+											class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
+										>
+											<div class="flex flex-col">
+												<span class="font-bold text-slate-900">{cost.name}</span>
+												<span class="mt-0.5 text-xs text-slate-400">
+													{formatDate(cost.createdAt)}
+												</span>
+											</div>
+											<Button
+												variant="ghost"
+												size="icon"
+												class="ml-4 h-8 w-8 shrink-0 md:hidden"
+												onclick={() => (expandedBiaya[cost.id] = !expandedBiaya[cost.id])}
+												aria-label="Expand row"
+											>
+												{#if expandedBiaya[cost.id]}
+													<ChevronUp class="h-4 w-4" />
+												{:else}
+													<ChevronDown class="h-4 w-4" />
+												{/if}
+											</Button>
+										</Table.Cell>
+
+										<!-- Column 2: Tanggal (hidden on mobile, merged above) -->
+										<Table.Cell class="hidden border-b-0 p-4 md:table-cell md:border-b md:p-4">
 											<span class="text-sm text-slate-600">{formatDate(cost.createdAt)}</span>
 										</Table.Cell>
-										<Table.Cell>
-											<div class="flex flex-col">
-												<span class="font-medium text-slate-900">{cost.name}</span>
-												{#if cost.dueDate}
-													<span class="text-[10px] text-slate-400">
-														Jatuh Tempo: {formatDate(cost.dueDate)}
-													</span>
-												{/if}
-											</div>
-										</Table.Cell>
-										<Table.Cell>
+
+										<!-- Mobile-only Due Date -->
+										{#if cost.dueDate}
+											<Table.Cell
+												class="{expandedBiaya[cost.id]
+													? 'flex'
+													: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:hidden"
+											>
+												<span class="text-xs font-semibold text-slate-400">Jatuh Tempo</span>
+												<span class="text-sm text-slate-900">{formatDate(cost.dueDate)}</span>
+											</Table.Cell>
+										{/if}
+
+										<!-- Column 3: Peralatan / Maintenance -->
+										<Table.Cell
+											class="{expandedBiaya[cost.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden"
+												>Peralatan / Maintenance</span
+											>
 											{#if cost.maintenance}
 												<div class="flex flex-col">
 													<span class="text-sm text-slate-700">
 														{cost.maintenance.equipment?.item?.name || 'Alat'}
 													</span>
-													<Badge variant="outline" class="w-fit text-[9px] uppercase">
+													<Badge variant="outline" class="mt-0.5 w-fit text-[9px] uppercase">
 														{cost.maintenance.maintenanceType}
 													</Badge>
 												</div>
@@ -451,16 +598,41 @@
 												<span class="text-xs text-slate-400 italic">Umum / Tidak Terkait</span>
 											{/if}
 										</Table.Cell>
-										<Table.Cell>
+
+										<!-- Column 4: Jumlah Biaya -->
+										<Table.Cell
+											class="{expandedBiaya[cost.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden"
+												>Jumlah Biaya</span
+											>
 											<span class="font-bold text-slate-900">{formatCurrency(cost.amount)}</span>
 										</Table.Cell>
-										<Table.Cell>
-											<Badge variant="outline" class="px-3 py-1 {getStatusColor(cost.status)}">
+
+										<!-- Column 5: Status -->
+										<Table.Cell
+											class="{expandedBiaya[cost.id]
+												? 'flex'
+												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Status</span>
+											<Badge
+												variant="outline"
+												class="w-fit px-3 py-1 {getStatusColor(cost.status)}"
+											>
 												{cost.status.replace('_', ' ')}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell class="pr-6 text-right">
-											<div class="flex justify-end gap-1">
+
+										<!-- Column 6: Aksi -->
+										<Table.Cell
+											class="{expandedBiaya[cost.id]
+												? 'flex'
+												: 'hidden'} justify-end border-b-0 bg-slate-50/50 p-4 pr-6 md:table-cell md:border-b md:bg-transparent md:p-4 md:pr-6 md:text-right"
+										>
+											<div class="flex w-full justify-end gap-1 md:w-auto">
 												{#if cost.attachmentPath}
 													<Button
 														size="icon"
@@ -476,7 +648,7 @@
 												<Button
 													size="icon"
 													variant="ghost"
-													href="{base}/admin/pemeliharaan/biaya/{cost.id}"
+													href="/admin/pemeliharaan/biaya/{cost.id}"
 													class="h-8 w-8 text-slate-400 hover:bg-slate-100"
 												>
 													<ChevronRight size={16} />
@@ -485,8 +657,8 @@
 										</Table.Cell>
 									</Table.Row>
 								{:else}
-									<Table.Row>
-										<Table.Cell colspan={6} class="h-64 text-center">
+									<Table.Row class="flex flex-col md:table-row">
+										<Table.Cell colspan={6} class="h-64 text-center md:table-cell">
 											<div class="flex flex-col items-center justify-center gap-3 text-slate-400">
 												<DollarSign size={48} strokeWidth={1} class="text-slate-200" />
 												<p class="text-sm">Belum ada data analisis biaya</p>
@@ -498,9 +670,9 @@
 						</Table.Root>
 					</div>
 				</Tabs.Content>
-			</Tabs.Root>
-		</Card.Content>
-	</Card.Root>
+			</Card.Content>
+		</Card.Root>
+	</Tabs.Root>
 
 	<!-- Footer Info -->
 	<div class="flex items-center justify-between text-xs text-slate-400">

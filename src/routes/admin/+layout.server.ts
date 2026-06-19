@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { notification } from '$lib/server/db/schema';
 import { and, desc, eq, or, count } from 'drizzle-orm';
@@ -7,7 +6,7 @@ import { redirect } from '@sveltejs/kit';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user) {
-		return redirect(302, `${base}/`);
+		return redirect(302, `/`);
 	}
 
 	const latestNotifications = await db.query.notification.findMany({
@@ -23,7 +22,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		.where(
 			and(
 				eq(notification.read, false),
-				or(eq(notification.userId, locals.user.id), eq(notification.laboratoriumId, locals.user.laboratorium?.id))
+				or(
+					eq(notification.userId, locals.user.id),
+					eq(notification.laboratoriumId, locals.user.laboratorium?.id)
+				)
 			)
 		);
 

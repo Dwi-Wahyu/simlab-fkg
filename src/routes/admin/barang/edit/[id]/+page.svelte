@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
 	let { data, form }: PageProps = $props();
@@ -77,7 +76,7 @@
 
 		<div class="mt-4 flex gap-3">
 			<a
-				href="{base}/{data.user.organization.slug}/barang"
+				href="/{data.user.organization.slug}/barang"
 				class="flex-1 rounded-lg border border-gray-300 py-3 text-center font-medium transition hover:bg-gray-50"
 			>
 				Batal

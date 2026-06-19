@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
@@ -21,7 +20,7 @@
 
 <div class="space-y-6 p-6">
 	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="{base}/admin/laboratorium">
+		<Button variant="outline" size="icon" href="/admin/laboratorium">
 			<ArrowLeft class="size-4" />
 		</Button>
 		<div>
@@ -78,7 +77,7 @@
 				</div>
 				<div class="grid grid-cols-3 gap-2">
 					<span class="font-semibold">ID:</span>
-					<span class="col-span-2 text-xs font-mono">{lab.id}</span>
+					<span class="col-span-2 font-mono text-xs">{lab.id}</span>
 				</div>
 			</Card.Content>
 		</Card.Root>

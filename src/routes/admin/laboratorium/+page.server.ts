@@ -1,4 +1,3 @@
-import { base } from '$app/paths';
 import { db } from '$lib/server/db';
 import { laboratorium, laboratoriumMember, user } from '$lib/server/db/schema';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -8,7 +7,7 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	const userSession = locals.user;
 	if (!userSession || userSession.role !== 'superadmin') {
-		throw redirect(302, `${base}/admin/dashboard`);
+		throw redirect(302, `/admin/dashboard`);
 	}
 
 	const labs = await db.query.laboratorium.findMany({

@@ -1,9 +1,16 @@
 import { db } from '$lib/server/db';
-import { lending, user, laboratorium } from '$lib/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { lending } from '$lib/server/db/schema';
+import { desc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	// If student (peneliti), do not load all lendings on server side (lazy loaded via client API)
+	if (locals.user?.role === 'peneliti') {
+		return {
+			lendings: []
+		};
+	}
+
 	const lendings = await db.query.lending.findMany({
 		with: {
 			requestedByUser: true,

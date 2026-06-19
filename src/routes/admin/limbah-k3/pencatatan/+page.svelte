@@ -1,22 +1,21 @@
 <script lang="ts">
-	import { base } from '$app/paths';
+	import { ArrowLeft, ChevronLeft, Loader2, Save, Trash2 } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { Trash2, ArrowLeft, Save, Loader2 } from '@lucide/svelte';
-	import type { PageData, ActionData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let loading = $state(false);
 	let showDialog = $state(false);
-	
+
 	let dialogConfig = $derived.by(() => {
 		if (form?.success) {
 			return {
@@ -70,23 +69,33 @@
 	async function handleAction() {
 		showDialog = false;
 		if (form?.success) {
-			await goto(`${base}/admin/limbah-k3`);
+			await goto(`/admin/limbah-k3`);
 		}
 	}
 </script>
 
 <div class="flex flex-col gap-6 p-6">
-	<div class="flex items-center gap-4">
-		<Button variant="outline" size="icon" href="{base}/admin/limbah-k3" title="Kembali">
-			<ArrowLeft class="h-4 w-4" />
-		</Button>
-		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold tracking-tight">Catat Limbah Baru</h1>
-			<p class="text-muted-foreground">Input detail limbah medis atau kimia untuk monitoring.</p>
-		</div>
-	</div>
+	<Button variant="outline" href="/admin/limbah-k3" title="Kembali" class="-mb-2 w-fit" size="sm">
+		<ChevronLeft class="h-4 w-4" /> Kembali
+	</Button>
 
-	<div class="max-w-2xl">
+	<div class="mx-auto w-full max-w-2xl space-y-6">
+		<div class="flex items-center gap-4">
+			<Button
+				variant="outline"
+				size="icon"
+				href="/admin/limbah-k3"
+				title="Kembali"
+				class="hidden shrink-0 md:flex"
+			>
+				<ChevronLeft class="size-5" />
+			</Button>
+			<div class="flex flex-col gap-1">
+				<h1 class="text-3xl font-bold tracking-tight">Catat Limbah Baru</h1>
+				<p class="text-muted-foreground">Input detail limbah medis atau kimia untuk monitoring.</p>
+			</div>
+		</div>
+
 		<form
 			method="POST"
 			use:enhance={() => {
@@ -97,15 +106,11 @@
 				};
 			}}
 		>
-			<Card.Root>
-				<Card.Header>
-					<Card.Title>Informasi Limbah</Card.Title>
-					<Card.Description>Lengkapi detail limbah yang akan dicatat.</Card.Description>
-				</Card.Header>
+			<Card.Root mobileAware={true}>
 				<Card.Content class="space-y-6">
 					<!-- Laboratorium -->
 					<div class="grid gap-2">
-						<Label for="laboratoriumId">Laboratorium</Label>
+						<Label for="laboratoriumId">Laboratorium <span class="text-red-500">*</span></Label>
 						<Select.Root type="single" name="laboratoriumId" bind:value={selectedLaboratorium}>
 							<Select.Trigger class="w-full">
 								{labTrigger}
@@ -121,7 +126,7 @@
 					<!-- Waste Type & Weight -->
 					<div class="grid gap-4 sm:grid-cols-2">
 						<div class="grid gap-2">
-							<Label for="wasteType">Jenis Limbah</Label>
+							<Label for="wasteType">Jenis Limbah <span class="text-red-500">*</span></Label>
 							<Select.Root type="single" name="wasteType" bind:value={selectedWasteType}>
 								<Select.Trigger class="w-full">
 									{wasteTypeTrigger}
@@ -135,7 +140,9 @@
 						</div>
 
 						<div class="grid gap-2">
-							<Label for="weightGram">Berat / Volume (gram)</Label>
+							<Label for="weightGram"
+								>Berat / Volume (gram) <span class="text-red-500">*</span></Label
+							>
 							<Input
 								type="number"
 								id="weightGram"
@@ -149,14 +156,16 @@
 
 					<!-- Disposal Status -->
 					<div class="grid gap-2">
-						<Label for="disposalStatus">Status Pembuangan</Label>
+						<Label for="disposalStatus">Status Pembuangan <span class="text-red-500">*</span></Label
+						>
 						<Select.Root type="single" name="disposalStatus" bind:value={selectedDisposalStatus}>
 							<Select.Trigger class="w-full">
 								{statusTrigger}
 							</Select.Trigger>
 							<Select.Content>
 								{#each disposalStatuses as status (status.value)}
-									<Select.Item value={status.value} label={status.label}>{status.label}</Select.Item>
+									<Select.Item value={status.value} label={status.label}>{status.label}</Select.Item
+									>
 								{/each}
 							</Select.Content>
 						</Select.Root>
@@ -174,7 +183,7 @@
 					</div>
 				</Card.Content>
 				<Card.Footer class="flex justify-end gap-2 border-t p-6">
-					<Button variant="outline" href="{base}/admin/limbah-k3" disabled={loading}>Batal</Button>
+					<Button variant="outline" href="/admin/limbah-k3" disabled={loading}>Batal</Button>
 					<Button type="submit" disabled={loading}>
 						{#if loading}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
