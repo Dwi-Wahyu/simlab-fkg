@@ -25,8 +25,8 @@
 	const userImage = $derived(
 		data.user.image
 			? data.user.image.startsWith('http://') ||
-			  data.user.image.startsWith('https://') ||
-			  data.user.image.startsWith('/')
+				data.user.image.startsWith('https://') ||
+				data.user.image.startsWith('/')
 				? data.user.image
 				: `/uploads/profiles/${data.user.image}`
 			: ''
@@ -142,7 +142,13 @@
 					</Card.Description>
 				</Card.Header>
 				<Card.Content>
-					<form action="?/updateProfile" method="POST" enctype="multipart/form-data" use:enhance class="space-y-4">
+					<form
+						action="?/updateProfile"
+						method="POST"
+						enctype="multipart/form-data"
+						use:enhance
+						class="space-y-4"
+					>
 						<div class="grid gap-4 sm:grid-cols-2">
 							<div class="space-y-2">
 								<Label for="name">Nama Lengkap</Label>
@@ -175,9 +181,11 @@
 								type="email"
 								value={data.user.email}
 								disabled
-								class="bg-slate-50 cursor-not-allowed text-slate-500"
+								class="cursor-not-allowed bg-slate-50 text-slate-500"
 							/>
-							<p class="text-[11px] text-muted-foreground">Email terikat pada akun dan tidak dapat diubah secara langsung.</p>
+							<p class="text-[11px] text-muted-foreground">
+								Email terikat pada akun dan tidak dapat diubah secara langsung.
+							</p>
 						</div>
 						<div class="space-y-2">
 							<Label for="image">Foto Profil</Label>
@@ -188,9 +196,11 @@
 								accept=".jpg,.jpeg,.png"
 								onchange={handleFileChange}
 							/>
-							<p class="text-xs text-muted-foreground">Format: JPG, JPEG, atau PNG. Maksimal 5MB.</p>
+							<p class="text-xs text-muted-foreground">
+								Format: JPG, JPEG, atau PNG. Maksimal 5MB.
+							</p>
 						</div>
-						<Button type="submit" class="w-full bg-[#2D5A43] hover:bg-[#234735]">Update Profil</Button>
+						<Button type="submit" class="w-full ">Update Profil</Button>
 					</form>
 				</Card.Content>
 			</Card.Root>

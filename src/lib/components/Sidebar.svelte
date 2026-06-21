@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		Activity,
+		CalendarDays,
 		Clipboard,
 		ClipboardList,
 		FlaskConical,
@@ -56,6 +57,11 @@
 					role: ['superadmin', 'koordinator', 'kepalaLab']
 				},
 				{
+					name: 'Kalender Jadwal',
+					path: `/admin/kalender-jadwal`,
+					role: ['superadmin', 'koordinator', 'kepalaLab']
+				},
+				{
 					name: 'Praktikum',
 					path: `/admin/master/seri`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']
@@ -83,6 +89,14 @@
 			]
 		},
 
+		{
+			name: 'Kalender Jadwal',
+			icon: CalendarDays,
+			isDropdown: false,
+			path: `/admin/kalender-jadwal`,
+			role: ['instruktur'],
+			children: []
+		},
 		{
 			name: 'Penilaian',
 			icon: Clipboard,
@@ -305,8 +319,8 @@
 	class="sidebar-mobile-base fixed inset-y-0 left-0 z-50 flex h-screen flex-col overflow-hidden bg-[#2D5A43] text-white
     shadow-xl transition-all duration-300 ease-in-out md:relative md:border-r md:border-white/5
     {sidebar.open
-		? 'sidebar-mobile-open w-[260px] translate-x-0 shadow-2xl md:shadow-none'
-		: 'w-0 -translate-x-full md:w-[70px] md:translate-x-0'}
+		? 'sidebar-mobile-open w-65 translate-x-0 shadow-2xl md:shadow-none'
+		: 'w-0 -translate-x-full md:w-17.5 md:translate-x-0'}
     "
 >
 	<div
@@ -348,9 +362,9 @@
 		{/if}
 	</div>
 
-	<nav class="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-10">
+	<nav class="scrollbar-hide flex-1 overflow-x-hidden overflow-y-auto px-4 pb-10">
 		<div
-			class="mb-4 px-2 text-[11px] font-semibold tracking-wider text-white/50 uppercase transition-opacity"
+			class="mb-4 hidden px-2 text-[11px] font-semibold tracking-wider text-white/50 uppercase transition-opacity md:block"
 			class:opacity-0={!sidebar.open && !isMobile.current}
 		>
 			Menu Utama
@@ -378,7 +392,7 @@
 
 		{#if ['superadmin', 'kakomlek'].includes(user.role)}
 			<div
-				class="mt-8 mb-4 px-2 text-[11px] font-semibold tracking-wider text-white/50 uppercase transition-opacity"
+				class="mt-8 mb-4 hidden px-2 text-[11px] font-semibold tracking-wider text-white/50 uppercase transition-opacity md:block"
 				class:opacity-0={!sidebar.open && !isMobile.current}
 			>
 				Sistem
@@ -420,6 +434,15 @@
 </aside>
 
 <style>
+	nav {
+		scrollbar-width: none; /* Firefox */
+		-ms-overflow-style: none; /* IE/Edge */
+	}
+
+	nav::-webkit-scrollbar {
+		display: none; /* Chrome/Safari */
+	}
+
 	/* Memastikan di mobile sidebar tertutup secara default saat SSR */
 	@media (max-width: 767px) {
 		:global(.sidebar-mobile-base) {

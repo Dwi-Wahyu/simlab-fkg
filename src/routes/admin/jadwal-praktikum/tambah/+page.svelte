@@ -42,9 +42,12 @@
 	const seriesTriggerContent = $derived(
 		data.series.find((s: any) => s.id === selectedSeriesId)?.name ?? 'Pilih Seri'
 	);
+	const selectedClass = $derived(data.classes.find((c: any) => c.id === selectedClassId));
+	const participantCount = $derived(selectedClass?.members?.length ?? 0);
+
 	const classTriggerContent = $derived(
-		data.classes.find((c: any) => c.id === selectedClassId)
-			? `${data.classes.find((c: any) => c.id === selectedClassId).name} - Angkatan ${data.classes.find((c: any) => c.id === selectedClassId).batch}`
+		selectedClass
+			? `${selectedClass.name} - Angkatan ${selectedClass.batch}`
 			: 'Pilih Kelas'
 	);
 	const labTriggerContent = $derived(
@@ -311,7 +314,8 @@
 
 					<div class="space-y-2">
 						<Label for="participantCount">Jumlah Peserta</Label>
-						<Input id="participantCount" name="participantCount" type="number" min="1" required />
+						<Input id="participantCount" type="number" value={participantCount} disabled />
+						<input type="hidden" name="participantCount" value={participantCount} />
 					</div>
 
 					<div class="space-y-2">

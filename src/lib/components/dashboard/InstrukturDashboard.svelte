@@ -42,8 +42,8 @@
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between">
-				<Card.Title class="text-base">Jadwal Mendatang</Card.Title>
-				<Button href="/admin/jadwal-praktikum" variant="outline" size="xs">Lihat Semua</Button>
+				<Card.Title>Jadwal Mendatang</Card.Title>
+				<Button href="/admin/jadwal-praktikum" variant="link" size="xs">Lihat Semua</Button>
 			</Card.Header>
 			<Card.Content>
 				{#if data.upcomingSchedules.length === 0}
@@ -78,8 +78,8 @@
 
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between">
-				<Card.Title class="text-base">Penilaian Perlu Diisi</Card.Title>
-				<Button href="/admin/penilaian" variant="outline" size="xs">Lihat</Button>
+				<Card.Title>Penilaian Perlu Diisi</Card.Title>
+				<Button href="/admin/penilaian" variant="link" size="xs">Lihat</Button>
 			</Card.Header>
 			<Card.Content>
 				{#if data.pendingAssessments.length === 0}

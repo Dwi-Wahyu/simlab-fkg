@@ -3,7 +3,12 @@
 	"compilerOptions": {
 		"rewriteRelativeImportExtensions": true,
 		"allowJs": true,
-		"types": ["vite/client", "@vite-pwa/sveltekit"],
+		"types": [
+			"vite/client",
+			"@vite-pwa/sveltekit",
+			"vite-plugin-pwa/client",
+			"vite-plugin-pwa/info"
+		],
 		"checkJs": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,

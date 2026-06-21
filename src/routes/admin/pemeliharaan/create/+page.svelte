@@ -91,12 +91,12 @@
 	<title>Tambah Pemeliharaan | SIM LAB</title>
 </svelte:head>
 
-<div class="flex max-w-4xl flex-col gap-6 p-6">
+<div class="mx-auto flex max-w-4xl flex-col gap-6 p-6">
 	<Button
 		variant="outline"
 		href="/admin/pemeliharaan"
 		title="Kembali"
-		class="-mb-2 w-fit"
+		class="-mb-2 w-fit md:hidden"
 		size="sm"
 	>
 		<ChevronLeft class="h-4 w-4" /> Kembali

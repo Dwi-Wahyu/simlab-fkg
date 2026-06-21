@@ -2,6 +2,7 @@ import createReport from 'docx-templates';
 import { and, eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import path from 'path';
+import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/auth.schema';
 import {
@@ -323,7 +324,7 @@ async function convertDocxToPdf(docxBuffer: Buffer, fileName: string): Promise<B
 	const formData = new FormData();
 	formData.append('files', new Blob([docxBuffer]), fileName);
 
-	const response = await fetch('http://localhost:4000/forms/libreoffice/convert', {
+	const response = await fetch(`${env.GOTENBERG_URL || 'http://localhost:4000'}/forms/libreoffice/convert`, {
 		method: 'POST',
 		body: formData
 	});

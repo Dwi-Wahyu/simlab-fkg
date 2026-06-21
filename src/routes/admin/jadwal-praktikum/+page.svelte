@@ -187,10 +187,7 @@
 				Kelola jadwal praktikum, OSCE, dan pelatihan di laboratorium.
 			</p>
 		</div>
-		<Button
-			href="/admin/jadwal-praktikum/tambah"
-			class="w-full justify-center gap-2 bg-[#2D5A43] hover:bg-[#234735] sm:w-auto"
-		>
+		<Button href="/admin/jadwal-praktikum/tambah" class="w-full justify-center gap-2  sm:w-auto">
 			<Plus class="size-4" />
 			Tambah Jadwal
 		</Button>
@@ -202,7 +199,7 @@
 		</div>
 	{/if}
 
-	<div class="rounded-md border bg-card shadow-sm overflow-hidden">
+	<div class="overflow-hidden rounded-md border bg-card shadow-sm">
 		<Table.Root class="block md:table">
 			<Table.Header class="hidden md:table-header-group">
 				<Table.Row class="md:table-row">
@@ -215,7 +212,10 @@
 			</Table.Header>
 			<Table.Body class="block md:table-row-group">
 				{#each data.schedules as schedule (schedule.id)}
-					<Table.Row class="flex flex-col border-b last:border-0 md:table-row md:border-b">
+					<Table.Row
+						onclick={() => toggleExpand(schedule.id)}
+						class="flex flex-col border-b last:border-0 md:table-row md:border-b"
+					>
 						<!-- Column 1: Kegiatan (always visible on mobile, header-like) -->
 						<Table.Cell
 							class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:p-4"
@@ -231,7 +231,6 @@
 								variant="ghost"
 								size="icon"
 								class="ml-4 h-8 w-8 shrink-0 md:hidden"
-								onclick={() => toggleExpand(schedule.id)}
 								aria-label="Expand row"
 							>
 								{#if expandedSchedules[schedule.id]}
@@ -278,7 +277,9 @@
 							<span class="mb-0.5 text-xs font-semibold text-slate-400 md:hidden">Instruktur</span>
 							<div class="flex flex-wrap gap-2">
 								{#each schedule.instructors as instr (instr.user.name)}
-									<div class="flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5">
+									<div
+										class="flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5"
+									>
 										<div
 											class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
 										>

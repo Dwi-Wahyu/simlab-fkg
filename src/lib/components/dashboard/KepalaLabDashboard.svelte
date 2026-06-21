@@ -22,7 +22,7 @@
 		<p class="text-sm text-muted-foreground">Dashboard Kepala Laboratorium</p>
 	</div>
 
-	<div class="grid grid-cols-3 gap-3 md:grid-cols-6">
+	<div class="grid grid-cols-2 gap-3 md:grid-cols-6">
 		{#each inventoryItems as item}
 			<Card.Root>
 				<Card.Content>
@@ -37,7 +37,6 @@
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between">
 				<Card.Title>Peminjaman Menunggu Persetujuan</Card.Title>
-				<Button href="/admin/peminjaman" variant="link" size="xs">Lihat</Button>
 			</Card.Header>
 			<Card.Content>
 				{#if data.pendingLendingApprovals.length === 0}
@@ -58,6 +57,11 @@
 					</div>
 				{/if}
 			</Card.Content>
+			{#if data.pendingLendingApprovals.length !== 0}
+				<Card.Footer>
+					<Button href="/admin/peminjaman" variant="link">Lihat Semua</Button>
+				</Card.Footer>
+			{/if}
 		</Card.Root>
 
 		<Card.Root>

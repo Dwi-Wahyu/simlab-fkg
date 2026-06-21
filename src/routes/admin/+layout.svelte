@@ -11,22 +11,21 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
 	import { setSidebarState } from '$lib/components/ui/sidebar/context.svelte.js';
+	import { onMount } from 'svelte';
 
 	let { data, children } = $props();
 
 	const userImage = $derived(
 		data.user?.image
 			? data.user.image.startsWith('http://') ||
-			  data.user.image.startsWith('https://') ||
-			  data.user.image.startsWith('/')
+				data.user.image.startsWith('https://') ||
+				data.user.image.startsWith('/')
 				? data.user.image
 				: `/uploads/profiles/${data.user.image}`
 			: ''
 	);
 
-	// Inisialisasi sidebar state: tertutup di mobile, terbuka di desktop
-	const initialSidebarOpen = typeof window !== 'undefined' ? window.innerWidth >= 768 : true;
-	const sidebar = setSidebarState(initialSidebarOpen);
+	const sidebar = setSidebarState(false); // SSR default: tutup (aman untuk mobile)
 
 	let isLogoutDialogOpen = $state(false);
 
@@ -75,6 +74,12 @@
 	function handleLogout() {
 		goto(`/logout`);
 	}
+
+	onMount(() => {
+		if (window.innerWidth >= 768) {
+			sidebar.setOpen(true); // Desktop: buka setelah hydration
+		}
+	});
 </script>
 
 <div class="flex h-screen bg-[#F8F9FA]">
@@ -103,15 +108,18 @@
 				<div class="hidden items-center gap-6 md:flex">
 					<PWAInstallButton />
 
-					<NotificationBell
+					<!-- <NotificationBell
 						notifications={data.notifications}
 						unreadCount={data.unreadCount}
 						organizationId={data.user.laboratorium?.id}
-					/>
+					/> -->
 
 					<div class="h-8 w-px bg-slate-200"></div>
 
-					<a href="/admin/profil" class="flex items-center gap-3 group hover:opacity-90 transition-opacity">
+					<a
+						href="/admin/profil"
+						class="group flex items-center gap-3 transition-opacity hover:opacity-90"
+					>
 						<Avatar
 							src={userImage}
 							alt={data.user.name}
@@ -119,7 +127,10 @@
 							class="h-9 w-9 border-2 border-primary/10 transition-transform group-hover:scale-105"
 						/>
 						<div class="flex flex-col">
-							<span class="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{data.user.name}</span>
+							<span
+								class="text-sm font-bold text-slate-700 transition-colors group-hover:text-primary"
+								>{data.user.name}</span
+							>
 							<span class="text-[11px] font-medium text-slate-400">
 								{toTitleCase(data.user.role)}
 							</span>
@@ -138,7 +149,7 @@
 				<!-- Tampilan Mobile (Sembunyi di Desktop) -->
 				<div class="flex items-center gap-3 md:hidden">
 					<PWAInstallButton />
-					
+
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
 							class="rounded-full ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -163,14 +174,14 @@
 							<DropdownMenu.Group>
 								<a
 									href="/admin/profil"
-									class="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-slate-100 focus:bg-slate-100 rounded-sm outline-none transition-colors"
+									class="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-slate-100 focus:bg-slate-100"
 								>
 									<User class="size-5 text-slate-500" />
 									<span>Profil Saya</span>
 								</a>
-								<a
+								<!-- <a
 									href="/admin/notifikasi"
-									class="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-slate-100 focus:bg-slate-100 rounded-sm outline-none transition-colors"
+									class="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-slate-100 focus:bg-slate-100"
 								>
 									<Bell class="size-5 text-slate-500" />
 									<span>Notifikasi</span>
@@ -181,10 +192,10 @@
 											{data.unreadCount}
 										</span>
 									{/if}
-								</a>
+								</a> -->
 								<a
 									href="/admin/pengaturan"
-									class="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-slate-100 focus:bg-slate-100 rounded-sm outline-none transition-colors"
+									class="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-slate-100 focus:bg-slate-100"
 								>
 									<Settings class="size-5 text-slate-500" />
 									<span>Pengaturan</span>

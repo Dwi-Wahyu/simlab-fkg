@@ -13,7 +13,9 @@
 
 	let { data, form } = $props();
 	let item = $state(data.item);
-	$effect(() => { item = data.item; });
+	$effect(() => {
+		item = data.item;
+	});
 
 	let isLoading = $state(false);
 
@@ -28,7 +30,9 @@
 	});
 
 	let qrCodePreview = $state<string | null>(item.qrCodePath);
-	$effect(() => { qrCodePreview = item.qrCodePath; });
+	$effect(() => {
+		qrCodePreview = item.qrCodePath;
+	});
 	let removeCurrentQr = $state(false);
 
 	// State untuk NotificationDialog
@@ -108,7 +112,7 @@
 	function handleDialogAction() {
 		showDialog = false;
 		if (dialogConfig.type === 'success') {
-			goto(`${base}/admin/inventori`);
+			goto(`/admin/inventaris`);
 		}
 	}
 
@@ -135,7 +139,7 @@
 
 <div class="mx-auto max-w-4xl space-y-8 p-6">
 	<div class="flex items-center gap-4">
-		<Button variant="ghost" size="icon" href="{base}/admin/inventori">
+		<Button variant="outline" size="icon" onclick={() => history.back()}>
 			<ArrowLeft class="size-5" />
 		</Button>
 		<div>
@@ -295,12 +299,8 @@
 
 				<!-- Buttons -->
 				<div class="mt-4 flex gap-3 md:col-span-2">
-					<Button variant="outline" class="flex-1" href="{base}/admin/inventori">Batal</Button>
-					<Button
-						type="submit"
-						disabled={isLoading}
-						class="flex-1 bg-[#2D5A43] text-white hover:bg-[#234735]"
-					>
+					<Button variant="outline" class="flex-1" onclick={() => history.back()}>Batal</Button>
+					<Button type="submit" disabled={isLoading} class="flex-1 ">
 						{isLoading ? 'Menyimpan...' : 'Perbarui Item'}
 					</Button>
 				</div>

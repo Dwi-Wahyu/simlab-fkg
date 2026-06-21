@@ -89,7 +89,7 @@
 	});
 </script>
 
-<div class="flex flex-col gap-6 p-4 md:p-8">
+<div class="flex flex-col gap-6 p-4 md:p-6">
 	<div class="flex flex-col gap-2">
 		<h1 class="text-2xl font-bold tracking-tight text-slate-900">Inventaris Alat</h1>
 		<p class="text-slate-500">Manajemen aset dan peralatan laboratorium.</p>
@@ -97,8 +97,8 @@
 
 	{#await data.alatPromise}
 		<!-- Skeleton Summary Cards -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-			{#each Array(4) as _}
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+			{#each Array(5) as _}
 				<Card.Root>
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
 						<div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
@@ -124,11 +124,11 @@
 					<Table.Header>
 						<Table.Row>
 							<Table.Head>Nama Alat</Table.Head>
-							<Table.Head>Serial Number</Table.Head>
-							<Table.Head>Merk</Table.Head>
-							<Table.Head>Lokasi</Table.Head>
-							<Table.Head>Kondisi</Table.Head>
-							<Table.Head>Status</Table.Head>
+							<Table.Head>Total</Table.Head>
+							<Table.Head>Rusak Berat</Table.Head>
+							<Table.Head>Rusak Ringan</Table.Head>
+							<Table.Head>Baik</Table.Head>
+							<Table.Head>Ready</Table.Head>
 							<Table.Head class="text-right">Aksi</Table.Head>
 						</Table.Row>
 					</Table.Header>
@@ -148,7 +148,7 @@
 		</div>
 	{:then res}
 		<!-- Summary Cards -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
 			{#each res.summary as card}
 				<Card.Root>
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -180,7 +180,7 @@
 					value={res.pagination.limit.toString()}
 					onValueChange={handleLimitChange}
 				>
-					<Select.Trigger class="w-[110px]">
+					<Select.Trigger class="w-27.5">
 						{res.pagination.limit} / Hal
 					</Select.Trigger>
 					<Select.Content>
@@ -190,8 +190,8 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				<Button href="/admin/inventaris/tambah" class="bg-[#2D5A43] hover:bg-[#234735]">
-					<Plus class="mr-2 h-4 w-4" /> Tambah Alat
+				<Button href="/admin/inventaris/tambah">
+					<Plus /> Tambah Alat
 				</Button>
 			</div>
 		</div>
@@ -202,19 +202,22 @@
 				<Table.Root class="block md:table">
 					<Table.Header class="hidden md:table-header-group">
 						<Table.Row class="md:table-row">
-							<Table.Head class="px-6 py-4">Nama Alat</Table.Head>
-							<Table.Head>Serial Number</Table.Head>
-							<Table.Head>Merk</Table.Head>
-							<Table.Head>Lokasi</Table.Head>
-							<Table.Head>Kondisi</Table.Head>
-							<Table.Head>Status</Table.Head>
+							<Table.Head class="px-6 py-4">Nama</Table.Head>
+							<Table.Head>Total</Table.Head>
+							<Table.Head>Rusak Berat</Table.Head>
+							<Table.Head>Rusak Ringan</Table.Head>
+							<Table.Head>Baik</Table.Head>
+							<Table.Head>Ready</Table.Head>
 							<Table.Head class="pr-6 text-right">Aksi</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body class="block md:table-row-group">
 						{#if res.items.length === 0}
 							<Table.Row class="flex flex-col md:table-row">
-								<Table.Cell colspan={7} class="py-10 text-center text-muted-foreground md:table-cell">
+								<Table.Cell
+									colspan={7}
+									class="py-10 text-center text-muted-foreground md:table-cell"
+								>
 									Data tidak ditemukan.
 								</Table.Cell>
 							</Table.Row>
@@ -223,29 +226,16 @@
 								<Table.Row
 									class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
 								>
-									<!-- Nama Alat + Mobile status/expand -->
+									<!-- Nama Alat + Mobile expand -->
 									<Table.Cell
 										class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
 									>
 										<div class="flex flex-col">
 											<div class="flex items-center gap-2">
 												<span class="font-bold text-slate-900 md:font-medium">{item.name}</span>
-												<Badge
-													variant="outline"
-													class={cn(
-														'px-1.5 py-0.5 text-[9px] md:hidden',
-														item.status === 'READY'
-															? 'border-green-200 text-green-600'
-															: item.status === 'IN_USE'
-																? 'border-blue-200 text-blue-600'
-																: 'border-red-200 text-red-600'
-													)}
-												>
-													{item.status}
-												</Badge>
 											</div>
 											<div class="mt-0.5 text-xs text-muted-foreground uppercase">
-												{item.brand}
+												{item.equipmentType || '-'}
 											</div>
 										</div>
 										<Button
@@ -263,76 +253,54 @@
 										</Button>
 									</Table.Cell>
 
-									<!-- Serial Number -->
+									<!-- Total -->
 									<Table.Cell
 										class={cn(
 											expandedItems[item.id] ? 'flex' : 'hidden',
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Serial Number</span>
-										<span class="text-sm text-slate-600">{item.serialNumber}</span>
+										{item.total}
 									</Table.Cell>
 
-									<!-- Merk (Hidden on mobile as it's in the first cell) -->
-									<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4">
-										{item.brand}
-									</Table.Cell>
-
-									<!-- Lokasi -->
+									<!-- Rusak Berat -->
 									<Table.Cell
 										class={cn(
 											expandedItems[item.id] ? 'flex' : 'hidden',
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Lokasi</span>
-										<span class="text-sm text-slate-600">{item.warehouse}</span>
+										{item.rusakBerat}
 									</Table.Cell>
 
-									<!-- Kondisi -->
+									<!-- Rusak Ringan -->
 									<Table.Cell
 										class={cn(
 											expandedItems[item.id] ? 'flex' : 'hidden',
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Kondisi</span>
-										<Badge
-											variant={item.condition === 'BAIK'
-												? 'default'
-												: item.condition === 'RUSAK_RINGAN'
-													? 'outline'
-													: 'destructive'}
-											class={cn(
-												'w-fit',
-												item.condition === 'BAIK'
-													? 'bg-green-100 text-green-700 hover:bg-green-100'
-													: item.condition === 'RUSAK_RINGAN'
-														? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
-														: ''
-											)}
-										>
-											{item.condition === 'BAIK'
-												? 'Baik'
-												: item.condition === 'RUSAK_RINGAN'
-													? 'Sedang'
-													: 'Rusak'}
-										</Badge>
+										{item.rusakRingan}
 									</Table.Cell>
 
-									<!-- Status (Desktop only) -->
-									<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4">
-										<Badge
-											variant="outline"
-											class={item.status === 'READY'
-												? 'border-green-200 text-green-600'
-												: item.status === 'IN_USE'
-													? 'border-blue-200 text-blue-600'
-													: 'border-red-200 text-red-600'}
-										>
-											{item.status}
-										</Badge>
+									<!-- Baik -->
+									<Table.Cell
+										class={cn(
+											expandedItems[item.id] ? 'flex' : 'hidden',
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+										)}
+									>
+										{item.baik}
+									</Table.Cell>
+
+									<!-- Ready -->
+									<Table.Cell
+										class={cn(
+											expandedItems[item.id] ? 'flex' : 'hidden',
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+										)}
+									>
+										{item.ready}
 									</Table.Cell>
 
 									<!-- Aksi -->
@@ -342,28 +310,12 @@
 											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 md:text-right'
 										)}
 									>
-										<DropdownMenu.Root>
-											<DropdownMenu.Trigger>
-												{#snippet child({ props })}
-													<Button {...props} variant="ghost" size="icon" class="h-8 w-8">
-														<MoreHorizontal class="h-4 w-4" />
-													</Button>
-												{/snippet}
-											</DropdownMenu.Trigger>
-											<DropdownMenu.Content align="end">
-												<DropdownMenu.Label>Aksi</DropdownMenu.Label>
-												<DropdownMenu.Item href="/admin/inventori/{item.id}">
-													<Eye class="mr-2 h-4 w-4" /> Detail
-												</DropdownMenu.Item>
-												<DropdownMenu.Item href="/admin/inventori/{item.id}/edit">
-													<FileEdit class="mr-2 h-4 w-4" /> Edit
-												</DropdownMenu.Item>
-												<DropdownMenu.Separator />
-												<DropdownMenu.Item class="text-red-600">
-													<Trash2 class="mr-2 h-4 w-4" /> Hapus
-												</DropdownMenu.Item>
-											</DropdownMenu.Content>
-										</DropdownMenu.Root>
+										<Button href="/admin/inventaris/alat/{item.id}" size="sm" variant="outline">
+											<Eye /> Detail
+										</Button>
+										<Button size="sm" variant="outline" href="/admin/inventaris/{item.id}/edit">
+											<FileEdit /> Edit
+										</Button>
 									</Table.Cell>
 								</Table.Row>
 							{/each}

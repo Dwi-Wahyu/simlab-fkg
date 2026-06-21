@@ -117,9 +117,7 @@
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">Master Praktikum</h1>
-			<p class="text-muted-foreground">
-				Kelola grup kegiatan praktikum (misal: "Clinical Skill Lab").
-			</p>
+			<p class="text-muted-foreground">Kelola grup kegiatan praktikum.</p>
 		</div>
 		<Button onclick={openCreate}>
 			<Plus />
@@ -234,7 +232,7 @@
 			class="space-y-4"
 		>
 			<div class="space-y-2">
-				<Label for="name">Nama Seri</Label>
+				<Label for="name">Nama Seri <span class="text-red-500">*</span></Label>
 				<Input
 					id="name"
 					name="name"
@@ -245,7 +243,7 @@
 			</div>
 
 			<div class="space-y-2">
-				<Label for="description">Keterangan (Opsional)</Label>
+				<Label for="description">Keterangan</Label>
 				<Input
 					id="description"
 					name="description"

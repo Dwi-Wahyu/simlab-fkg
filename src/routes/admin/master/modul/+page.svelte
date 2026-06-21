@@ -82,20 +82,17 @@
 </script>
 
 <div class="flex flex-col gap-6 p-6">
-	<div class="flex items-center justify-between">
+	<div class="flex flex-col items-center justify-between gap-4 md:flex-row">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">Modul Praktikum</h1>
 			<p class="text-muted-foreground">Manajemen daftar modul praktikum laboratorium.</p>
 		</div>
-		<Button href="/admin/master/modul/tambah">
+		<Button href="/admin/master/modul/tambah" class="w-full md:w-fit">
 			<Plus class="mr-2 size-4" /> Tambah Modul
 		</Button>
 	</div>
 
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Filter</Card.Title>
-		</Card.Header>
+	<Card.Root mobileAware={true}>
 		<Card.Content>
 			<div class="flex flex-wrap items-end gap-4">
 				<div class="grid w-full max-w-xs gap-1.5">
@@ -133,8 +130,8 @@
 					</Select.Root>
 				</div>
 
-				<Button variant="outline" onclick={resetFilter}>
-					<FilterX class="mr-2 size-4" /> Reset
+				<Button variant="outline" class="w-full md:w-fit" onclick={resetFilter}>
+					<FilterX /> Reset
 				</Button>
 			</div>
 		</Card.Content>
@@ -192,7 +189,7 @@
 							<Table.Cell
 								class={cn(
 									expandedItems[module.id] ? 'flex' : 'hidden',
-									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 								)}
 							>
 								<span class="text-xs font-semibold text-slate-400 md:hidden">Departemen</span>
@@ -203,7 +200,7 @@
 							<Table.Cell
 								class={cn(
 									expandedItems[module.id] ? 'flex' : 'hidden',
-									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 								)}
 							>
 								<span class="text-xs font-semibold text-slate-400 md:hidden">Blok</span>
@@ -214,11 +211,11 @@
 							<Table.Cell
 								class={cn(
 									expandedItems[module.id] ? 'flex' : 'hidden',
-									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 								)}
 							>
 								<span class="text-xs font-semibold text-slate-400 md:hidden">Deskripsi</span>
-								<span class="text-sm text-slate-600 line-clamp-2 md:line-clamp-none"
+								<span class="line-clamp-2 text-sm text-slate-600 md:line-clamp-none"
 									>{module.description ?? '-'}</span
 								>
 							</Table.Cell>
@@ -227,7 +224,7 @@
 							<Table.Cell
 								class={cn(
 									expandedItems[module.id] ? 'flex' : 'hidden',
-									'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 md:text-right'
+									'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
 								)}
 							>
 								<div class="flex justify-end gap-2">

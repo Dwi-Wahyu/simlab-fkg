@@ -153,12 +153,12 @@
 	});
 </script>
 
-<div class="mx-auto max-w-4xl flex flex-col gap-6 p-6">
+<div class="mx-auto flex max-w-4xl flex-col gap-6 p-6">
 	<Button
 		variant="outline"
 		href="/admin/pemeliharaan?tab=biaya"
 		title="Kembali"
-		class="-mb-2 w-fit"
+		class="-mb-2 w-fit md:hidden"
 		size="sm"
 	>
 		<ChevronLeft class="h-4 w-4" /> Kembali
@@ -166,20 +166,27 @@
 
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-4">
-			<Button variant="outline" size="icon" href="/admin/pemeliharaan?tab=biaya" class="hidden md:flex">
+			<Button
+				variant="outline"
+				size="icon"
+				href="/admin/pemeliharaan?tab=biaya"
+				class="hidden md:flex"
+			>
 				<ChevronLeft size={24} />
 			</Button>
 			<div>
 				<h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
 					Catat Analisis Biaya Baru
 				</h1>
-				<p class="text-sm text-slate-500">Input rincian pengeluaran untuk operasional laboratorium.</p>
+				<p class="text-sm text-slate-500">
+					Input rincian pengeluaran untuk operasional laboratorium.
+				</p>
 			</div>
 		</div>
 	</div>
 
 	<Card.Root>
-		<Card.Content class="p-8">
+		<Card.Content>
 			<form
 				method="POST"
 				enctype="multipart/form-data"
@@ -194,7 +201,7 @@
 						}
 					};
 				}}
-				class="space-y-8"
+				class="space-y-6"
 			>
 				<!-- Info Utama -->
 				<div class="grid gap-6 md:grid-cols-2">
@@ -241,9 +248,9 @@
 				<!-- Rincian Biaya -->
 				<div class="space-y-4">
 					<div class="flex items-center justify-between">
-						<Label class="text-lg font-semibold">Rincian Item Biaya</Label>
-						<Button type="button" variant="outline" size="sm" onclick={addItem} class="gap-1.5">
-							<Plus size={16} />
+						<Label class="font-semibold">Rincian Item Biaya</Label>
+						<Button type="button" variant="outline" size="xs" onclick={addItem}>
+							<Plus />
 							Tambah Baris
 						</Button>
 					</div>
@@ -284,9 +291,9 @@
 					</div>
 
 					<!-- Total -->
-					<div class="flex justify-end pt-4">
+					<div class="w-full">
 						<div
-							class="flex w-full max-w-md items-center justify-between rounded-lg border bg-slate-50 px-6 py-3"
+							class="flex w-full items-center justify-between rounded-lg border bg-slate-50 px-6 py-3"
 						>
 							<span class="text-sm font-medium tracking-wider text-slate-500 uppercase"
 								>Total Keseluruhan</span
@@ -297,7 +304,7 @@
 					<input type="hidden" name="items" value={JSON.stringify(items)} />
 				</div>
 
-				<div class="grid gap-6 border-t pt-4 md:grid-cols-2">
+				<div class="grid gap-6 md:grid-cols-2">
 					<div class="space-y-2">
 						<Label for="status">Status Pembayaran <span class="text-red-500">*</span></Label>
 						<Select.Root type="single" bind:value={selectedStatus}>
@@ -323,7 +330,7 @@
 				<div class="space-y-2">
 					<Label for="attachment">Lampiran Bukti (Kwitansi/Invoice)</Label>
 					<div
-						class="group relative flex min-h-[120px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 transition-all hover:border-[#2D5A43] hover:bg-white"
+						class="group relative flex min-h-30 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 transition-all hover:border-[#2D5A43] hover:bg-white"
 					>
 						{#if fileName}
 							<div class="flex w-full items-center justify-between px-4">
@@ -340,7 +347,7 @@
 										</div>
 									{/if}
 									<div class="text-left">
-										<p class="max-w-[200px] truncate text-sm font-semibold text-slate-700">
+										<p class="max-w-50 truncate text-sm font-semibold text-slate-700">
 											{fileName}
 										</p>
 										<p class="text-xs text-slate-500">{fileSize}</p>
@@ -385,12 +392,12 @@
 				</div>
 
 				<!-- Submit Buttons -->
-				<div class="flex items-center justify-end gap-3 border-t pt-4">
+				<div class="flex items-center justify-end gap-3">
 					<Button variant="outline" href="/admin/pemeliharaan?tab=biaya">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading}
-						class="min-w-[160px] bg-[#2D5A43] text-white hover:bg-[#234735]"
+						class="min-w-40 bg-[#2D5A43] text-white hover:bg-[#234735]"
 					>
 						{isLoading ? 'Menyimpan...' : 'Simpan Analisis'}
 					</Button>
@@ -402,7 +409,7 @@
 
 <!-- Note Dialog -->
 <Dialog.Root bind:open={isNoteDialogOpen}>
-	<Dialog.Content class="sm:max-w-[425px]">
+	<Dialog.Content class="sm:max-w-106.25">
 		<Dialog.Header>
 			<Dialog.Title>Tambah Catatan Item</Dialog.Title>
 			<Dialog.Description>Berikan keterangan detail untuk rincian biaya ini.</Dialog.Description>

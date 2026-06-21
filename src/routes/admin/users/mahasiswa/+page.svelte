@@ -172,14 +172,14 @@
 					value={res.pagination.limit.toString()}
 					onValueChange={handleLimitChange}
 				>
-					<Select.Trigger class="w-[110px]">
-						{res.pagination.limit} / Hal
+					<Select.Trigger class="w-full md:w-27.5">
+						{res.pagination.limit} / Halaman
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="10" label="10 / Halaman">10 / Hal</Select.Item>
-						<Select.Item value="25" label="25 / Halaman">25 / Hal</Select.Item>
-						<Select.Item value="50" label="50 / Halaman">50 / Hal</Select.Item>
-						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
+						<Select.Item value="10" label="10 / Halaman">10 / Halaman</Select.Item>
+						<Select.Item value="25" label="25 / Halaman">25 / Halaman</Select.Item>
+						<Select.Item value="50" label="50 / Halaman">50 / Halaman</Select.Item>
+						<Select.Item value="100" label="100 / Halaman">100 / Halaman</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>
@@ -202,7 +202,10 @@
 					<Table.Body class="block md:table-row-group">
 						{#if res.items.length === 0}
 							<Table.Row class="flex flex-col md:table-row">
-								<Table.Cell colspan={6} class="py-10 text-center text-muted-foreground md:table-cell">
+								<Table.Cell
+									colspan={6}
+									class="py-10 text-center text-muted-foreground md:table-cell"
+								>
 									Data tidak ditemukan.
 								</Table.Cell>
 							</Table.Row>
@@ -216,7 +219,9 @@
 										class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
 									>
 										<div class="flex items-center gap-3">
-											<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+											<div
+												class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+											>
 												<User size={20} />
 											</div>
 											<div class="flex flex-col">
@@ -249,7 +254,7 @@
 										)}
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Username</span>
-										<span class="text-sm text-slate-600 font-mono">{student.username}</span>
+										<span class="font-mono text-sm text-slate-600">{student.username}</span>
 									</Table.Cell>
 
 									<!-- Email -->
@@ -295,28 +300,19 @@
 											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 md:text-right'
 										)}
 									>
-										<DropdownMenu.Root>
-											<DropdownMenu.Trigger>
-												{#snippet child({ props })}
-													<Button {...props} variant="ghost" size="icon" class="h-8 w-8">
-														<MoreHorizontal class="h-4 w-4" />
-													</Button>
-												{/snippet}
-											</DropdownMenu.Trigger>
-											<DropdownMenu.Content align="end">
-												<DropdownMenu.Label>Aksi</DropdownMenu.Label>
-												<DropdownMenu.Item>
-													<Eye class="mr-2 h-4 w-4" /> Detail
-												</DropdownMenu.Item>
-												<DropdownMenu.Item>
-													<FileEdit class="mr-2 h-4 w-4" /> Edit
-												</DropdownMenu.Item>
-												<DropdownMenu.Separator />
-												<DropdownMenu.Item class="text-red-600">
-													<Trash2 class="mr-2 h-4 w-4" /> Hapus
-												</DropdownMenu.Item>
-											</DropdownMenu.Content>
-										</DropdownMenu.Root>
+										<div>
+											<Button size="icon" variant="outline">
+												<Eye />
+											</Button>
+											{#if data.user.role === 'superadmin'}
+												<Button size="icon" variant="outline">
+													<FileEdit />
+												</Button>
+												<Button size="icon" variant="destructive">
+													<Trash2 />
+												</Button>
+											{/if}
+										</div>
 									</Table.Cell>
 								</Table.Row>
 							{/each}
@@ -326,7 +322,9 @@
 			</div>
 
 			<!-- Pagination -->
-			<div class="flex items-center justify-between border-t px-4 py-4">
+			<div
+				class="flex flex-col-reverse items-center justify-between gap-2 border-t px-4 py-4 md:flex-row"
+			>
 				<div class="text-sm text-slate-500">
 					Menampilkan {(res.pagination.currentPage - 1) * res.pagination.limit + 1} sampai {Math.min(
 						res.pagination.currentPage * res.pagination.limit,
@@ -393,4 +391,3 @@
 		</Card.Root>
 	{/await}
 </div>
-

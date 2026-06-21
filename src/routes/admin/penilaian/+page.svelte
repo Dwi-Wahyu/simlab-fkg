@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
+	import * as Select from '$lib/components/ui/select';
 	import {
 		Calendar,
 		Clock,
@@ -9,9 +10,12 @@
 		Users,
 		ClipboardCheck,
 		ChevronDown,
-		ChevronUp
+		ChevronUp,
+		Search,
+		FlaskConical
 	} from '@lucide/svelte';
 	import { badgeVariants } from '$lib/components/ui/badge';
+	import Input from '@/components/ui/input/input.svelte';
 
 	let { data } = $props();
 
@@ -20,6 +24,33 @@
 	function toggleExpand(id: string) {
 		expandedSchedules[id] = !expandedSchedules[id];
 	}
+
+	let filter = $state('');
+	let debouncedFilter = $state('');
+	let filterTimeout: ReturnType<typeof setTimeout>;
+	let labFilter = $state('all');
+
+	let uniqueLabs = $derived([
+		...new Map(data.schedules.map((s) => [s.laboratorium.id, s.laboratorium])).values()
+	]);
+
+	function onFilterInput(event: Event) {
+		const value = (event.target as HTMLInputElement).value;
+		filter = value;
+		clearTimeout(filterTimeout);
+		filterTimeout = setTimeout(() => {
+			debouncedFilter = value;
+		}, 300);
+	}
+
+	let filteredSchedules = $derived(
+		data.schedules.filter((s) => {
+			const matchesSearch =
+				!debouncedFilter || s.title.toLowerCase().includes(debouncedFilter.toLowerCase());
+			const matchesLab = labFilter === 'all' || s.laboratorium.id === labFilter;
+			return matchesSearch && matchesLab;
+		})
+	);
 
 	function formatTime(date: Date) {
 		return new Intl.DateTimeFormat('id-ID', {
@@ -40,6 +71,35 @@
 		</div>
 	</div>
 
+	<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+		<div class="relative flex-1">
+			<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+
+			<Input
+				type="text"
+				placeholder="Cari nama kegiatan..."
+				bind:value={filter}
+				oninput={onFilterInput}
+				class="w-full pl-10"
+			/>
+		</div>
+
+		<Select.Root type="single" bind:value={labFilter}>
+			<Select.Trigger class="w-full sm:w-55">
+				<FlaskConical class="mr-2 size-4 text-muted-foreground" />
+				{labFilter === 'all'
+					? 'Semua Laboratorium'
+					: (uniqueLabs.find((l) => l.id === labFilter)?.name ?? 'Semua Laboratorium')}
+			</Select.Trigger>
+			<Select.Content>
+				<Select.Item value="all" label="Semua Laboratorium">Semua Laboratorium</Select.Item>
+				{#each uniqueLabs as lab (lab.id)}
+					<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
+	</div>
+
 	<Card.Root class="overflow-hidden p-0">
 		<Card.Content class="p-0">
 			<Table.Root class="block md:table">
@@ -52,15 +112,16 @@
 					</Table.Row>
 				</Table.Header>
 				<Table.Body class="block md:table-row-group">
-					{#each data.schedules as schedule (schedule.id)}
+					{#each filteredSchedules as schedule (schedule.id)}
 						<Table.Row class="flex flex-col border-b last:border-0 md:table-row md:border-b">
 							<Table.Cell
 								class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:p-4"
+								onclick={() => toggleExpand(schedule.id)}
 							>
 								<div class="flex flex-col gap-1">
 									<span class="text-base font-bold md:text-sm">{schedule.title}</span>
 									<div class="flex flex-wrap gap-2">
-										<span class={badgeVariants({ variant: 'secondary' })}>{schedule.type}</span>
+										<!-- <span class={badgeVariants({ variant: 'secondary' })}>{schedule.type}</span> -->
 										<span class={badgeVariants({ variant: 'outline' })}>Kelas {schedule.class}</span
 										>
 									</div>
@@ -69,7 +130,6 @@
 									variant="ghost"
 									size="icon"
 									class="ml-4 h-8 w-8 shrink-0 md:hidden"
-									onclick={() => toggleExpand(schedule.id)}
 									aria-label="Expand row"
 								>
 									{#if expandedSchedules[schedule.id]}

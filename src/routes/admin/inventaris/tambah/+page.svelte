@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, Upload, X } from '@lucide/svelte';
+	import { ChevronLeft, Search, Upload, X } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
@@ -164,7 +164,7 @@
 	function handleDialogAction() {
 		showDialog = false;
 		if (dialogConfig.type === 'success') {
-			goto(`${base}/admin/inventori`);
+			goto(`/admin/inventaris/alat`);
 		}
 	}
 
@@ -196,8 +196,15 @@
 	});
 </script>
 
-<div class="mx-auto max-w-4xl space-y-8 p-6">
+<div class="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+	<Button href="/admin/inventaris/alat" variant="outline" class="-mb-2 w-fit md:hidden" size="sm">
+		<ChevronLeft class="size-5" /> Kembali
+	</Button>
+
 	<div class="flex items-center gap-4">
+		<Button href="/admin/inventaris/alat" variant="outline" class="hidden md:flex" size="icon">
+			<ChevronLeft class="size-5" />
+		</Button>
 		<div>
 			<h1 class="text-2xl font-bold text-slate-900">Tambah Item Baru</h1>
 			<p class="text-sm text-slate-500">Daftarkan aset atau bahan habis pakai ke sistem.</p>
@@ -277,7 +284,7 @@
 								<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
 								<Input placeholder="Cari nama aset..." bind:value={assetSearchQuery} class="pl-9" />
 							</div>
-							<div class="max-h-[300px] overflow-y-auto rounded-md border border-slate-200">
+							<div class="max-h-75 overflow-y-auto rounded-md border border-slate-200">
 								{#if filteredAssets.length > 0}
 									<div class="divide-y">
 										{#each filteredAssets as asset (asset.id)}
@@ -488,7 +495,7 @@
 
 				<!-- Buttons -->
 				<div class="mt-4 flex gap-3 md:col-span-2">
-					<Button variant="outline" class="flex-1" href="{base}/admin/inventori">Batal</Button>
+					<Button variant="outline" class="flex-1" href="/admin/inventaris/alat">Batal</Button>
 					<Button
 						type="submit"
 						disabled={isLoading}

@@ -77,7 +77,7 @@
 							<Table.Cell class="p-4">
 								<div class="flex items-center gap-2 text-sm">
 									<FileText class="h-4 w-4 text-muted-foreground" />
-									<span class="max-w-[200px] truncate">{tpl.templateFilePath}</span>
+									<span class="max-w-50 truncate">{tpl.templateFilePath}</span>
 								</div>
 							</Table.Cell>
 							<Table.Cell class="p-4 text-sm text-muted-foreground">
@@ -213,7 +213,8 @@
 				<div class="flex flex-col gap-1.5">
 					<Label for="edit-file">
 						Ganti File Template
-						<span class="text-xs text-muted-foreground">(kosongkan jika tidak ingin mengganti)</span>
+						<span class="text-xs text-muted-foreground">(kosongkan jika tidak ingin mengganti)</span
+						>
 					</Label>
 					<p class="flex items-center gap-1 text-xs text-muted-foreground">
 						<FileText class="h-3 w-3" /> File saat ini: {editTarget.templateFilePath}

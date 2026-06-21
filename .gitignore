@@ -34,3 +34,5 @@ vite.config.ts.timestamp-*
 
 src/lib/server/db/seeds/*.xlsx
 static/generated/
+
+simlab-fkg-images.tar.gz

@@ -31,6 +31,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		orderBy: (ps, { asc }) => [asc(ps.name)]
 	});
 	const classes = await db.query.practicumClass.findMany({
+		with: {
+			members: true
+		},
 		orderBy: (pc, { desc }) => [desc(pc.batch), pc.name]
 	});
 

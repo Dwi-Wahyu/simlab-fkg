@@ -175,17 +175,6 @@
 				<h1 class="text-3xl font-bold tracking-tight text-slate-900">Peminjaman Saya</h1>
 				<p class="text-slate-500">Ajukan dan pantau status peminjaman alat laboratorium Anda.</p>
 			</div>
-			<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-				{#if data.user.role == 'instruktur'}
-					<Button
-						href="/admin/peminjaman/baru"
-						class="w-full gap-2 bg-[#2D5A43] hover:bg-[#234735] sm:w-fit"
-					>
-						<Plus class="size-4" />
-						Ajukan Peminjaman
-					</Button>
-				{/if}
-			</div>
 		</div>
 
 		<!-- Summary Cards -->
@@ -256,7 +245,7 @@
 						<div class="w-full sm:w-48">
 							<Select.Root type="single" bind:value={studentActiveTab}>
 								<Select.Trigger class="w-full">
-									<Select.Value placeholder="Pilih Status" />
+									<Select.Value placeholder="Pilih Status" /> Semua Status
 								</Select.Trigger>
 								<Select.Content>
 									<Select.Item value="semua" label="Semua Status">Semua Status</Select.Item>
@@ -361,7 +350,7 @@
 											<Table.Cell
 												class={cn(
 													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 												)}
 											>
 												<span class="text-xs font-semibold text-slate-400 md:hidden">Tujuan</span>
@@ -372,7 +361,7 @@
 											<Table.Cell
 												class={cn(
 													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 												)}
 											>
 												<span class="text-xs font-semibold text-slate-400 md:hidden"
@@ -385,7 +374,7 @@
 											<Table.Cell
 												class={cn(
 													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 												)}
 											>
 												<span class="text-xs font-semibold text-slate-400 md:hidden"
@@ -409,7 +398,7 @@
 											<Table.Cell
 												class={cn(
 													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 md:text-right'
+													'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
 												)}
 											>
 												<Button
@@ -583,10 +572,7 @@
 					<FileDown class="size-4" />
 					Export
 				</Button>
-				<Button
-					href="/admin/peminjaman/baru"
-					class="w-full gap-2 bg-[#2D5A43] hover:bg-[#234735] sm:w-fit"
-				>
+				<Button href="/admin/peminjaman/baru" class="w-full gap-2  sm:w-fit">
 					<Plus class="size-4" />
 					Peminjaman Baru
 				</Button>
@@ -628,187 +614,170 @@
 			</Card.Root>
 		</div>
 
+		<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+			<div class="relative w-full sm:w-64">
+				<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
+				<Input placeholder="Cari peminjam..." bind:value={search} class="w-full pl-9" />
+			</div>
+			<div class="w-full sm:w-48">
+				<Select.Root type="single" bind:value={activeTab}>
+					<Select.Trigger class="w-full">
+						<Select.Value placeholder="Pilih Status" />
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="semua" label="Semua Status">Semua Status</Select.Item>
+						<Select.Item value="dipinjam" label="Sedang Dipinjam">Sedang Dipinjam</Select.Item>
+						<Select.Item value="menunggu" label="Menunggu">Menunggu</Select.Item>
+						<Select.Item value="selesai" label="Selesai">Selesai</Select.Item>
+					</Select.Content>
+				</Select.Root>
+			</div>
+		</div>
+
 		<!-- Main Table Card -->
-		<Card.Root mobileAware={true}>
-			<Card.Header>
-				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div class="space-y-1.5">
-						<Card.Title>Daftar Peminjaman</Card.Title>
-					</div>
 
-					<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-						<div class="relative w-full sm:w-64">
-							<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
-							<Input placeholder="Cari peminjam..." bind:value={search} class="w-full pl-9" />
-						</div>
-						<div class="w-full sm:w-48">
-							<Select.Root type="single" bind:value={activeTab}>
-								<Select.Trigger class="w-full">
-									<Select.Value placeholder="Pilih Status" />
-								</Select.Trigger>
-								<Select.Content>
-									<Select.Item value="semua" label="Semua Status">Semua Status</Select.Item>
-									<Select.Item value="dipinjam" label="Sedang Dipinjam">Sedang Dipinjam</Select.Item
-									>
-									<Select.Item value="menunggu" label="Menunggu">Menunggu</Select.Item>
-									<Select.Item value="selesai" label="Selesai">Selesai</Select.Item>
-								</Select.Content>
-							</Select.Root>
-						</div>
-					</div>
-				</div>
-			</Card.Header>
-			<Card.Content>
-				<div class="overflow-x-auto">
-					<Table.Root class="block md:table">
-						<Table.Header class="hidden md:table-header-group">
-							<Table.Row class="md:table-row">
-								<Table.Head class="px-6 py-4">Peminjam</Table.Head>
-								<Table.Head>Laboratorium</Table.Head>
-								<Table.Head>Alat</Table.Head>
-								<Table.Head>Tanggal Pinjam</Table.Head>
-								<Table.Head>Batas Kembali</Table.Head>
-								<Table.Head class="hidden md:table-cell">Status</Table.Head>
-								<Table.Head class="pr-6 text-right">Aksi</Table.Head>
-							</Table.Row>
-						</Table.Header>
-						<Table.Body class="block md:table-row-group">
-							{#each filteredLendings as lending (lending.id)}
-								{@const statusInfo = getStatusInfo(lending.status)}
-								<Table.Row
-									class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
-								>
-									<!-- Column 1: Peminjam + mobile status badge + expand chevron -->
-									<Table.Cell
-										class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
-									>
-										<div class="flex flex-col">
-											<div class="flex items-center gap-2">
-												<span class="font-bold text-slate-900 md:font-medium"
-													>{lending.requestedByUser?.name || 'Unknown'}</span
-												>
-												<Badge
-													variant="outline"
-													class={cn('px-1.5 py-0.5 text-[9px] md:hidden', statusInfo.class)}
-												>
-													{statusInfo.label}
-												</Badge>
-											</div>
-											<div class="mt-0.5 text-xs text-muted-foreground uppercase">
-												{lending.requestedByUser?.role}
-											</div>
-										</div>
-										<Button
-											variant="ghost"
-											size="icon"
-											class="ml-4 h-8 w-8 shrink-0 md:hidden"
-											onclick={() =>
-												(expandedLendingsAdmin[lending.id] = !expandedLendingsAdmin[lending.id])}
-											aria-label="Expand row"
+		<div class="rounded-md border bg-white shadow-sm">
+			<Table.Root class="block md:table">
+				<Table.Header class="hidden md:table-header-group">
+					<Table.Row class="md:table-row">
+						<Table.Head class="px-6 py-4">Peminjam</Table.Head>
+						<Table.Head>Laboratorium</Table.Head>
+						<Table.Head>Alat</Table.Head>
+						<Table.Head>Tanggal Pinjam</Table.Head>
+						<Table.Head>Batas Kembali</Table.Head>
+						<Table.Head class="hidden md:table-cell">Status</Table.Head>
+						<Table.Head class="pr-6 text-right">Aksi</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body class="block md:table-row-group">
+					{#each filteredLendings as lending (lending.id)}
+						{@const statusInfo = getStatusInfo(lending.status)}
+						<Table.Row
+							class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
+						>
+							<!-- Column 1: Peminjam + mobile status badge + expand chevron -->
+							<Table.Cell
+								class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
+							>
+								<div class="flex flex-col">
+									<div class="flex items-center gap-2">
+										<span class="font-bold text-slate-900 md:font-medium"
+											>{lending.requestedByUser?.name || 'Unknown'}</span
 										>
-											{#if expandedLendingsAdmin[lending.id]}
-												<ChevronUp class="h-4 w-4" />
-											{:else}
-												<ChevronDown class="h-4 w-4" />
-											{/if}
-										</Button>
-									</Table.Cell>
-
-									<!-- Column 2: Laboratorium -->
-									<Table.Cell
-										class={cn(
-											expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
-										)}
-									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Laboratorium</span>
-										<span class="text-sm text-slate-600">{lending.laboratorium?.name || '-'}</span>
-									</Table.Cell>
-
-									<!-- Column 3: Alat -->
-									<Table.Cell
-										class={cn(
-											expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
-										)}
-									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Alat</span>
-										<div class="flex flex-wrap gap-1">
-											{#each lending.items as item (item.id)}
-												<Badge variant="outline" class="px-1 py-0 text-[10px]">
-													{item.equipment?.item?.name}
-												</Badge>
-											{:else}
-												<span class="text-xs text-muted-foreground">Tidak ada alat</span>
-											{/each}
-										</div>
-									</Table.Cell>
-
-									<!-- Column 4: Tanggal Pinjam -->
-									<Table.Cell
-										class={cn(
-											expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
-										)}
-									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden"
-											>Tanggal Pinjam</span
+										<Badge
+											variant="outline"
+											class={cn('px-1.5 py-0.5 text-[9px] md:hidden', statusInfo.class)}
 										>
-										<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
-									</Table.Cell>
-
-									<!-- Column 5: Batas Kembali -->
-									<Table.Cell
-										class={cn(
-											expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
-										)}
-									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Batas Kembali</span
-										>
-										<span class="text-sm text-slate-600"
-											>{lending.endDate ? formatDate(lending.endDate) : '-'}</span
-										>
-									</Table.Cell>
-
-									<!-- Column 6: Status (desktop only) -->
-									<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4">
-										<Badge variant="outline" class={statusInfo.class}>
 											{statusInfo.label}
 										</Badge>
-									</Table.Cell>
+									</div>
+									<div class="mt-0.5 text-xs text-muted-foreground uppercase">
+										{lending.requestedByUser?.role}
+									</div>
+								</div>
+								<Button
+									variant="ghost"
+									size="icon"
+									class="ml-4 h-8 w-8 shrink-0 md:hidden"
+									onclick={() =>
+										(expandedLendingsAdmin[lending.id] = !expandedLendingsAdmin[lending.id])}
+									aria-label="Expand row"
+								>
+									{#if expandedLendingsAdmin[lending.id]}
+										<ChevronUp class="h-4 w-4" />
+									{:else}
+										<ChevronDown class="h-4 w-4" />
+									{/if}
+								</Button>
+							</Table.Cell>
 
-									<!-- Column 7: Aksi -->
-									<Table.Cell
-										class={cn(
-											expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 md:text-right'
-										)}
-									>
-										<Button
-											variant="ghost"
-											size="sm"
-											href="/admin/peminjaman/{lending.id}"
-											class="w-full text-[#2D5A43] hover:bg-slate-100 hover:text-[#234735] sm:w-fit"
-										>
-											Detail
-										</Button>
-									</Table.Cell>
-								</Table.Row>
-							{:else}
-								<Table.Row class="flex flex-col md:table-row">
-									<Table.Cell
-										colspan={7}
-										class="py-10 text-center text-muted-foreground md:table-cell"
-									>
-										Tidak ada data peminjaman ditemukan.
-									</Table.Cell>
-								</Table.Row>
-							{/each}
-						</Table.Body>
-					</Table.Root>
-				</div>
-			</Card.Content>
-		</Card.Root>
+							<!-- Column 2: Laboratorium -->
+							<Table.Cell
+								class={cn(
+									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
+									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
+								)}
+							>
+								<span class="text-xs font-semibold text-slate-400 md:hidden">Laboratorium</span>
+								<span class="text-sm text-slate-600">{lending.laboratorium?.name || '-'}</span>
+							</Table.Cell>
+
+							<!-- Column 3: Alat -->
+							<Table.Cell
+								class={cn(
+									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
+									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
+								)}
+							>
+								<span class="text-xs font-semibold text-slate-400 md:hidden">Alat</span>
+								<div class="flex flex-wrap gap-1">
+									{#each lending.items as item (item.id)}
+										<Badge variant="outline" class="px-1 py-0 text-[10px]">
+											{item.equipment?.item?.name}
+										</Badge>
+									{:else}
+										<span class="text-xs text-muted-foreground">Tidak ada alat</span>
+									{/each}
+								</div>
+							</Table.Cell>
+
+							<!-- Column 4: Tanggal Pinjam -->
+							<Table.Cell
+								class={cn(
+									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
+									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
+								)}
+							>
+								<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Pinjam</span>
+								<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
+							</Table.Cell>
+
+							<!-- Column 5: Batas Kembali -->
+							<Table.Cell
+								class={cn(
+									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
+									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
+								)}
+							>
+								<span class="text-xs font-semibold text-slate-400 md:hidden">Batas Kembali</span>
+								<span class="text-sm text-slate-600"
+									>{lending.endDate ? formatDate(lending.endDate) : '-'}</span
+								>
+							</Table.Cell>
+
+							<!-- Column 6: Status (desktop only) -->
+							<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4">
+								<Badge variant="outline" class={statusInfo.class}>
+									{statusInfo.label}
+								</Badge>
+							</Table.Cell>
+
+							<!-- Column 7: Aksi -->
+							<Table.Cell
+								class={cn(
+									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
+									'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
+								)}
+							>
+								<Button
+									variant="ghost"
+									size="sm"
+									href="/admin/peminjaman/{lending.id}"
+									class="w-full text-[#2D5A43] hover:bg-slate-100 hover:text-[#234735] sm:w-fit"
+								>
+									Detail
+								</Button>
+							</Table.Cell>
+						</Table.Row>
+					{:else}
+						<Table.Row class="flex flex-col md:table-row">
+							<Table.Cell colspan={7} class="py-10 text-center text-muted-foreground md:table-cell">
+								Tidak ada data peminjaman ditemukan.
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
 	</div>
 {/if}

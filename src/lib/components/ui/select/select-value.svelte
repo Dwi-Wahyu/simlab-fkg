@@ -14,6 +14,6 @@
 	bind:ref
 	{placeholder}
 	data-slot="select-value"
-	class={cn("text-sm data-[placeholder]:text-muted-foreground", className)}
+	class={cn('text-sm data-placeholder:text-muted-foreground', className)}
 	{...restProps}
 />

@@ -1,10 +1,5 @@
 <script lang="ts">
-	import {
-		Check,
-		ChevronLeft,
-		FileText,
-		Upload
-	} from '@lucide/svelte';
+	import { Check, ChevronLeft, FileText, Upload } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
@@ -77,12 +72,12 @@
 	}
 </script>
 
-<div class="mx-auto max-w-3xl flex flex-col gap-6 p-6">
+<div class="mx-auto flex max-w-3xl flex-col gap-6 p-6">
 	<Button
 		variant="outline"
 		href="/admin/pemeliharaan?tab=kalibrasi"
 		title="Kembali"
-		class="-mb-2 w-fit"
+		class="-mb-2 w-fit md:hidden"
 		size="sm"
 	>
 		<ChevronLeft class="h-4 w-4" /> Kembali
@@ -90,7 +85,12 @@
 
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-4">
-			<Button variant="outline" size="icon" href="/admin/pemeliharaan?tab=kalibrasi" class="hidden md:flex">
+			<Button
+				variant="outline"
+				size="icon"
+				href="/admin/pemeliharaan?tab=kalibrasi"
+				class="hidden md:flex"
+			>
 				<ChevronLeft size={24} />
 			</Button>
 			<div>

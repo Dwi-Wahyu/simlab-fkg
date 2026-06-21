@@ -11,9 +11,13 @@ export default defineConfig({
 		sveltekit(),
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
+			workbox: {
+				navigateFallback: null
+			},
 			manifest: {
 				name: 'SIM-Lab FKG Unhas',
 				short_name: 'SIM-Lab',
+				start_url: '/',
 				description: 'Sistem Informasi Manajemen Laboratorium FKG Unhas',
 				theme_color: '#ffffff',
 				icons: [

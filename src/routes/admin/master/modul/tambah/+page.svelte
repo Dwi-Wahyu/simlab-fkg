@@ -88,7 +88,7 @@
 						/>
 					</div>
 				</Card.Content>
-				<Card.Footer class="flex justify-end gap-2 border-t px-6 py-4">
+				<Card.Footer class="mt-4 flex justify-end gap-2">
 					<Button variant="outline" href="/admin/master/modul" disabled={isLoading}>Batal</Button>
 					<Button type="submit" disabled={isLoading}>
 						{#if isLoading}

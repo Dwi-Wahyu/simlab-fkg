@@ -35,9 +35,6 @@
 <div class="flex flex-col gap-6 p-6">
 	<div class="mx-auto w-full max-w-2xl space-y-6">
 		<div class="flex items-center gap-4">
-			<Button variant="outline" size="icon" href="/admin/master/modul" class="shrink-0">
-				<ChevronLeft class="size-4" />
-			</Button>
 			<div class="flex flex-col gap-1">
 				<h1 class="text-3xl font-bold tracking-tight">Edit Modul Praktikum</h1>
 				<p class="text-muted-foreground">Perbarui informasi modul praktikum.</p>
@@ -100,7 +97,7 @@
 						/>
 					</div>
 				</Card.Content>
-				<Card.Footer class="flex justify-end gap-2 border-t px-6 py-4">
+				<Card.Footer class="flex justify-end gap-2 pt-4">
 					<Button variant="outline" href="/admin/master/modul" disabled={isLoading}>Batal</Button>
 					<Button type="submit" disabled={isLoading}>
 						{#if isLoading}

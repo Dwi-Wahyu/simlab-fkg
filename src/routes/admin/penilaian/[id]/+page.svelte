@@ -4,6 +4,9 @@
 		BookOpen,
 		CheckCircle2,
 		ChevronLeft,
+		ChevronRight,
+		ChevronsLeft,
+		ChevronsRight,
 		ClipboardEdit,
 		FileText,
 		Filter,
@@ -63,6 +66,37 @@
 	const selectedStatusLabel = $derived(
 		statusOptions.find((opt) => opt.value === statusFilter)?.label ?? 'Pilih Status'
 	);
+
+	// --- Pagination State ---
+	let pageSize = $state(15);
+	let currentPage = $state(1);
+
+	$effect(() => {
+		void searchQuery;
+		void statusFilter;
+		currentPage = 1;
+	});
+
+	const totalPages = $derived(Math.ceil(filteredStudents.length / pageSize));
+
+	const paginatedStudents = $derived(
+		filteredStudents.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+	);
+
+	function getPageNumbers(current: number, total: number): (number | '...')[] {
+		if (total <= 4) {
+			return Array.from({ length: total }, (_, i) => i + 1);
+		}
+		const pages: (number | '...')[] = [];
+		if (current <= 2) {
+			pages.push(1, 2, 3, '...', total);
+		} else if (current >= total - 1) {
+			pages.push(1, '...', total - 2, total - 1, total);
+		} else {
+			pages.push(1, '...', current, current + 1, '...', total);
+		}
+		return pages;
+	}
 </script>
 
 <div class="flex h-full flex-col gap-6 p-6">
@@ -93,69 +127,6 @@
 		</div>
 	</div>
 
-	<!-- Info Bar (Horizontal Summary) -->
-	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-					<Stethoscope class="h-5 w-5 text-primary" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Jenis</span
-					>
-					<span class="font-bold">{data.schedule.type}</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-					<GraduationIcon class="h-5 w-5 text-blue-500" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Kelas</span
-					>
-					<span class="font-bold">{data.schedule.class}</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-					<BookOpen class="h-5 w-5 text-amber-500" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Modul</span
-					>
-					<div class="mt-1 flex flex-wrap gap-1">
-						{#each modules as mod (mod.id)}
-							<span
-								class={badgeVariants({ variant: 'secondary' }) +
-									' h-4 py-0 text-[10px] wrap-break-word'}>{mod.name}</span
-							>
-						{/each}
-					</div>
-				</div>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-					<Users class="h-5 w-5 text-green-500" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Peserta</span
-					>
-					<span class="font-bold">{data.students.length} Mahasiswa</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-	</div>
-
 	<!-- Main Content: Student List -->
 	<Card.Root
 		class="border-none bg-transparent py-0 shadow-none ring-0 outline-none md:bg-card md:py-6 md:shadow-sm md:ring-1"
@@ -180,7 +151,7 @@
 					</div>
 
 					<Select.Root type="single" bind:value={statusFilter}>
-						<Select.Trigger class="w-full sm:w-[180px]">
+						<Select.Trigger class="w-full sm:w-45">
 							<Filter class="mr-2 h-4 w-4 text-muted-foreground" />
 							{selectedStatusLabel}
 						</Select.Trigger>
@@ -190,13 +161,33 @@
 							{/each}
 						</Select.Content>
 					</Select.Root>
+
+					<Select.Root
+						type="single"
+						value={String(pageSize)}
+						onValueChange={(val) => {
+							pageSize = Number(val);
+							currentPage = 1;
+						}}
+					>
+						<Select.Trigger class="w-full sm:w-45">
+							{pageSize} per halaman
+						</Select.Trigger>
+						<Select.Content>
+							{#each [10, 15, 25, 50] as size}
+								<Select.Item value={String(size)} label="{size} per halaman"
+									>{size} per halaman</Select.Item
+								>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 			</div>
 		</Card.Header>
 		<Card.Content class="px-0 md:px-6">
 			{#if isMobile.current}
 				<Accordion.Root type="single" class="w-full">
-					{#each filteredStudents as studentMember (studentMember.id)}
+					{#each paginatedStudents as studentMember (studentMember.id)}
 						{@const student = studentMember.user}
 						{@const studentAssessments = data.assessments.filter(
 							(a: any) => a.studentId === student.id
@@ -298,7 +289,7 @@
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{#each filteredStudents as studentMember (studentMember.id)}
+						{#each paginatedStudents as studentMember (studentMember.id)}
 							{@const student = studentMember.user}
 							{@const studentAssessments = data.assessments.filter(
 								(a: any) => a.studentId === student.id
@@ -367,5 +358,122 @@
 				</Table.Root>
 			{/if}
 		</Card.Content>
+
+		<!-- Pagination Controls -->
+		{#if totalPages > 1}
+			<div
+				class="flex flex-col-reverse items-center gap-3 px-0 py-4 sm:flex-row sm:justify-between md:flex-row md:items-center md:px-6"
+			>
+				<div class="flex items-center gap-3">
+					<p class="text-sm text-muted-foreground">
+						Menampilkan {(currentPage - 1) * pageSize + 1}–{Math.min(
+							currentPage * pageSize,
+							filteredStudents.length
+						)} dari {filteredStudents.length} mahasiswa
+					</p>
+				</div>
+
+				<div class="flex items-center gap-1">
+				
+					<Button
+						variant="outline"
+						size="icon"
+						disabled={currentPage === 1}
+						onclick={() => currentPage--}
+						aria-label="Halaman sebelumnya"
+					>
+						<ChevronLeft class="h-4 w-4" />
+					</Button>
+
+					{#each getPageNumbers(currentPage, totalPages) as pg}
+						{#if pg === '...'}
+							<span class="px-2 text-muted-foreground">…</span>
+						{:else}
+							<Button
+								variant={currentPage === pg ? 'default' : 'outline'}
+								size="icon"
+								onclick={() => (currentPage = pg as number)}
+							>
+								{pg}
+							</Button>
+						{/if}
+					{/each}
+
+					<Button
+						variant="outline"
+						size="icon"
+						disabled={currentPage === totalPages}
+						onclick={() => currentPage++}
+						aria-label="Halaman berikutnya"
+					>
+						<ChevronRight class="h-4 w-4" />
+					</Button>
+				
+				</div>
+			</div>
+		{/if}
 	</Card.Root>
+
+	<!-- Info Bar (Horizontal Summary) -->
+	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+					<Stethoscope class="h-5 w-5 text-primary" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Jenis</span
+					>
+					<span class="font-bold">{data.schedule.type}</span>
+				</div>
+			</Card.Content>
+		</Card.Root>
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+					<GraduationIcon class="h-5 w-5 text-blue-500" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Kelas</span
+					>
+					<span class="font-bold">{data.schedule.class}</span>
+				</div>
+			</Card.Content>
+		</Card.Root>
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+					<BookOpen class="h-5 w-5 text-amber-500" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Modul</span
+					>
+					<div class="mt-1 flex flex-wrap gap-1">
+						{#each modules as mod (mod.id)}
+							<span
+								class={badgeVariants({ variant: 'secondary' }) +
+									' h-4 py-0 text-[10px] wrap-break-word'}>{mod.name}</span
+							>
+						{/each}
+					</div>
+				</div>
+			</Card.Content>
+		</Card.Root>
+		<Card.Root>
+			<Card.Content class="flex items-center gap-4">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+					<Users class="h-5 w-5 text-green-500" />
+				</div>
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+						>Peserta</span
+					>
+					<span class="font-bold">{data.students.length} Mahasiswa</span>
+				</div>
+			</Card.Content>
+		</Card.Root>
+	</div>
 </div>

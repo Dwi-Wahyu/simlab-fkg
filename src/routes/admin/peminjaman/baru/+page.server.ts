@@ -1,12 +1,12 @@
 import { db } from '$lib/server/db';
-import { user, item, equipment, laboratorium, lending, lendingItem } from '$lib/server/db/schema';
+import { user, item, equipment, lending, lendingItem } from '$lib/server/db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user || !['staff', 'koordinator', 'superadmin'].includes(locals.user.role)) {
+	if (!locals.user || !['kepalaLab', 'superadmin'].includes(locals.user.role)) {
 		throw redirect(302, `/admin/peminjaman`);
 	}
 
@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
-		if (!locals.user || !['staff', 'koordinator', 'superadmin'].includes(locals.user.role)) {
+		if (!locals.user || !['kepalaLab', 'superadmin'].includes(locals.user.role)) {
 			return fail(403, { message: 'Tidak diizinkan' });
 		}
 		const formData = await request.formData();

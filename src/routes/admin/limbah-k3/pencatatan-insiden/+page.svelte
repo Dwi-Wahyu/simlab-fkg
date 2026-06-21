@@ -76,7 +76,13 @@
 </script>
 
 <div class="flex flex-col gap-6 p-6">
-	<Button variant="outline" href="/admin/limbah-k3" title="Kembali" class="-mb-2 w-fit" size="sm">
+	<Button
+		variant="outline"
+		href="/admin/limbah-k3"
+		title="Kembali"
+		class="-mb-2 flex w-fit md:hidden"
+		size="sm"
+	>
 		<ChevronLeft class="h-4 w-4" /> Kembali
 	</Button>
 

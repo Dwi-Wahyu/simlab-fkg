@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const search = url.searchParams.get('search') || '';
 	const offset = (page - 1) * limit;
 
-	// Summary data (always calculated from all data)
+	// Summary data
 	const [totalResult] = await db.select({ value: count() }).from(equipment);
 	const [baikResult] = await db
 		.select({ value: count() })
@@ -24,73 +24,47 @@ export const GET: RequestHandler = async ({ url }) => {
 		.select({ value: count() })
 		.from(equipment)
 		.where(eq(equipment.condition, 'RUSAK_BERAT'));
-
-	// Prepare where clause for items
-	let whereClause;
-	if (search) {
-		whereClause = sql`${item.name} LIKE ${'%' + search + '%'}`;
-	}
-
-	// Get total items for this search (for pagination)
-	const [totalItemsResult] = await db
+	const [readyResult] = await db
 		.select({ value: count() })
 		.from(equipment)
-		.innerJoin(item, eq(equipment.itemId, item.id))
-		.where(whereClause);
+		.where(eq(equipment.status, 'READY'));
 
-	const totalItems = Number(totalItemsResult.count || totalItemsResult.value);
-	const totalPages = Math.ceil(totalItems / limit);
+	// Per-item aggregated counts
+	const whereClause = search ? sql`${item.name} LIKE ${'%' + search + '%'}` : undefined;
 
-	const equipments = await db.query.equipment.findMany({
-		where: (fields, { eq, and, or }) => {
-			if (!search) return undefined;
-			// Note: findMany's where doesn't easily support joins in the same way as select().from()
-			// but we can use the results of the select if needed or stick to the simpler approach if it works.
-			// Actually, better to use standard select().from() for complex joins with filters
-			return undefined;
-		},
-		with: {
-			item: true,
-			warehouse: true
-		}
-	});
-
-	// Re-doing with standard query to support search better with joins
-	const itemsQuery = db
+	const itemStats = await db
 		.select({
-			equipment: equipment,
-			item: item,
-			warehouse: warehouse
+			id: item.id,
+			name: item.name,
+			equipmentType: item.equipmentType,
+			total: count(),
+			baik: count(sql`CASE WHEN ${equipment.condition} = 'BAIK' THEN 1 END`),
+			rusakRingan: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_RINGAN' THEN 1 END`),
+			rusakBerat: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_BERAT' THEN 1 END`),
+			ready: count(sql`CASE WHEN ${equipment.status} = 'READY' THEN 1 END`)
 		})
 		.from(equipment)
 		.innerJoin(item, eq(equipment.itemId, item.id))
 		.leftJoin(warehouse, eq(equipment.warehouseId, warehouse.id))
 		.where(whereClause)
+		.groupBy(item.id)
+		.orderBy(item.name)
 		.limit(limit)
-		.offset(offset)
-		.orderBy(item.name);
+		.offset(offset);
 
-	const results = await itemsQuery;
+	// Total distinct items for pagination
+	const [totalItemsResult] = await db
+		.select({ value: sql<number>`count(distinct ${item.id})` })
+		.from(equipment)
+		.innerJoin(item, eq(equipment.itemId, item.id))
+		.where(whereClause);
 
-	const data = results.map((r) => ({
-		id: r.equipment.id,
-		name: r.item.name,
-		serialNumber: r.equipment.serialNumber || '-',
-		brand: r.equipment.brand || '-',
-		condition: r.equipment.condition,
-		status: r.equipment.status,
-		warehouse: r.warehouse?.name || '-',
-		category: r.item.equipmentType || '-'
-	}));
+	const totalItems = Number(totalItemsResult.value);
+	const totalPages = Math.ceil(totalItems / limit);
 
 	return json({
 		summary: [
-			{
-				label: 'Total Alat',
-				value: totalResult.value,
-				color: 'text-blue-600',
-				icon: 'Package'
-			},
+			{ label: 'Total Alat', value: totalResult.value, color: 'text-blue-600', icon: 'Package' },
 			{
 				label: 'Kondisi Baik',
 				value: baikResult.value,
@@ -98,24 +72,15 @@ export const GET: RequestHandler = async ({ url }) => {
 				icon: 'CheckCircle'
 			},
 			{
-				label: 'Kondisi Sedang',
+				label: 'Rusak Ringan',
 				value: sedangResult.value,
 				color: 'text-yellow-600',
 				icon: 'AlertTriangle'
 			},
-			{
-				label: 'Kondisi Rusak',
-				value: rusakResult.value,
-				color: 'text-red-600',
-				icon: 'XCircle'
-			}
+			{ label: 'Rusak Berat', value: rusakResult.value, color: 'text-red-600', icon: 'XCircle' },
+			{ label: 'Ready', value: readyResult.value, color: 'text-emerald-600', icon: 'ShieldCheck' }
 		],
-		items: data,
-		pagination: {
-			totalItems,
-			totalPages,
-			currentPage: page,
-			limit
-		}
+		items: itemStats,
+		pagination: { totalItems, totalPages, currentPage: page, limit }
 	});
 };

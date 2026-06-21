@@ -1,0 +1,65 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - '4502:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: simlab-fkg-builder:latest
+    command: bun run db:push && bun run db:seed && bun run db:seed-users && bun run db:seed-mahasiswa && bun run db:seed-logbook-templates
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  gotenberg-api:
+    image: gotenberg/gotenberg:8
+    ports:
+      - '${GOTENBERG_PORT}:3000'
+    restart: always
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: simlab-fkg-app:latest
+    ports:
+      - '4500:3000'
+    volumes:
+      - ./static/uploads:/app/static/uploads
+      - ./static/generated:/app/static/generated
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - ORIGIN=${ORIGIN}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
+      - GOTENBERG_URL=http://gotenberg-api:3000
+      - NODE_ENV=${NODE_ENV}
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+      gotenberg-api:
+        condition: service_started
+
+volumes:
+  mysql_data:

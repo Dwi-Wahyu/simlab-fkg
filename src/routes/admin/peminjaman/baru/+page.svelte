@@ -135,8 +135,12 @@
 </script>
 
 <div class="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+	<Button href="/admin/peminjaman" variant="outline" class="-mb-2 flex w-fit md:hidden" size="sm">
+		<ChevronLeft class="size-5" /> Kembali
+	</Button>
+
 	<div class="flex items-center gap-4">
-		<Button href="/admin/peminjaman" variant="outline" size="icon">
+		<Button href="/admin/peminjaman" variant="outline" class="hidden md:flex" size="icon">
 			<ChevronLeft class="size-5" />
 		</Button>
 		<div>
@@ -415,11 +419,7 @@
 					Terpilih: {selectedRequesters.length} orang
 				</div>
 				<Button variant="outline" href="/admin/peminjaman">Batal</Button>
-				<Button
-					type="submit"
-					disabled={isSubmitting || stockWarnings.length > 0}
-					class="bg-[#2D5A43] hover:bg-[#234735]"
-				>
+				<Button type="submit" disabled={isSubmitting || stockWarnings.length > 0}>
 					{isSubmitting ? 'Memproses...' : 'Buat Peminjaman'}
 				</Button>
 			</Card.Footer>

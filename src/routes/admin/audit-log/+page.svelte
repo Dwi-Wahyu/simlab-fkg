@@ -449,7 +449,7 @@
 							<X size={16} class="mr-2" />
 							Reset
 						</Button>
-						<Button size="sm" onclick={applyFilters} class="bg-[#2D5A43] hover:bg-[#234735]">
+						<Button size="sm" onclick={applyFilters}>
 							<Search size={16} class="mr-2" />
 							Cari Aktivitas
 						</Button>
