@@ -35,6 +35,13 @@ async function main() {
 
 		if (existing) {
 			console.log(`- Sudah ada: ${mod.name}`);
+			if (!existing.tableBuilderKey) {
+				await db
+					.update(schema.practicumLogbookTemplate)
+					.set({ tableBuilderKey: 'logbook-rowspan-table' })
+					.where(eq(schema.practicumLogbookTemplate.id, existing.id));
+				console.log(`  * tableBuilderKey diperbarui ke: logbook-rowspan-table`);
+			}
 			continue;
 		}
 
@@ -43,7 +50,8 @@ async function main() {
 			moduleId: mod.id,
 			name: `Template Logbook — ${mod.name}`,
 			// Hanya nama file; path lengkap di-resolve saat generate: static/templates/logbook/<fileName>
-			templateFilePath: DEFAULT_TEMPLATE_FILE
+			templateFilePath: DEFAULT_TEMPLATE_FILE,
+			tableBuilderKey: 'logbook-rowspan-table'
 		});
 
 		console.log(`+ Template ditambahkan: ${mod.name}`);

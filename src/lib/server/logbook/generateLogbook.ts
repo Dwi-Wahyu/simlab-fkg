@@ -428,7 +428,16 @@ export async function generateLogbookForSeries(
 	};
 
 	// 7. Resolusi tiap field metadata jadi key-value untuk docx-templates.
-	const renderData: Record<string, any> = {};
+	// Inisialisasi default key agar tidak terjadi ReferenceError saat render data kosong di production
+	const renderData: Record<string, any> = {
+		seriesName: '',
+		studentName: '',
+		studentNim: '',
+		laboratoriumName: '',
+		fotoMahasiswa: null,
+		hasPhoto: false,
+		tableLogbook: ''
+	};
 
 	for (const field of templateFields) {
 		let rawValue: unknown;

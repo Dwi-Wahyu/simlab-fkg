@@ -4,7 +4,7 @@ set -e
 
 # Configuration
 REMOTE_HOST="server-csi"
-REMOTE_DIR="/var/www/simlab-fkg"
+REMOTE_DIR="/var/www/simlab"
 IMAGE_TAR="simlab-fkg-images.tar.gz"
 
 echo "=== 1. Building Docker Images Locally ==="
