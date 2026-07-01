@@ -23,6 +23,7 @@
 
 	// State
 	let isSaving = $state<string | null>(null); // moduleId being saved
+	let criteriaValues = $state<Record<string, number>>({});
 
 	// Notification State
 	let showNotification = $state(false);
@@ -30,11 +31,30 @@
 	let notificationTitle = $state('');
 	let notificationDescription = $state('');
 
+	$effect(() => {
+		const values: Record<string, number> = {};
+		for (const m of data.schedule.modules) {
+			if (m.module.scoringMode === 'RUBRIK') {
+				for (const crit of m.criteria) {
+					const existingScore = data.criteriaScores.find((s: any) => s.criteriaId === crit.id);
+					values[crit.id] = existingScore ? existingScore.score : 0;
+				}
+			}
+		}
+		criteriaValues = values;
+	});
+
+	function totalFor(moduleId: string, criteria: any[]) {
+		if (criteria.length === 0) return 0;
+		const sum = criteria.reduce((acc, crit) => acc + (criteriaValues[crit.id] || 0), 0);
+		return Math.round(sum / criteria.length);
+	}
+
 	function getAssessment(moduleId: string) {
 		return data.assessments.find((a: any) => a.moduleId === moduleId);
 	}
 
-	const modules = $derived(data.schedule.modules.map((m: any) => m.module));
+	const modules = $derived(data.schedule.modules);
 
 	function handleSave(moduleId: string) {
 		return async ({ result }: { result: any }) => {
@@ -98,7 +118,9 @@
 		<h2 class="text-lg font-semibold">Daftar Modul / Kompetensi</h2>
 
 		<div class="grid grid-cols-1 gap-6">
-			{#each modules as mod (mod.id)}
+			{#each modules as m (m.moduleId)}
+				{@const mod = m.module}
+				{@const criteria = m.criteria}
 				{@const assessment = getAssessment(mod.id)}
 				{@const isOriginalInstructor =
 					!assessment ||
@@ -144,40 +166,103 @@
 						>
 							<input type="hidden" name="moduleId" value={mod.id} />
 
-							<div class="grid grid-cols-1 gap-6 md:grid-cols-4">
-								<!-- Score Field -->
-								<div class="space-y-2 md:col-span-1">
-									<Label for="score-{mod.id}" class="text-sm font-semibold">Skor (0-100)</Label>
-									<div class="relative">
-										<Input
-											id="score-{mod.id}"
-											name="score"
-											type="number"
-											min="0"
-											max="100"
-											value={assessment?.score ?? ''}
-											placeholder="0"
-											class="h-12 text-lg font-bold"
-											required
-											disabled={!isOriginalInstructor}
-										/>
-									</div>
-								</div>
+							<div class="flex flex-col gap-6">
+								{#if mod.scoringMode === 'TOTAL'}
+									<div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+										<!-- Score Field -->
+										<div class="space-y-2 md:col-span-1">
+											<Label for="score-{mod.id}" class="text-sm font-semibold">Skor (0-100)</Label>
+											<div class="relative">
+												<Input
+													id="score-{mod.id}"
+													name="score"
+													type="number"
+													min="0"
+													max="100"
+													value={assessment?.score ?? ''}
+													placeholder="0"
+													class="h-12 text-lg font-bold"
+													required
+													disabled={!isOriginalInstructor}
+												/>
+											</div>
+										</div>
 
-								<!-- Notes Field -->
-								<div class="space-y-2 md:col-span-3">
-									<Label for="notes-{mod.id}" class="text-sm font-semibold"
-										>Catatan / Feedback</Label
-									>
-									<Textarea
-										id="notes-{mod.id}"
-										name="notes"
-										value={assessment?.notes ?? ''}
-										placeholder="Masukkan catatan penilaian, masukan, atau kendala yang dihadapi mahasiswa..."
-										class="min-h-[80px] md:min-h-[100px]"
-										disabled={!isOriginalInstructor}
-									/>
-								</div>
+										<!-- Notes Field -->
+										<div class="space-y-2 md:col-span-3">
+											<Label for="notes-{mod.id}" class="text-sm font-semibold"
+												>Catatan / Feedback</Label
+											>
+											<Textarea
+												id="notes-{mod.id}"
+												name="notes"
+												value={assessment?.notes ?? ''}
+												placeholder="Masukkan catatan penilaian..."
+												class="min-h-[80px] md:min-h-[100px]"
+												disabled={!isOriginalInstructor}
+											/>
+										</div>
+									</div>
+								{:else}
+									<!-- RUBRIK Mode Layout -->
+									<div class="flex flex-col gap-4">
+										<Label class="text-xs font-bold tracking-wider text-muted-foreground uppercase"
+											>Kriteria Penilaian (Rubrik)</Label
+										>
+										<div class="space-y-4 rounded-xl border bg-muted/5 p-4">
+											{#each criteria as criterion (criterion.id)}
+												<div
+													class="flex items-center justify-between gap-4 border-b pb-4 last:border-0 last:pb-0"
+												>
+													<div class="flex flex-col">
+														<span class="text-sm font-semibold">{criterion.name}</span>
+														{#if criterion.description}
+															<span class="text-xs text-muted-foreground"
+																>{criterion.description}</span
+															>
+														{/if}
+													</div>
+													<div class="flex items-center gap-2">
+														<Input
+															type="number"
+															name="criteriaScore_{criterion.id}"
+															min="0"
+															max={criterion.maxScore}
+															class="w-24 text-right font-mono font-bold"
+															bind:value={criteriaValues[criterion.id]}
+															disabled={!isOriginalInstructor}
+															required
+														/>
+														<span class="text-xs font-semibold text-muted-foreground"
+															>/ {criterion.maxScore}</span
+														>
+													</div>
+												</div>
+											{/each}
+											<div
+												class="flex items-center justify-between border-t border-dashed pt-4 font-bold"
+											>
+												<span class="text-sm">Nilai Total Akhir (Otomatis)</span>
+												<span class="text-lg text-primary">{totalFor(mod.id, criteria)}</span>
+											</div>
+										</div>
+
+										<!-- Notes Field for RUBRIK -->
+										<div class="mt-2 space-y-2">
+											<Label for="notes-{mod.id}" class="text-sm font-semibold"
+												>Catatan / Feedback</Label
+											>
+											<Textarea
+												id="notes-{mod.id}"
+												name="notes"
+												value={assessment?.notes ?? ''}
+												placeholder="Masukkan catatan penilaian..."
+												class="min-h-[80px]"
+												disabled={!isOriginalInstructor}
+											/>
+										</div>
+									</div>
+								{/if}
 							</div>
 
 							<!-- Previous Data Info -->

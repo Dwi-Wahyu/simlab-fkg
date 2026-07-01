@@ -481,11 +481,27 @@ export const practicumClassMember = mysqlTable(
 	]
 );
 
+export const practicumModuleComponentEnum = mysqlEnum('practicum_module_component', [
+	'PREPARASI',
+	'RESTORASI'
+]);
+
+export const practicumModuleScoringModeEnum = mysqlEnum('practicum_module_scoring_mode', [
+	'TOTAL',
+	'RUBRIK'
+]);
+
 export const practicumModule = mysqlTable('practicum_module', {
 	id: varchar('id', { length: 36 }).primaryKey(),
 	name: varchar('name', { length: 255 }).notNull(),
 	description: text('description'),
 	blockId: varchar('block_id', { length: 36 }).references(() => block.id, { onDelete: 'cascade' }),
+	// NULL = general module, no Preparasi/Restorasi split (e.g. "Caries Removal").
+	// 'PREPARASI' / 'RESTORASI' = this module represents that half of a schedule's
+	// assessment (e.g. "Kelas I — Preparasi", "Kelas I — Restorasi", or a
+	// standalone "Inlay — Preparasi" module that has no Restorasi counterpart).
+	component: practicumModuleComponentEnum,
+	scoringMode: practicumModuleScoringModeEnum.default('TOTAL').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -529,6 +545,61 @@ export const practicumAssessment = mysqlTable(
 			table.studentId,
 			table.moduleId
 		)
+	]
+);
+
+export const practicumModuleCriteria = mysqlTable(
+	'practicum_module_criteria',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		moduleId: varchar('module_id', { length: 36 }).notNull(),
+		name: varchar('name', { length: 255 }).notNull(), // e.g. "Ketepatan preparasi kavitas"
+		description: text('description'),
+		maxScore: int('max_score').notNull().default(100),
+		sortOrder: int('sort_order').default(0).notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow()
+	},
+	(table) => [
+		index('practicum_module_criteria_module_idx').on(table.moduleId),
+		index('practicum_module_criteria_sort_idx').on(table.moduleId, table.sortOrder),
+		foreignKey({
+			name: 'pm_criteria_module_fk',
+			columns: [table.moduleId],
+			foreignColumns: [practicumModule.id]
+		}).onDelete('cascade')
+	]
+);
+
+export const practicumAssessmentCriteriaScore = mysqlTable(
+	'practicum_assessment_criteria_score',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		assessmentId: varchar('assessment_id', { length: 36 }).notNull(),
+		criteriaId: varchar('criteria_id', { length: 36 }).notNull(),
+		score: int('score').notNull(),
+		notes: text('notes'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow()
+	},
+	(table) => [
+		index('assessment_criteria_score_assessment_idx').on(table.assessmentId),
+		index('assessment_criteria_score_criteria_idx').on(table.criteriaId),
+		uniqueIndex('assessment_criteria_score_unique_idx').on(table.assessmentId, table.criteriaId),
+		foreignKey({
+			name: 'pac_score_assessment_fk',
+			columns: [table.assessmentId],
+			foreignColumns: [practicumAssessment.id]
+		}).onDelete('cascade'),
+		foreignKey({
+			name: 'pac_score_criteria_fk',
+			columns: [table.criteriaId],
+			foreignColumns: [practicumModuleCriteria.id]
+		}).onDelete('cascade')
 	]
 );
 
@@ -1062,7 +1133,7 @@ export const practicumClassMemberRelations = relations(practicumClassMember, ({ 
 	})
 }));
 
-export const practicumAssessmentRelations = relations(practicumAssessment, ({ one }) => ({
+export const practicumAssessmentRelations = relations(practicumAssessment, ({ one, many }) => ({
 	schedule: one(practicumSchedule, {
 		fields: [practicumAssessment.scheduleId],
 		references: [practicumSchedule.id]
@@ -1080,7 +1151,8 @@ export const practicumAssessmentRelations = relations(practicumAssessment, ({ on
 	module: one(practicumModule, {
 		fields: [practicumAssessment.moduleId],
 		references: [practicumModule.id]
-	})
+	}),
+	criteriaScores: many(practicumAssessmentCriteriaScore)
 }));
 
 export const practicumLogbookTemplateRelations = relations(
@@ -1131,8 +1203,34 @@ export const practicumModuleRelations = relations(practicumModule, ({ one, many 
 	}),
 	templates: many(practicumLogbookTemplate),
 	assessments: many(practicumAssessment),
-	schedules: many(practicumScheduleModule)
+	schedules: many(practicumScheduleModule),
+	criteria: many(practicumModuleCriteria)
 }));
+
+export const practicumModuleCriteriaRelations = relations(
+	practicumModuleCriteria,
+	({ one, many }) => ({
+		module: one(practicumModule, {
+			fields: [practicumModuleCriteria.moduleId],
+			references: [practicumModule.id]
+		}),
+		scores: many(practicumAssessmentCriteriaScore)
+	})
+);
+
+export const practicumAssessmentCriteriaScoreRelations = relations(
+	practicumAssessmentCriteriaScore,
+	({ one }) => ({
+		assessment: one(practicumAssessment, {
+			fields: [practicumAssessmentCriteriaScore.assessmentId],
+			references: [practicumAssessment.id]
+		}),
+		criteria: one(practicumModuleCriteria, {
+			fields: [practicumAssessmentCriteriaScore.criteriaId],
+			references: [practicumModuleCriteria.id]
+		})
+	})
+);
 
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),

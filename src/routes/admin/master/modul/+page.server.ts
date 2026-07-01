@@ -39,7 +39,8 @@ export const load: PageServerLoad = async ({ url }) => {
 			description: practicumModule.description,
 			blockName: block.name,
 			departmentName: department.name,
-			createdAt: practicumModule.createdAt
+			createdAt: practicumModule.createdAt,
+			component: practicumModule.component
 		})
 		.from(practicumModule)
 		.innerJoin(block, eq(practicumModule.blockId, block.id))

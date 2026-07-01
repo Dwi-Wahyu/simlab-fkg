@@ -72,6 +72,11 @@
 					role: ['superadmin', 'koordinator']
 				},
 				{
+					name: 'Rekapitulasi per Instruktur',
+					path: `/admin/rekapitulasi`,
+					role: ['superadmin', 'koordinator', 'kepalaLab']
+				},
+				{
 					name: 'Modul & Materi',
 					path: `/admin/master/modul`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']

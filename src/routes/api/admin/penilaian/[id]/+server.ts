@@ -34,10 +34,12 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 	if (!schedule) throw error(404, 'Schedule not found');
 
-	// Verify instructor is part of this schedule
+	// Verify authorization: instructor, koordinator of matching lab, or superadmin
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === locals.user?.id);
-	if (!isInstructor && locals.user.role !== 'superadmin') {
-		throw error(403, 'Forbidden');
+	const isKoordinator = locals.user.role === 'koordinator' && (!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
+	const isAuthorized = isInstructor || locals.user.role === 'superadmin' || isKoordinator;
+	if (!isAuthorized) {
+		throw error(403, 'Forbidden: You are not authorized to view this schedule');
 	}
 
 	const modules = schedule.modules.map((m) => m.module);

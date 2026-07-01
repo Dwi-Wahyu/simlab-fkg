@@ -411,11 +411,22 @@ export async function generateLogbookForSeries(
 					year: 'numeric'
 				}),
 				time: dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-				assessments: assessments.map((a) => ({
-					moduleName: a.module?.name ?? '-',
-					score: a.score,
-					instructorName: a.instructor?.name ?? '-'
-				}))
+				assessments: (() => {
+					const scheduleComponents = new Set(assessments.map((a) => a.module?.component).filter(Boolean));
+					return assessments.map((a) => {
+						const comp = a.module?.component;
+						const label = comp
+							? scheduleComponents.size > 1
+								? comp === 'PREPARASI' ? 'Prep' : 'Resto'
+								: comp === 'PREPARASI' ? 'Preparasi' : 'Restorasi'
+							: null;
+						return {
+							moduleName: label ? `${a.module?.name ?? '-'} (${label})` : (a.module?.name ?? '-'),
+							score: a.score,
+							instructorName: a.instructor?.name ?? '-'
+						};
+					});
+				})()
 			};
 		})
 	);

@@ -30,10 +30,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	if (!schedule) throw error(404, 'Schedule not found');
 
-	// Verify instructor is part of this schedule
+	// Verify authorization: instructor, koordinator of matching lab, or superadmin
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === instructorId);
-	if (!isInstructor && locals.user.role !== 'superadmin') {
-		throw error(403, 'Forbidden: You are not an instructor for this schedule');
+	const isKoordinator = locals.user.role === 'koordinator' && (!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
+	const isAuthorized = isInstructor || locals.user.role === 'superadmin' || isKoordinator;
+	if (!isAuthorized) {
+		throw error(403, 'Forbidden: You are not authorized to view this schedule');
 	}
 
 	const students = await db.query.practicumClassMember.findMany({

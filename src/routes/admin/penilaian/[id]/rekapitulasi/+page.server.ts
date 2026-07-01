@@ -44,9 +44,18 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				eq(practicumSchedule.classId, schedule.classId)
 			),
 			with: {
+				laboratorium: true,
+				block: true,
+				practicumClass: true,
+				series: true,
 				modules: {
 					with: {
 						module: true
+					}
+				},
+				instructors: {
+					with: {
+						user: true
 					}
 				}
 			},
@@ -54,10 +63,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		});
 	}
 
-	// Verify instructor is part of this schedule
+	// Verify authorization: instructor, koordinator of matching lab, or superadmin
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === locals.user.id);
-	if (!isInstructor && locals.user.role !== 'superadmin') {
-		throw error(403, 'Forbidden: You are not an instructor for this schedule');
+	const isKoordinator = locals.user.role === 'koordinator' && (!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
+	const isAuthorized = isInstructor || locals.user.role === 'superadmin' || isKoordinator;
+	if (!isAuthorized) {
+		throw error(403, 'Forbidden: You are not authorized to view this schedule');
 	}
 
 	const baseQuery = db

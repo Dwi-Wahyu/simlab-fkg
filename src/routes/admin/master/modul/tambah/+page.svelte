@@ -5,7 +5,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { ChevronLeft, Loader2, Save } from '@lucide/svelte';
+	import { ChevronLeft, Loader2, Save, Plus, Trash2 } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
@@ -13,11 +13,54 @@
 	let { data, form } = $props();
 
 	let selectedBlockId = $state('');
+	let selectedComponent = $state('');
+	let selectedScoringMode = $state('TOTAL');
 	let isLoading = $state(false);
 	let showSuccessDialog = $state(false);
 
+	interface Criterion {
+		id: string;
+		name: string;
+		maxScore: number;
+	}
+
+	let criteriaList = $state<Criterion[]>([
+		{ id: Math.random().toString(), name: '', maxScore: 100 }
+	]);
+
+	function addCriterion() {
+		criteriaList.push({
+			id: Math.random().toString(),
+			name: '',
+			maxScore: 100
+		});
+	}
+
+	function removeCriterion(index: number) {
+		criteriaList.splice(index, 1);
+	}
+
 	const blockTrigger = $derived(
 		data.blocks.find((b) => b.id === selectedBlockId)?.name ?? 'Pilih Blok'
+	);
+
+	const componentOptions = [
+		{ value: '', label: 'Tanpa Komponen (Modul Umum)' },
+		{ value: 'PREPARASI', label: 'Preparasi' },
+		{ value: 'RESTORASI', label: 'Restorasi' }
+	];
+
+	const componentTrigger = $derived(
+		componentOptions.find((o) => o.value === selectedComponent)?.label ?? 'Pilih Komponen'
+	);
+
+	const scoringModeOptions = [
+		{ value: 'TOTAL', label: 'Total' },
+		{ value: 'RUBRIK', label: 'Rubrik' }
+	];
+
+	const scoringModeTrigger = $derived(
+		scoringModeOptions.find((o) => o.value === selectedScoringMode)?.label ?? 'Pilih Mode Penilaian'
 	);
 
 	$effect(() => {
@@ -77,6 +120,102 @@
 						</Select.Root>
 						<input type="hidden" name="blockId" value={selectedBlockId} />
 					</div>
+
+					<div class="grid gap-2">
+						<Label for="component">Komponen Penilaian</Label>
+						<Select.Root type="single" name="component" bind:value={selectedComponent}>
+							<Select.Trigger class="w-full text-left">
+								{componentTrigger}
+							</Select.Trigger>
+							<Select.Content>
+								{#each componentOptions as opt (opt.value)}
+									<Select.Item value={opt.value} label={opt.label}>
+										{opt.label}
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+						<input type="hidden" name="component" value={selectedComponent} />
+						<p class="text-xs text-muted-foreground">
+							<i>Pilih Preparasi/Restorasi jika modul ini merepresentasikan salah satu tahap penilaian pada suatu jadwal. Biarkan kosong untuk modul dengan nilai tunggal (tanpa pemisahan).</i>
+						</p>
+					</div>
+
+					<div class="grid gap-2">
+						<Label for="scoringMode">Mode Penilaian</Label>
+						<Select.Root type="single" name="scoringMode" bind:value={selectedScoringMode}>
+							<Select.Trigger class="w-full text-left">
+								{scoringModeTrigger}
+							</Select.Trigger>
+							<Select.Content>
+								{#each scoringModeOptions as opt (opt.value)}
+									<Select.Item value={opt.value} label={opt.label}>
+										{opt.label}
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+						<input type="hidden" name="scoringMode" value={selectedScoringMode} />
+						<p class="text-xs text-muted-foreground">
+							<i>Total: instruktur mengisi satu nilai akhir langsung. Rubrik: nilai akhir dihitung otomatis dari beberapa kriteria/tugas di bawah.</i>
+						</p>
+					</div>
+
+					{#if selectedScoringMode === 'RUBRIK'}
+						<div class="space-y-4 border-t pt-4">
+							<div class="flex items-center justify-between">
+								<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Kriteria Rubrik</h3>
+								<Button type="button" variant="outline" size="sm" onclick={addCriterion}>
+									<Plus class="mr-2 h-4 w-4" />
+									Tambah Kriteria
+								</Button>
+							</div>
+
+							{#each criteriaList as criterion, idx (criterion.id)}
+								<div class="flex flex-col gap-2 rounded-lg border p-4 bg-muted/10 relative">
+									<div class="flex items-start gap-4">
+										<div class="flex-1 grid gap-2">
+											<Label for="criteria-name-{idx}">Nama Kriteria / Tugas</Label>
+											<Input
+												id="criteria-name-{idx}"
+												name="criteriaName[]"
+												placeholder="Misal: Ketepatan preparasi kavitas"
+												bind:value={criterion.name}
+												required
+											/>
+										</div>
+										<div class="w-28 grid gap-2">
+											<Label for="criteria-score-{idx}">Skor Maks</Label>
+											<Input
+												id="criteria-score-{idx}"
+												type="number"
+												name="criteriaMaxScore[]"
+												min="1"
+												bind:value={criterion.maxScore}
+												required
+											/>
+										</div>
+										{#if criteriaList.length > 1}
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												class="mt-8 text-destructive hover:bg-destructive/10 animate-fade-in"
+												onclick={() => removeCriterion(idx)}
+											>
+												<Trash2 class="h-4 w-4" />
+											</Button>
+										{/if}
+									</div>
+								</div>
+							{/each}
+
+							<div class="rounded-lg bg-blue-50/50 border border-blue-100 p-4 text-xs text-blue-800">
+								<p class="font-semibold mb-1">Catatan Pengaturan Skor:</p>
+								<p>Sistem akan menghitung nilai total akhir sebagai rata-rata (jumlah skor dibagi dengan jumlah kriteria/tugas), dibulatkan ke bilangan bulat terdekat. Sangat disarankan untuk mengatur nilai maksimum setiap kriteria ke 100 agar konsisten.</p>
+							</div>
+						</div>
+					{/if}
 
 					<div class="grid gap-2">
 						<Label for="description">Deskripsi (Opsional)</Label>

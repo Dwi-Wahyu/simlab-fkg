@@ -40,16 +40,20 @@
 		await goto(url.toString());
 	}
 
+	import { buildRekapColumns } from '$lib/rekap/buildRekapMatrix';
+
 	// Group modules by schedule
 	const groupedColumns = $derived(
-		data.allSchedules.map((s: any) => ({
-			scheduleId: s.id,
-			title: s.title,
-			modules: s.modules.map((m: any) => m.module)
-		}))
+		buildRekapColumns(
+			data.allSchedules.map((s: any) => ({
+				id: s.id,
+				title: s.title,
+				modules: s.modules.map((m: any) => m.module)
+			}))
+		)
 	);
 
-	const allModules = $derived(groupedColumns.flatMap((col) => col.modules));
+	const allColumns = $derived(groupedColumns.flatMap((g) => g.columns));
 
 	function getScore(studentId: string, scheduleId: string, moduleId: string) {
 		const assessment = data.assessments.find(
@@ -81,7 +85,11 @@
 		</div>
 
 		<div class="flex items-center gap-2">
-			<Button variant="outline" class="hidden md:flex">
+			<Button
+				variant="outline"
+				class="hidden md:flex"
+				href="/admin/penilaian/{data.schedule.id}/rekapitulasi/export"
+			>
 				<Download />
 				Export Excel
 			</Button>
@@ -175,7 +183,8 @@
 							>
 							{#each groupedColumns as col (col.scheduleId)}
 								<Table.Head
-									colspan={col.modules.length}
+									colspan={col.singleColumn ? undefined : col.columns.length}
+									rowspan={col.singleColumn ? 2 : undefined}
 									class="border-r border-b bg-muted/20 text-center font-bold"
 								>
 									{col.title}
@@ -188,21 +197,23 @@
 						<!-- Second Level Header: Modules -->
 						<Table.Row>
 							{#each groupedColumns as col (col.scheduleId)}
-								{#each col.modules as mod (mod.id)}
-									<Table.Head
-										class="min-w-[100px] border-r py-1 text-center text-[10px] font-semibold tracking-wider uppercase"
-									>
-										{col.modules.length > 1 ? mod.name : ''}
-									</Table.Head>
-								{/each}
+								{#if !col.singleColumn}
+									{#each col.columns as c (c.moduleId)}
+										<Table.Head
+											class="min-w-[100px] border-r py-1 text-center text-[10px] font-semibold tracking-wider uppercase"
+										>
+											{c.subLabel}
+										</Table.Head>
+									{/each}
+								{/if}
 							{/each}
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
 						{#each data.students as student (student.id)}
 							{@const studentScores = groupedColumns.flatMap((col) =>
-								col.modules.map((m) => {
-									const val = getScore(student.userId, col.scheduleId, m.id);
+								col.columns.map((c) => {
+									const val = getScore(student.userId, col.scheduleId, c.moduleId);
 									return typeof val === 'number' ? val : null;
 								})
 							)}
@@ -223,9 +234,9 @@
 									</div>
 								</Table.Cell>
 								{#each groupedColumns as col (col.scheduleId)}
-									{#each col.modules as mod (mod.id)}
+									{#each col.columns as c (c.moduleId)}
 										<Table.Cell class="border-r text-center">
-											{getScore(student.userId, col.scheduleId, mod.id)}
+											{getScore(student.userId, col.scheduleId, c.moduleId)}
 										</Table.Cell>
 									{/each}
 								{/each}
@@ -235,7 +246,7 @@
 							</Table.Row>
 						{:else}
 							<Table.Row>
-								<Table.Cell colspan={allModules.length + 2} class="h-24 text-center">
+								<Table.Cell colspan={allColumns.length + 2} class="h-24 text-center">
 									Tidak ada data mahasiswa ditemukan.
 								</Table.Cell>
 							</Table.Row>

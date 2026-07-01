@@ -16,6 +16,7 @@
 	import { page } from '$app/state';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -165,7 +166,16 @@
 								class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
 							>
 								<div class="flex flex-col">
-									<span class="font-bold text-slate-900 md:font-medium">{module.name}</span>
+									<div class="flex items-center gap-2 flex-wrap">
+										<span class="font-bold text-slate-900 md:font-medium">{module.name}</span>
+										{#if module.component}
+											{#if module.component === 'PREPARASI'}
+												<Badge variant="outline" class="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">Preparasi</Badge>
+											{:else if module.component === 'RESTORASI'}
+												<Badge variant="outline" class="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">Restorasi</Badge>
+											{/if}
+										{/if}
+									</div>
 									<span class="mt-0.5 text-xs text-muted-foreground uppercase md:hidden">
 										{module.blockName}
 									</span>
