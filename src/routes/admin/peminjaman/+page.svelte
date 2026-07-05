@@ -510,9 +510,7 @@
 																									'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold',
 																									item.returnStatus === 'BAIK'
 																										? 'border-emerald-100 bg-emerald-50 text-emerald-700'
-																										: item.returnStatus === 'RUSAK_RINGAN'
-																											? 'border-yellow-100 bg-yellow-50 text-yellow-700'
-																											: 'border-red-100 bg-red-50 text-red-700'
+																										: 'border-red-100 bg-red-50 text-red-700'
 																								)}
 																							>
 																								{item.returnStatus}

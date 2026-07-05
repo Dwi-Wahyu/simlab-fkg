@@ -1,0 +1,1 @@
+ALTER TABLE `maintenance` ADD `nota_file_name` varchar(255);

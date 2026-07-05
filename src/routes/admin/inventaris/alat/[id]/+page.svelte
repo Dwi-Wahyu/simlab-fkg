@@ -145,7 +145,7 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				<Button href="/admin/inventaris/tambah">
+				<Button href="/admin/inventaris/alat/tambah">
 					<Plus /> Tambah Alat
 				</Button>
 			</div>
@@ -245,16 +245,12 @@
 										<Badge
 											variant={equipment.condition === 'BAIK'
 												? 'default'
-												: equipment.condition === 'RUSAK_RINGAN'
-													? 'outline'
-													: 'destructive'}
+												: 'destructive'}
 											class={cn(
 												'w-fit',
 												equipment.condition === 'BAIK'
 													? 'bg-green-100 text-green-700 hover:bg-green-100'
-													: equipment.condition === 'RUSAK_RINGAN'
-														? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
-														: ''
+													: 'bg-red-100 text-red-700 hover:bg-red-100'
 											)}
 										>
 											{equipment.condition}

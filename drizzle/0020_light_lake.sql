@@ -1,1 +1,0 @@
-ALTER TABLE `practicum_module` ADD `practicum_module_component` enum('PREPARASI','RESTORASI');

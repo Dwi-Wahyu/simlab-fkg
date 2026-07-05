@@ -9,7 +9,8 @@ import {
 	index,
 	uniqueIndex,
 	unique,
-	foreignKey
+	foreignKey,
+	json
 } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 import { laboratorium, user, laboratoriumMember, session, account, apiKey } from './auth.schema';
@@ -78,12 +79,24 @@ export const warehouse = mysqlTable('warehouse', {
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
+export const equipmentCategory = mysqlTable('equipment_category', {
+	id: varchar('id', { length: 36 }).primaryKey(),
+	name: varchar('name', { length: 255 }).notNull().unique(), // "Gunting"
+	description: text('description'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+export const equipmentCategoryRelations = relations(equipmentCategory, ({ many }) => ({
+	items: many(item)
+}));
+
 export const equipment = mysqlTable(
 	'equipment',
 	{
 		id: varchar('id', { length: 36 }).primaryKey(),
 		serialNumber: varchar('serial_number', { length: 100 }).unique(),
 		brand: varchar('brand', { length: 100 }),
+		variant: varchar('variant', { length: 255 }),
 
 		warehouseId: varchar('warehouse_id', { length: 36 }).references(() => warehouse.id),
 
@@ -93,11 +106,12 @@ export const equipment = mysqlTable(
 			.notNull()
 			.references(() => item.id), // Ensure item.type = 'ASSET'
 
-		condition: mysqlEnum('condition', ['BAIK', 'RUSAK_RINGAN', 'RUSAK_BERAT'])
+		condition: mysqlEnum('condition', ['BAIK', 'RUSAK'])
 			.default('BAIK')
 			.notNull(),
 
 		status: mysqlEnum('status', ['READY', 'IN_USE', 'MAINTENANCE']).default('READY'),
+		storageLocation: varchar('storage_location', { length: 255 }),
 
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').onUpdateNow()
@@ -110,6 +124,7 @@ export const equipment = mysqlTable(
 
 export const item = mysqlTable('item', {
 	id: varchar('id', { length: 36 }).primaryKey(),
+	categoryId: varchar('category_id', { length: 36 }).references(() => equipmentCategory.id),
 
 	name: varchar('name', { length: 255 }).notNull(),
 
@@ -128,7 +143,7 @@ export const item = mysqlTable('item', {
 	minStock: int('min_stock').default(0),
 	qrCodePath: text('qr_code_path'),
 
-	baseUnit: mysqlEnum('base_unit', ['PCS', 'BOX', 'METER', 'ROLL', 'UNIT']).notNull(),
+	baseUnit: mysqlEnum('base_unit', ['PCS', 'BOX', 'METER', 'ROLL', 'UNIT', 'BOTOL']).notNull(),
 
 	description: text('description'),
 
@@ -163,12 +178,17 @@ export const stock = mysqlTable(
 
 		qty: int('qty').default(0).notNull(),
 
+		brand: varchar('brand', { length: 100 }),
+		variant: varchar('variant', { length: 255 }),
+		laboratoriumId: varchar('laboratorium_id', { length: 36 }).references(() => laboratorium.id),
+		condition: varchar('condition', { length: 100 }).default('baik'),
+
 		updatedAt: timestamp('updated_at').defaultNow().onUpdateNow()
 	},
 
 	(table) => [
 		index('stock_item_idx').on(table.itemId),
-		uniqueIndex('stock_unique_idx').on(table.itemId, table.warehouseId)
+		uniqueIndex('stock_unique_idx').on(table.itemId, table.laboratoriumId, table.brand, table.variant)
 	]
 );
 
@@ -268,6 +288,8 @@ export const maintenance = mysqlTable('maintenance', {
 	certificatePath: text('certificate_path'),
 	certificateName: varchar('certificate_name', { length: 255 }),
 
+	notaFileName: varchar('nota_file_name', { length: 255 }),
+
 	cost: int('cost').default(0),
 
 	createdAt: timestamp('created_at').defaultNow().notNull()
@@ -342,7 +364,7 @@ export const lendingItem = mysqlTable('lending_item', {
 	qty: int('qty').default(1),
 
 	// Return data
-	returnStatus: mysqlEnum('return_status', ['BAIK', 'RUSAK_RINGAN', 'RUSAK_BERAT']),
+	returnStatus: mysqlEnum('return_status', ['BAIK', 'RUSAK']),
 	returnNotes: text('return_notes'),
 	returnEvidencePath: text('return_evidence_path'),
 	returnedAt: timestamp('returned_at')
@@ -481,6 +503,46 @@ export const practicumClassMember = mysqlTable(
 	]
 );
 
+export const kelompokMahasiswa = mysqlTable(
+	'kelompok_mahasiswa',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		name: varchar('name', { length: 255 }).notNull(), // "Kelompok 1"
+		classId: varchar('class_id', { length: 36 })
+			.notNull()
+			.references(() => practicumClass.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow()
+	},
+	(table) => [
+		index('kelompok_mahasiswa_class_idx').on(table.classId),
+		uniqueIndex('kelompok_mahasiswa_unique_idx').on(table.classId, table.name)
+	]
+);
+
+export const kelompokMahasiswaMember = mysqlTable(
+	'kelompok_mahasiswa_member',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		kelompokId: varchar('kelompok_id', { length: 36 })
+			.notNull()
+			.references(() => kelompokMahasiswa.id, { onDelete: 'cascade' }),
+		userId: varchar('user_id', { length: 36 })
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('kelompok_member_kelompok_idx').on(table.kelompokId),
+		index('kelompok_member_user_idx').on(table.userId),
+		uniqueIndex('kelompok_member_unique_idx').on(table.kelompokId, table.userId)
+	]
+);
+
 export const practicumModuleComponentEnum = mysqlEnum('practicum_module_component', [
 	'PREPARASI',
 	'RESTORASI'
@@ -488,7 +550,8 @@ export const practicumModuleComponentEnum = mysqlEnum('practicum_module_componen
 
 export const practicumModuleScoringModeEnum = mysqlEnum('practicum_module_scoring_mode', [
 	'TOTAL',
-	'RUBRIK'
+	'RUBRIK',
+	'CHECKLIST'
 ]);
 
 export const practicumModule = mysqlTable('practicum_module', {
@@ -502,6 +565,8 @@ export const practicumModule = mysqlTable('practicum_module', {
 	// standalone "Inlay — Preparasi" module that has no Restorasi counterpart).
 	component: practicumModuleComponentEnum,
 	scoringMode: practicumModuleScoringModeEnum.default('TOTAL').notNull(),
+	groupLabel: varchar('group_label', { length: 255 }),
+	scoreLegend: json('score_legend').$type<{ value: number; label: string }[] | null>(),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -559,6 +624,7 @@ export const practicumModuleCriteria = mysqlTable(
 		description: text('description'),
 		maxScore: int('max_score').notNull().default(100),
 		sortOrder: int('sort_order').default(0).notNull(),
+		sectionLabel: varchar('section_label', { length: 255 }),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').onUpdateNow()
 	},
@@ -655,6 +721,8 @@ export const practicumSchedule = mysqlTable(
 			onDelete: 'set null'
 		}),
 
+		// DEPRECATED: input dihapus dari UI Tambah/Edit Jadwal (Modul 7). Kolom
+		// dibiarkan ada untuk kompatibilitas data lama, jangan diisi dari form baru.
 		semester: int('semester'),
 
 		startTime: timestamp('start_time').notNull(),
@@ -678,11 +746,13 @@ export const practicumScheduleInstructor = mysqlTable(
 	{
 		id: varchar('id', { length: 36 }).primaryKey(),
 		scheduleId: varchar('schedule_id', { length: 36 }).notNull(),
-		instructorId: varchar('instructor_id', { length: 36 }).notNull()
+		instructorId: varchar('instructor_id', { length: 36 }).notNull(),
+		groupId: varchar('group_id', { length: 36 })
 	},
 	(table) => [
 		index('ps_instructor_schedule_idx').on(table.scheduleId),
 		index('ps_instructor_user_idx').on(table.instructorId),
+		index('ps_instructor_group_idx').on(table.groupId),
 		foreignKey({
 			name: 'ps_instr_schedule_fk',
 			columns: [table.scheduleId],
@@ -692,7 +762,12 @@ export const practicumScheduleInstructor = mysqlTable(
 			name: 'ps_instr_user_fk',
 			columns: [table.instructorId],
 			foreignColumns: [user.id]
-		}).onDelete('cascade')
+		}).onDelete('cascade'),
+		foreignKey({
+			name: 'ps_instr_group_fk',
+			columns: [table.groupId],
+			foreignColumns: [kelompokMahasiswa.id]
+		}).onDelete('set null')
 	]
 );
 
@@ -975,11 +1050,15 @@ export const lendingItemRelations = relations(lendingItem, ({ one }) => ({
 	})
 }));
 
-export const itemRelations = relations(item, ({ many }) => ({
+export const itemRelations = relations(item, ({ many, one }) => ({
 	stocks: many(stock),
 	movements: many(movement),
 	unitConversions: many(itemUnitConversion),
-	equipments: many(equipment)
+	equipments: many(equipment),
+	category: one(equipmentCategory, {
+		fields: [item.categoryId],
+		references: [equipmentCategory.id]
+	})
 }));
 
 export const itemUnitConversionRelations = relations(itemUnitConversion, ({ one }) => ({
@@ -997,6 +1076,10 @@ export const stockRelations = relations(stock, ({ one }) => ({
 	warehouse: one(warehouse, {
 		fields: [stock.warehouseId],
 		references: [warehouse.id]
+	}),
+	laboratorium: one(laboratorium, {
+		fields: [stock.laboratoriumId],
+		references: [laboratorium.id]
 	})
 }));
 
@@ -1103,6 +1186,10 @@ export const practicumScheduleInstructorRelations = relations(
 		user: one(user, {
 			fields: [practicumScheduleInstructor.instructorId],
 			references: [user.id]
+		}),
+		group: one(kelompokMahasiswa, {
+			fields: [practicumScheduleInstructor.groupId],
+			references: [kelompokMahasiswa.id]
 		})
 	})
 );
@@ -1119,7 +1206,8 @@ export const practicumScheduleModuleRelations = relations(practicumScheduleModul
 }));
 
 export const practicumClassRelations = relations(practicumClass, ({ many }) => ({
-	members: many(practicumClassMember)
+	members: many(practicumClassMember),
+	groups: many(kelompokMahasiswa)
 }));
 
 export const practicumClassMemberRelations = relations(practicumClassMember, ({ one }) => ({
@@ -1129,6 +1217,26 @@ export const practicumClassMemberRelations = relations(practicumClassMember, ({ 
 	}),
 	user: one(user, {
 		fields: [practicumClassMember.userId],
+		references: [user.id]
+	})
+}));
+
+export const kelompokMahasiswaRelations = relations(kelompokMahasiswa, ({ one, many }) => ({
+	class: one(practicumClass, {
+		fields: [kelompokMahasiswa.classId],
+		references: [practicumClass.id]
+	}),
+	members: many(kelompokMahasiswaMember),
+	scheduleInstructors: many(practicumScheduleInstructor)
+}));
+
+export const kelompokMahasiswaMemberRelations = relations(kelompokMahasiswaMember, ({ one }) => ({
+	kelompok: one(kelompokMahasiswa, {
+		fields: [kelompokMahasiswaMember.kelompokId],
+		references: [kelompokMahasiswa.id]
+	}),
+	user: one(user, {
+		fields: [kelompokMahasiswaMember.userId],
 		references: [user.id]
 	})
 }));

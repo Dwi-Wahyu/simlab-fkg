@@ -10,15 +10,17 @@ const slugToRole: Record<string, string> = {
 	'kepala-lab': 'kepalaLab',
 	'instruktur': 'instruktur',
 	'teknisi': 'teknisi',
-	'spmi': 'spmi'
+	'spmi': 'spmi',
+	'laboran': 'laboran'
 };
 
 const roleToLabel: Record<string, string> = {
-	'koordinator': 'Koordinator',
+	'koordinator': 'PJ Mata Kuliah',
 	'kepalaLab': 'Kepala Lab',
 	'instruktur': 'Dosen',
 	'teknisi': 'Teknisi',
-	'spmi': 'SPMI'
+	'spmi': 'SPMI',
+	'laboran': 'Laboran'
 };
 
 export const load: PageServerLoad = async ({ params, locals }) => {

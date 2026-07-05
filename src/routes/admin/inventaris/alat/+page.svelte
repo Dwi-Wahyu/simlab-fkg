@@ -19,7 +19,8 @@
 		ChevronsLeft,
 		ChevronsRight,
 		ChevronDown,
-		ChevronUp
+		ChevronUp,
+		Download
 	} from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -32,8 +33,27 @@
 	import { page as pageStore } from '$app/state';
 	import { untrack } from 'svelte';
 	import { cn } from '$lib/utils';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
+
+	let selectedExportLabId = $state('');
+	let laboratories = $state<any[]>([]);
+	const exportLabName = $derived(
+		laboratories.find((l) => l.id === selectedExportLabId)?.name ?? 'Pilih Laboratorium'
+	);
+
+	onMount(async () => {
+		if (data.user?.role === 'superadmin') {
+			const res = await fetch('/api/admin/laboratorium');
+			if (res.ok) {
+				laboratories = await res.json();
+				if (laboratories.length > 0) {
+					selectedExportLabId = laboratories[0].id;
+				}
+			}
+		}
+	});
 
 	// Map icon strings to components
 	const iconMap = {
@@ -97,8 +117,8 @@
 
 	{#await data.alatPromise}
 		<!-- Skeleton Summary Cards -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-			{#each Array(5) as _}
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			{#each Array(4) as _}
 				<Card.Root>
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
 						<div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
@@ -148,7 +168,7 @@
 		</div>
 	{:then res}
 		<!-- Summary Cards -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 			{#each res.summary as card}
 				<Card.Root>
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -190,7 +210,29 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				<Button href="/admin/inventaris/tambah">
+				{#if data.user?.role === 'superadmin'}
+					<div class="flex items-center gap-2">
+						<Select.Root type="single" bind:value={selectedExportLabId}>
+							<Select.Trigger class="w-[200px] h-10 bg-white">
+								{exportLabName}
+							</Select.Trigger>
+							<Select.Content>
+								{#each laboratories as lab}
+									<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+						<Button href="/admin/laporan/inventaris/export?labId={selectedExportLabId}" variant="outline" class="gap-2" disabled={!selectedExportLabId}>
+							<Download class="size-4" /> Export XLSX
+						</Button>
+					</div>
+				{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
+					<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
+						<Download class="size-4" /> Export XLSX
+					</Button>
+				{/if}
+
+				<Button href="/admin/inventaris/alat/tambah">
 					<Plus /> Tambah Alat
 				</Button>
 			</div>
@@ -204,8 +246,7 @@
 						<Table.Row class="md:table-row">
 							<Table.Head class="px-6 py-4">Nama</Table.Head>
 							<Table.Head>Total</Table.Head>
-							<Table.Head>Rusak Berat</Table.Head>
-							<Table.Head>Rusak Ringan</Table.Head>
+							<Table.Head>Rusak</Table.Head>
 							<Table.Head>Baik</Table.Head>
 							<Table.Head>Ready</Table.Head>
 							<Table.Head class="pr-6 text-right">Aksi</Table.Head>
@@ -215,7 +256,7 @@
 						{#if res.items.length === 0}
 							<Table.Row class="flex flex-col md:table-row">
 								<Table.Cell
-									colspan={7}
+									colspan={6}
 									class="py-10 text-center text-muted-foreground md:table-cell"
 								>
 									Data tidak ditemukan.
@@ -263,24 +304,14 @@
 										{item.total}
 									</Table.Cell>
 
-									<!-- Rusak Berat -->
+									<!-- Rusak -->
 									<Table.Cell
 										class={cn(
 											expandedItems[item.id] ? 'flex' : 'hidden',
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
 										)}
 									>
-										{item.rusakBerat}
-									</Table.Cell>
-
-									<!-- Rusak Ringan -->
-									<Table.Cell
-										class={cn(
-											expandedItems[item.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
-										)}
-									>
-										{item.rusakRingan}
+										{item.rusak}
 									</Table.Cell>
 
 									<!-- Baik -->
@@ -313,7 +344,7 @@
 										<Button href="/admin/inventaris/alat/{item.id}" size="sm" variant="outline">
 											<Eye /> Detail
 										</Button>
-										<Button size="sm" variant="outline" href="/admin/inventaris/{item.id}/edit">
+										<Button size="sm" variant="outline" href="/admin/inventaris/alat/{item.id}/edit">
 											<FileEdit /> Edit
 										</Button>
 									</Table.Cell>

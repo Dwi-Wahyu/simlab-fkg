@@ -1,22 +1,23 @@
+import { apiKey } from '@better-auth/api-key';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { admin, customSession, organization, username } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
-import { env } from '$env/dynamic/private';
 import { getRequestEvent } from '$app/server';
+import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
-import { organization, admin, username, customSession } from 'better-auth/plugins';
+import * as schema from '$lib/server/db/schema';
 import {
 	accessControl,
-	superadmin,
-	koordinator,
-	kepalaLab,
 	instruktur,
+	kepalaLab,
+	koordinator,
+	laboran,
 	peneliti,
-	teknisi,
-	spmi
+	spmi,
+	superadmin,
+	teknisi
 } from './auth.roles';
-import * as schema from '$lib/server/db/schema';
-import { apiKey } from '@better-auth/api-key';
 
 export const auth = betterAuth({
 	baseURL: env.ORIGIN,
@@ -82,10 +83,13 @@ export const auth = betterAuth({
 				instruktur,
 				peneliti,
 				teknisi,
-				spmi
+				spmi,
+				laboran
 			}
 		}),
-		username(),
+		username({
+			maxUsernameLength: 40
+		}),
 		apiKey(),
 		organization({
 			ac: accessControl,
@@ -96,7 +100,8 @@ export const auth = betterAuth({
 				instruktur,
 				peneliti,
 				teknisi,
-				spmi
+				spmi,
+				laboran
 			}
 		}),
 		customSession(async ({ user, session }) => {

@@ -56,7 +56,7 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		.as('ac');
 
 	// Base query for students
-	let whereClause = eq(practicumClassMember.classId, schedule.classId!);
+	let whereClause: any = eq(practicumClassMember.classId, schedule.classId!);
 
 	if (search) {
 		whereClause = and(
@@ -65,13 +65,19 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 				ilike(user.name, `%${search}%`),
 				ilike(user.username, `%${search}%`)
 			)
-		) as any;
+		);
 	}
 
-	// For status filtering, we might need a more complex query joining the subquery
-	// But to keep it simple and efficient with pagination, let's fetch students first
-	// then filter if status != 'all', or use a join.
-	
+	// Build final where clause incorporating status filter before query construction
+	let finalWhere: any = whereClause;
+	if (status === 'completed') {
+		finalWhere = and(whereClause, eq(sql`COALESCE(${assessmentCountSubquery.count}, 0)`, modules.length));
+	} else if (status === 'partial') {
+		finalWhere = and(whereClause, and(sql`COALESCE(${assessmentCountSubquery.count}, 0) > 0`, sql`COALESCE(${assessmentCountSubquery.count}, 0) < ${modules.length}`));
+	} else if (status === 'none') {
+		finalWhere = and(whereClause, eq(sql`COALESCE(${assessmentCountSubquery.count}, 0)`, 0));
+	}
+
 	const studentsQuery = db
 		.select({
 			member: practicumClassMember,
@@ -81,25 +87,15 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		.from(practicumClassMember)
 		.innerJoin(user, eq(practicumClassMember.userId, user.id))
 		.leftJoin(assessmentCountSubquery, eq(practicumClassMember.userId, assessmentCountSubquery.studentId))
-		.where(whereClause);
+		.where(finalWhere);
 
-	// Add status filtering
-	let finalWhere = whereClause;
-	if (status === 'completed') {
-		studentsQuery.where(and(whereClause, eq(sql`COALESCE(${assessmentCountSubquery.count}, 0)`, modules.length)));
-	} else if (status === 'partial') {
-		studentsQuery.where(and(whereClause, and(sql`COALESCE(${assessmentCountSubquery.count}, 0) > 0`, sql`COALESCE(${assessmentCountSubquery.count}, 0) < ${modules.length}`)));
-	} else if (status === 'none') {
-		studentsQuery.where(and(whereClause, eq(sql`COALESCE(${assessmentCountSubquery.count}, 0)`, 0)));
-	}
-
-	// Count total for pagination
+	// Count total for pagination using same joins and where clause
 	const totalItemsResult = await db
 		.select({ count: count() })
 		.from(practicumClassMember)
 		.innerJoin(user, eq(practicumClassMember.userId, user.id))
 		.leftJoin(assessmentCountSubquery, eq(practicumClassMember.userId, assessmentCountSubquery.studentId))
-		.where(studentsQuery.config.where);
+		.where(finalWhere);
 
 	const totalItems = totalItemsResult[0].count;
 	const totalPages = Math.ceil(totalItems / limit);

@@ -6,11 +6,49 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { Save, ChevronLeft } from '@lucide/svelte';
+	import { Save, ChevronLeft, Check, Upload, FileText, Search } from '@lucide/svelte';
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
+	import * as Dialog from '$lib/components/ui/dialog';
+
+	import { untrack } from 'svelte';
 
 	let { data } = $props();
+
+	// File Preview States
+	let fileInput: HTMLInputElement | null = $state(null);
+	let fileName = $state('');
+	let fileSize = $state('');
+	let fileType = $state('');
+	let filePreviewUrl = $state<string | null>(null);
+
+	function handleFileChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (file) {
+			fileName = file.name;
+			fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+			fileType = file.type;
+
+			if (file.type.startsWith('image/')) {
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					filePreviewUrl = e.target?.result as string;
+				};
+				reader.readAsDataURL(file);
+			} else {
+				filePreviewUrl = null;
+			}
+		}
+	}
+
+	function removeFile() {
+		fileName = '';
+		fileSize = '';
+		fileType = '';
+		filePreviewUrl = null;
+		if (fileInput) fileInput.value = '';
+	}
 
 	// State form
 	let formData = $state({
@@ -31,6 +69,54 @@
 	let notificationDescription = $state('');
 	let notificationActionLabel = $state('OK');
 
+	// Equipment Search Dialog State
+	let isEquipmentDialogOpen = $state(false);
+	let equipmentSearchQuery = $state('');
+	let debouncedEquipmentSearchQuery = $state('');
+	let isEquipmentSearching = $state(false);
+	let equipmentSearchTimeout = $state<NodeJS.Timeout | null>(null);
+	let equipmentCurrentPage = $state(1);
+	const EQUIPMENT_PAGE_SIZE = 10;
+
+	// Debounce effect
+	$effect(() => {
+		const query = equipmentSearchQuery;
+		
+		untrack(() => {
+			isEquipmentSearching = true;
+			if (equipmentSearchTimeout) clearTimeout(equipmentSearchTimeout);
+			
+			equipmentSearchTimeout = setTimeout(() => {
+				debouncedEquipmentSearchQuery = query;
+				equipmentCurrentPage = 1;
+				isEquipmentSearching = false;
+			}, 500);
+		});
+	});
+
+	const filteredEquipments = $derived(
+		data.equipment.filter((eq) => {
+			const name = eq.item?.name?.toLowerCase() || '';
+			const sn = eq.serialNumber?.toLowerCase() || '';
+			const q = debouncedEquipmentSearchQuery.toLowerCase();
+			return name.includes(q) || sn.includes(q);
+		})
+	);
+
+	const paginatedEquipments = $derived(
+		filteredEquipments.slice(
+			(equipmentCurrentPage - 1) * EQUIPMENT_PAGE_SIZE,
+			equipmentCurrentPage * EQUIPMENT_PAGE_SIZE
+		)
+	);
+
+	const equipmentTotalPages = $derived(Math.ceil(filteredEquipments.length / EQUIPMENT_PAGE_SIZE) || 1);
+
+	function selectEquipment(id: string) {
+		formData.equipmentId = id;
+		isEquipmentDialogOpen = false;
+	}
+
 	const maintenanceTypes = [
 		{ value: 'PREVENTIF', label: 'Preventif (Perawatan)' },
 		{ value: 'KOREKTIF', label: 'Korektif (Perbaikan)' }
@@ -43,11 +129,12 @@
 	];
 
 	// Derived trigger labels
-	const selectedEquipmentTrigger = $derived(
-		data.equipment.find((e) => e.id === formData.equipmentId)
-			? `${data.equipment.find((e) => e.id === formData.equipmentId).item?.name || 'Tanpa Nama'} ${data.equipment.find((e) => e.id === formData.equipmentId).serialNumber ? `(${data.equipment.find((e) => e.id === formData.equipmentId).serialNumber})` : ''}`
-			: 'Pilih alat'
-	);
+	const selectedEquipmentTrigger = $derived.by(() => {
+		const eq = data.equipment.find((e) => e.id === formData.equipmentId);
+		if (!eq) return 'Pilih alat';
+		const name = eq.item?.name || 'Tanpa Nama';
+		return eq.serialNumber ? `${name} (${eq.serialNumber})` : name;
+	});
 
 	const selectedTypeTrigger = $derived(
 		maintenanceTypes.find((t) => t.value === formData.maintenanceType)?.label ?? 'Pilih Tipe'
@@ -120,6 +207,7 @@
 		<Card.Content>
 			<form
 				method="POST"
+				enctype="multipart/form-data"
 				use:enhance={() => {
 					return async ({ result }) => {
 						if (result.type === 'success') {
@@ -135,31 +223,15 @@
 					<!-- Equipment -->
 					<div class="space-y-2">
 						<Label for="equipmentId">Peralatan <span class="text-red-500">*</span></Label>
-						<Select.Root
-							type="single"
-							name="equipmentId"
-							bind:value={formData.equipmentId}
-							required
+						<input type="hidden" name="equipmentId" value={formData.equipmentId} required />
+						<Button
+							type="button"
+							variant="outline"
+							class="h-11 w-full justify-start rounded-xl border-slate-200 font-normal shadow-none hover:bg-slate-50 {formData.equipmentId ? 'text-slate-900' : 'text-slate-500'}"
+							onclick={() => isEquipmentDialogOpen = true}
 						>
-							<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
-								{selectedEquipmentTrigger}
-							</Select.Trigger>
-							<Select.Content>
-								{#each data.equipment as eq (eq.id)}
-									<Select.Item
-										value={eq.id}
-										label="{eq.item?.name || 'Tanpa Nama'} {eq.serialNumber
-											? `(${eq.serialNumber})`
-											: ''}"
-									>
-										{eq.item?.name || 'Tanpa Nama'}
-										{#if eq.serialNumber}
-											<span class="ml-1 text-slate-400">({eq.serialNumber})</span>
-										{/if}
-									</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
+							{selectedEquipmentTrigger}
+						</Button>
 					</div>
 
 					<!-- Tipe -->
@@ -226,20 +298,22 @@
 					</div>
 
 					<!-- Teknisi -->
-					<div class="space-y-2">
-						<Label for="technicianId">Teknisi (Opsional)</Label>
-						<Select.Root type="single" name="technicianId" bind:value={formData.technicianId}>
-							<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
-								{selectedTechnicianTrigger}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="" label="Pilih teknisi">Pilih teknisi</Select.Item>
-								{#each data.technicians as tech (tech.id)}
-									<Select.Item value={tech.id} label={tech.name}>{tech.name}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</div>
+					{#if data.userRole !== 'teknisi'}
+						<div class="space-y-2">
+							<Label for="technicianId">Teknisi (Opsional)</Label>
+							<Select.Root type="single" name="technicianId" bind:value={formData.technicianId}>
+								<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
+									{selectedTechnicianTrigger}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Item value="" label="Pilih teknisi">Pilih teknisi</Select.Item>
+									{#each data.technicians as tech (tech.id)}
+										<Select.Item value={tech.id} label={tech.name}>{tech.name}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</div>
+					{/if}
 
 					<!-- Biaya -->
 					<div class="space-y-2">
@@ -270,6 +344,70 @@
 					/>
 				</div>
 
+				<!-- Nota Upload -->
+				{#if formData.maintenanceType !== 'KALIBRASI'}
+					<div class="space-y-2">
+						<Label for="nota">Nota / Bukti Pembayaran (PDF/Gambar) (Opsional)</Label>
+						<div
+							class="group relative flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 transition-all hover:border-[#2D5A43] hover:bg-white"
+						>
+							{#if fileName}
+								<div class="flex w-full animate-in flex-col items-center gap-4 zoom-in-95 fade-in">
+									{#if filePreviewUrl}
+										<div class="relative">
+											<img
+												src={filePreviewUrl}
+												alt="Preview"
+												class="max-h-32 rounded-lg border border-slate-200 shadow-sm"
+											/>
+											<div
+												class="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#2D5A43] text-white shadow-sm"
+											>
+												<Check size={14} />
+											</div>
+										</div>
+									{:else}
+										<div class="rounded-xl bg-slate-100 p-4 text-slate-400">
+											<FileText size={48} />
+										</div>
+									{/if}
+									<div class="text-center">
+										<p class="max-w-[240px] truncate text-sm font-semibold text-slate-700">
+											{fileName}
+										</p>
+										<p class="text-xs text-slate-500">{fileSize}</p>
+									</div>
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-8 text-xs text-destructive hover:bg-red-50"
+										onclick={removeFile}
+									>
+										Hapus & Ganti File
+									</Button>
+								</div>
+							{:else}
+								<input
+									type="file"
+									name="nota"
+									id="nota"
+									bind:this={fileInput}
+									class="absolute inset-0 z-10 cursor-pointer opacity-0"
+									accept=".pdf,.png,.jpg,.jpeg"
+									onchange={handleFileChange}
+								/>
+								<div class="flex flex-col items-center gap-2 text-center">
+									<div class="rounded-full bg-slate-100 p-3 group-hover:bg-[#2D5A43]/10">
+										<Upload size={24} class="text-slate-400 group-hover:text-[#2D5A43]" />
+									</div>
+									<p class="text-sm font-medium text-slate-600">Klik untuk upload nota</p>
+									<p class="text-xs text-slate-400">PDF, PNG, JPG (Maks. 5MB)</p>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+
 				<div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
 					<Button variant="outline" href="/admin/pemeliharaan" class="h-11 rounded-xl px-6"
 						>Batal</Button
@@ -292,4 +430,81 @@
 		actionLabel={notificationActionLabel}
 		onAction={handleNotificationAction}
 	/>
+
+	<!-- Equipment Search Dialog -->
+	<Dialog.Root bind:open={isEquipmentDialogOpen}>
+		<Dialog.Content class="sm:max-w-[500px]">
+			<Dialog.Header>
+				<Dialog.Title>Pilih Peralatan</Dialog.Title>
+				<Dialog.Description>Cari dan pilih peralatan yang akan dipelihara.</Dialog.Description>
+			</Dialog.Header>
+			<div class="flex flex-col gap-4 py-4">
+				<div class="relative">
+					<Search class="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+					<Input
+						type="text"
+						placeholder="Cari nama atau serial number..."
+						class="pl-9 h-10 rounded-xl"
+						bind:value={equipmentSearchQuery}
+					/>
+				</div>
+
+				<div class="flex h-[300px] flex-col gap-2 overflow-y-auto pr-2">
+					{#if isEquipmentSearching}
+						<!-- Mock Skeleton -->
+						{#each Array(5) as _}
+							<div class="flex h-16 w-full animate-pulse flex-col justify-center rounded-lg border border-slate-100 bg-slate-50 p-3 px-4">
+								<div class="h-4 w-2/3 rounded bg-slate-200"></div>
+								<div class="mt-2 h-3 w-1/3 rounded bg-slate-200"></div>
+							</div>
+						{/each}
+					{:else if paginatedEquipments.length === 0}
+						<div class="flex h-full items-center justify-center text-sm text-slate-500">
+							Tidak ada peralatan ditemukan.
+						</div>
+					{:else}
+						{#each paginatedEquipments as eq (eq.id)}
+							<button
+								type="button"
+								class="flex flex-col items-start justify-center rounded-lg border border-slate-200 p-3 px-4 text-left transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+								onclick={() => selectEquipment(eq.id)}
+							>
+								<span class="font-medium text-slate-900">{eq.item?.name || 'Tanpa Nama'}</span>
+								{#if eq.serialNumber}
+									<span class="mt-0.5 text-xs text-slate-500">SN: {eq.serialNumber}</span>
+								{/if}
+							</button>
+						{/each}
+					{/if}
+				</div>
+
+				<!-- Pagination -->
+				<div class="flex items-center justify-between border-t pt-4">
+					<span class="text-xs font-medium text-slate-500">
+						Halaman {equipmentCurrentPage} dari {equipmentTotalPages || 1}
+					</span>
+					<div class="flex gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							class="h-8 rounded-lg"
+							disabled={equipmentCurrentPage <= 1 || isEquipmentSearching}
+							onclick={() => equipmentCurrentPage--}
+						>
+							Sebelumnya
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							class="h-8 rounded-lg"
+							disabled={equipmentCurrentPage >= equipmentTotalPages || isEquipmentSearching}
+							onclick={() => equipmentCurrentPage++}
+						>
+							Selanjutnya
+						</Button>
+					</div>
+				</div>
+			</div>
+		</Dialog.Content>
+	</Dialog.Root>
 </div>

@@ -12,7 +12,7 @@
 		if (status === 'PENDING') return 'secondary';
 		return 'outline';
 	};
-	const conditionColor = (c: string) => (c === 'RUSAK_BERAT' ? 'text-red-600' : 'text-yellow-600');
+	const conditionColor = (c: string) => (c === 'RUSAK' ? 'text-red-600' : 'text-yellow-600');
 </script>
 
 <div class="space-y-6">
@@ -100,7 +100,7 @@
 										</p>{/if}
 								</div>
 								<Badge
-									variant={eq.condition === 'RUSAK_BERAT' ? 'destructive' : 'secondary'}
+									variant={eq.condition === 'RUSAK' ? 'destructive' : 'secondary'}
 									class="shrink-0 text-xs"
 								>
 									{eq.condition.replace(/_/g, ' ')}

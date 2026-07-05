@@ -22,7 +22,8 @@ import {
 	instruktur,
 	peneliti,
 	teknisi,
-	spmi
+	spmi,
+	laboran
 } from '../../auth.roles';
 import { eq, and } from 'drizzle-orm';
 
@@ -36,7 +37,8 @@ const allAuthRoles = {
 	instruktur,
 	peneliti,
 	teknisi,
-	spmi
+	spmi,
+	laboran
 };
 
 export const auth = betterAuth({
@@ -100,17 +102,17 @@ export const auth = betterAuth({
 async function main() {
 	console.log('Sedang melakukan seeding user staff/admin...');
 
-	// Get Molar Lab for assignment
-	let labMolar = await db.query.laboratorium.findFirst({
-		where: eq(authSchema.laboratorium.slug, 'molar')
+	// Get Preparasi Lab for assignment
+	let labPreparasi = await db.query.laboratorium.findFirst({
+		where: eq(authSchema.laboratorium.slug, 'preparasi')
 	});
 
-	if (!labMolar) {
-		console.log('Lab Molar tidak ditemukan. Mohon jalankan db:seed terlebih dahulu.');
+	if (!labPreparasi) {
+		console.log('Lab Preparasi tidak ditemukan. Mohon jalankan db:seed terlebih dahulu.');
 		process.exit(1);
 	}
 
-	const rolesToSeed = ['koordinator', 'kepalaLab', 'instruktur', 'teknisi', 'spmi'];
+	const rolesToSeed = ['koordinator', 'instruktur', 'teknisi', 'spmi', 'laboran'];
 
 	for (const roleName of rolesToSeed) {
 		const email = `${roleName.toLowerCase()}@unhas.ac.id`;
@@ -161,11 +163,11 @@ async function main() {
 			.set({ role: roleName })
 			.where(eq(authSchema.user.id, userId));
 
-		if (roleName === 'koordinator' || roleName === 'kepalaLab' || roleName === 'teknisi') {
+		if (roleName === 'koordinator' || roleName === 'teknisi' || roleName === 'laboran') {
 			// Tambahkan User ke Laboratorium dengan Role tersebut jika belum ada
 			const existingMember = await db.query.laboratoriumMember.findFirst({
 				where: and(
-					eq(authSchema.laboratoriumMember.laboratoriumId, labMolar.id),
+					eq(authSchema.laboratoriumMember.laboratoriumId, labPreparasi.id),
 					eq(authSchema.laboratoriumMember.userId, userId)
 				)
 			});
@@ -173,12 +175,12 @@ async function main() {
 			if (!existingMember) {
 				await db.insert(authSchema.laboratoriumMember).values({
 					id: crypto.randomUUID(),
-					laboratoriumId: labMolar.id,
+					laboratoriumId: labPreparasi.id,
 					userId: userId,
 					role: roleName,
 					createdAt: new Date()
 				});
-				console.log(`  -> Ditambahkan sebagai member ke lab Molar`);
+				console.log(`  -> Ditambahkan sebagai member ke lab Preparasi`);
 			}
 		}
 	}

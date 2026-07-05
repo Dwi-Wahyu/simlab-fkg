@@ -22,13 +22,72 @@
 	// Form State
 	let selectedType = $state('PRAKTIKUM');
 	let selectedSeriesId = $state('');
-	let semesterValue = $state('');
 	let selectedClassId = $state('');
 	let selectedLab = $state('');
 	let selectedBlock = $state('');
 	let selectedModules = $state<string[]>([]);
 	let instructorSearch = $state('');
-	let selectedInstructors = $state<string[]>([]);
+	let instructorGroupMap = $state<Record<string, string[]>>({});
+	let expandedInstructorId = $state<string | null>(null);
+
+	const selectedInstructorIds = $derived(Object.keys(instructorGroupMap));
+
+	const groupsForClass = $derived(data.groups.filter((g: any) => g.classId === selectedClassId));
+
+	// Union semua kelompok yang sudah dipakai instruktur MANAPUN
+	function assignedElsewhere(instructorId: string): Set<string> {
+		const used = new Set<string>();
+		for (const [id, groupIds] of Object.entries(instructorGroupMap)) {
+			if (id === instructorId) continue;
+			for (const gid of groupIds) used.add(gid);
+		}
+		return used;
+	}
+
+	function availableGroupsFor(instructorId: string) {
+		const used = assignedElsewhere(instructorId);
+		return groupsForClass.filter((g: any) => !used.has(g.id));
+	}
+
+	function toggleInstructor(id: string) {
+		if (id in instructorGroupMap) {
+			const next = { ...instructorGroupMap };
+			delete next[id];
+			instructorGroupMap = next;
+			if (expandedInstructorId === id) expandedInstructorId = null;
+		} else {
+			instructorGroupMap = { ...instructorGroupMap, [id]: [] };
+			expandedInstructorId = id;
+		}
+	}
+
+	function toggleGroupForInstructor(instructorId: string, groupId: string) {
+		const current = instructorGroupMap[instructorId] ?? [];
+		const next = current.includes(groupId)
+			? current.filter((g) => g !== groupId)
+			: [...current, groupId];
+		instructorGroupMap = { ...instructorGroupMap, [instructorId]: next };
+	}
+
+	// Kelompok kelas yang belum dipilih instruktur manapun
+	const unassignedGroups = $derived(
+		groupsForClass.filter((g: any) => !Object.values(instructorGroupMap).flat().includes(g.id))
+	);
+
+	function autoDistributeGroups() {
+		const instructorIds = selectedInstructorIds;
+		if (instructorIds.length === 0 || unassignedGroups.length === 0) return;
+		const next = { ...instructorGroupMap };
+		unassignedGroups.forEach((g: any, idx: number) => {
+			const targetId = instructorIds[idx % instructorIds.length];
+			next[targetId] = [...(next[targetId] ?? []), g.id];
+		});
+		instructorGroupMap = next;
+	}
+
+	const hasUnassignedGroups = $derived(
+		groupsForClass.length > 0 && selectedInstructorIds.length > 0 && unassignedGroups.length > 0
+	);
 
 	const practicumTypes = [
 		{ value: 'PRAKTIKUM', label: 'Praktikum' },
@@ -46,9 +105,7 @@
 	const participantCount = $derived(selectedClass?.members?.length ?? 0);
 
 	const classTriggerContent = $derived(
-		selectedClass
-			? `${selectedClass.name} - Angkatan ${selectedClass.batch}`
-			: 'Pilih Kelas'
+		selectedClass ? `${selectedClass.name} - Angkatan ${selectedClass.batch}` : 'Pilih Kelas'
 	);
 	const labTriggerContent = $derived(
 		data.labs.find((l: any) => l.id === selectedLab)?.name ?? 'Pilih Laboratorium'
@@ -68,14 +125,6 @@
 			i.name.toLowerCase().includes(instructorSearch.toLowerCase())
 		)
 	);
-
-	function toggleInstructor(id: string) {
-		if (selectedInstructors.includes(id)) {
-			selectedInstructors = selectedInstructors.filter((i) => i !== id);
-		} else {
-			selectedInstructors = [...selectedInstructors, id];
-		}
-	}
 
 	let conflictError = $state<string | null>(null);
 </script>
@@ -103,7 +152,23 @@
 
 	<form
 		method="POST"
-		use:enhance={() => {
+		use:enhance={({ cancel }) => {
+			if (selectedInstructorIds.length === 0) {
+				notificationType = 'error';
+				notificationTitle = 'Gagal!';
+				notificationDescription = 'Pilih minimal satu instruktur.';
+				showNotification = true;
+				cancel();
+				return;
+			}
+			if (hasUnassignedGroups) {
+				notificationType = 'error';
+				notificationTitle = 'Gagal!';
+				notificationDescription = 'Semua kelompok harus ditugaskan ke instruktur.';
+				showNotification = true;
+				cancel();
+				return;
+			}
 			conflictError = null;
 			return async ({ result }) => {
 				if (result.type === 'success') {
@@ -133,10 +198,22 @@
 					<Card.Description>Detail utama jadwal praktikum.</Card.Description>
 				</Card.Header>
 				<Card.Content class="space-y-4">
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div class="grid grid-cols-1 gap-4">
 						<div class="space-y-2">
 							<Label for="seriesId">Seri Praktikum</Label>
-							<Select.Root type="single" name="seriesId" bind:value={selectedSeriesId}>
+							<Select.Root
+								type="single"
+								name="seriesId"
+								bind:value={selectedSeriesId}
+								onValueChange={(v) => {
+									const seri = data.series.find((s: any) => s.id === v);
+									if (seri) {
+										if (seri.laboratoriumId) selectedLab = seri.laboratoriumId;
+										if (seri.blockId) selectedBlock = seri.blockId;
+										selectedModules = [];
+									}
+								}}
+							>
 								<Select.Trigger class="w-full">
 									{seriesTriggerContent}
 								</Select.Trigger>
@@ -153,16 +230,6 @@
 								Gunakan seri untuk mengelompokkan jadwal dalam satu rekapitulasi (misal: "Clinical
 								Skill Lab").
 							</p>
-						</div>
-						<div class="space-y-2">
-							<Label for="semester">Semester</Label>
-							<Input
-								id="semester"
-								name="semester"
-								type="number"
-								placeholder="Misal: 3"
-								bind:value={semesterValue}
-							/>
 						</div>
 					</div>
 
@@ -282,6 +349,15 @@
 						{#each selectedModules as moduleId}
 							<input type="hidden" name="moduleIds" value={moduleId} />
 						{/each}
+						{#each Object.entries(instructorGroupMap) as [instructorId, groupIds]}
+							{#if groupIds.length > 0}
+								{#each groupIds as groupId}
+									<input type="hidden" name="assignments" value="{instructorId}:{groupId}" />
+								{/each}
+							{:else}
+								<input type="hidden" name="assignments" value="{instructorId}:" />
+							{/if}
+						{/each}
 						{#if !selectedBlock}
 							<p class="text-xs text-muted-foreground italic">
 								Pilih blok terlebih dahulu untuk melihat modul.
@@ -353,39 +429,73 @@
 				</Card.Header>
 				<Card.Content class="flex-1 space-y-4 overflow-y-auto">
 					{#each filteredInstructors as instructor (instructor.id)}
-						<label
-							class="flex cursor-pointer items-center space-y-0 space-x-3 rounded-md border p-4 transition-colors hover:bg-accent"
-						>
-							<Checkbox
-								id={instructor.id}
-								name="instructorIds"
-								value={instructor.id}
-								checked={selectedInstructors.includes(instructor.id)}
-								onCheckedChange={() => toggleInstructor(instructor.id)}
-							/>
-							<div class="flex flex-col gap-0.5">
-								<span class="text-sm leading-none font-medium">
-									{instructor.name}
-								</span>
-								<span class="text-xs text-muted-foreground">
-									{instructor.email}
-								</span>
-							</div>
-						</label>
+						<div class="rounded-md border">
+							<label
+								class="flex cursor-pointer items-center space-y-0 space-x-3 p-4 transition-colors hover:bg-accent"
+							>
+								<Checkbox
+									id={instructor.id}
+									checked={instructor.id in instructorGroupMap}
+									onCheckedChange={() => toggleInstructor(instructor.id)}
+								/>
+								<div class="flex flex-1 flex-col gap-0.5">
+									<span class="text-sm leading-none font-medium">{instructor.name}</span>
+									<span class="text-xs text-muted-foreground">{instructor.email}</span>
+								</div>
+								{#if instructor.id in instructorGroupMap && groupsForClass.length > 0}
+									<span class="text-xs text-muted-foreground">
+										{(instructorGroupMap[instructor.id] ?? []).length} kelompok
+									</span>
+								{/if}
+							</label>
+
+							{#if instructor.id in instructorGroupMap && groupsForClass.length > 0}
+								<div class="space-y-2 border-t bg-muted/20 p-3">
+									<p class="text-xs font-medium text-muted-foreground">
+										Kelompok yang ditangani {instructor.name}:
+									</p>
+									{#each groupsForClass as group (group.id)}
+										{@const isMine = (instructorGroupMap[instructor.id] ?? []).includes(group.id)}
+										{@const isTakenByOther =
+											!isMine && assignedElsewhere(instructor.id).has(group.id)}
+										{#if !isTakenByOther}
+											<label class="mt-1 flex cursor-pointer items-center gap-2 text-sm first:mt-0">
+												<Checkbox
+													checked={isMine}
+													onCheckedChange={() => toggleGroupForInstructor(instructor.id, group.id)}
+												/>
+												{group.name}
+											</label>
+										{/if}
+									{/each}
+								</div>
+							{/if}
+						</div>
 					{:else}
 						<p class="text-center text-sm text-muted-foreground py-8">
 							Instruktur tidak ditemukan.
 						</p>
 					{/each}
 				</Card.Content>
-				<Card.Footer class="flex items-center justify-between border-t bg-muted/20 p-4">
-					<span class="text-sm text-muted-foreground">
-						{selectedInstructors.length} Instruktur dipilih
-					</span>
-					{#if selectedInstructors.length > 0}
-						<Button variant="ghost" size="sm" onclick={() => (selectedInstructors = [])}>
-							Reset
-						</Button>
+				<Card.Footer class="flex flex-col items-stretch gap-2 border-t bg-muted/20 p-4">
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-muted-foreground">
+							{selectedInstructorIds.length} Instruktur dipilih
+						</span>
+						{#if selectedInstructorIds.length > 0}
+							<Button variant="ghost" size="sm" onclick={() => (instructorGroupMap = {})}
+								>Reset</Button
+							>
+						{/if}
+					</div>
+					{#if hasUnassignedGroups}
+						<div class="flex flex-col gap-2 rounded-md bg-amber-50 p-2 text-xs text-amber-700">
+							<span>{unassignedGroups.length} kelompok belum ditugaskan ke instruktur manapun.</span
+							>
+							<Button type="button" variant="outline" size="sm" onclick={autoDistributeGroups}>
+								Bagi Rata Otomatis
+							</Button>
+						</div>
 					{/if}
 				</Card.Footer>
 			</Card.Root>

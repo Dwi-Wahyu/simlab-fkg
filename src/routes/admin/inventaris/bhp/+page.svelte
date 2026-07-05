@@ -24,7 +24,8 @@
 		ChevronsRight,
 		ChevronDown,
 		ChevronUp,
-		ArrowUpDown
+		ArrowUpDown,
+		Download
 	} from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
@@ -33,8 +34,27 @@
 	import { page as pageStore } from '$app/state';
 	import { untrack } from 'svelte';
 	import { cn } from '$lib/utils';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
+
+	let selectedExportLabId = $state('');
+	let laboratories = $state<any[]>([]);
+	const exportLabName = $derived(
+		laboratories.find((l) => l.id === selectedExportLabId)?.name ?? 'Pilih Laboratorium'
+	);
+
+	onMount(async () => {
+		if (data.user?.role === 'superadmin') {
+			const res = await fetch('/api/admin/laboratorium');
+			if (res.ok) {
+				laboratories = await res.json();
+				if (laboratories.length > 0) {
+					selectedExportLabId = laboratories[0].id;
+				}
+			}
+		}
+	});
 
 	// Map icon strings to components
 	const iconMap = {
@@ -297,7 +317,29 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				<Button href="/admin/inventaris/tambah">
+				{#if data.user?.role === 'superadmin'}
+					<div class="flex items-center gap-2">
+						<Select.Root type="single" bind:value={selectedExportLabId}>
+							<Select.Trigger class="w-[200px] h-10 bg-white">
+								{exportLabName}
+							</Select.Trigger>
+							<Select.Content>
+								{#each laboratories as lab}
+									<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+						<Button href="/admin/laporan/inventaris/export?labId={selectedExportLabId}" variant="outline" class="gap-2" disabled={!selectedExportLabId}>
+							<Download class="size-4" /> Export XLSX
+						</Button>
+					</div>
+				{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
+					<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
+						<Download class="size-4" /> Export XLSX
+					</Button>
+				{/if}
+
+				<Button href="/admin/inventaris/bhp/tambah">
 					<Plus /> Tambah Bahan
 				</Button>
 			</div>
@@ -454,7 +496,7 @@
 													<ArrowUpDown /> Ubah Stok
 												</DropdownMenu.Item>
 												<DropdownMenu.Separator />
-												<a href="/admin/inventaris/{item.id}/edit">
+												<a href="/admin/inventaris/bhp/{item.id}/edit">
 													<DropdownMenu.Item>
 														<FileEdit /> Edit
 													</DropdownMenu.Item>

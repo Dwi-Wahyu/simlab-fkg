@@ -1,22 +1,13 @@
 import { config } from 'dotenv';
-config();
-
 import mysql from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
 import * as schema from '../schema';
 import * as authSchema from '../auth.schema';
 import { eq } from 'drizzle-orm';
 
-const client = mysql.createPool(process.env.DATABASE_URL ?? '');
-const db = drizzle(client, { schema: { ...schema, ...authSchema }, mode: 'default' });
-
-/**
- * Nama file template yang sudah ada di static/templates/logbook/
- * Hanya nama file, bukan path.
- */
 const DEFAULT_TEMPLATE_FILE = 'TEMPLATE_LOGBOOK_PRAKTIKUM_SIMLAB.docx';
 
-async function main() {
+export async function seedLogbookTemplates(db: any) {
 	console.log('Seeding template logbook...');
 
 	const modules = await db.query.practicumModule.findMany({
@@ -25,7 +16,7 @@ async function main() {
 
 	if (modules.length === 0) {
 		console.log('Tidak ada modul. Jalankan seeder modul terlebih dahulu.');
-		process.exit(1);
+		return;
 	}
 
 	for (const mod of modules) {
@@ -56,12 +47,22 @@ async function main() {
 
 		console.log(`+ Template ditambahkan: ${mod.name}`);
 	}
+}
 
+async function main() {
+	config();
+	const client = mysql.createPool(process.env.DATABASE_URL ?? '');
+	const db = drizzle(client, { schema: { ...schema, ...authSchema }, mode: 'default' });
+	await seedLogbookTemplates(db);
 	console.log('\nSeeding selesai!');
+	await client.end();
 	process.exit(0);
 }
 
-main().catch((err) => {
-	console.error('Seeder gagal:', err);
-	process.exit(1);
-});
+if (import.meta.main) {
+	main().catch((err) => {
+		console.error('Seeder gagal:', err);
+		process.exit(1);
+	});
+}
+

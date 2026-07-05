@@ -74,7 +74,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	});
 
 	const fileName = `rekapitulasi-nilai-${(schedule.series?.name ?? schedule.title).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.xlsx`;
-	return new Response(buffer, {
+	return new Response(new Uint8Array(buffer), {
 		headers: {
 			'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 			'Content-Disposition': `attachment; filename="${fileName}"`

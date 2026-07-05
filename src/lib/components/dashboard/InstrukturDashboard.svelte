@@ -1,15 +1,15 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
+	import { BookOpen, CalendarDays, ClipboardCheck } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
-	import { CalendarDays, ClipboardCheck, BookOpen } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import type { InstrukturDashboardData } from '$lib/types/dashboard';
 
 	let { data }: { data: InstrukturDashboardData } = $props();
 </script>
 
 <div class="space-y-6">
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 		<Card.Root>
 			<Card.Content>
 				<div class="mb-1 flex items-center gap-2 text-muted-foreground">
@@ -26,15 +26,6 @@
 					<span class="text-sm">Penilaian Pending</span>
 				</div>
 				<p class="text-2xl font-bold text-orange-600">{data.pendingAssessments.length}</p>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content>
-				<div class="mb-1 flex items-center gap-2 text-muted-foreground">
-					<BookOpen class="h-4 w-4" />
-					<span class="text-sm">Logbook Saya</span>
-				</div>
-				<p class="text-2xl font-bold">{data.myRecentLogbooks.length}</p>
 			</Card.Content>
 		</Card.Root>
 	</div>

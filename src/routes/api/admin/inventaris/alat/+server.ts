@@ -16,14 +16,10 @@ export const GET: RequestHandler = async ({ url }) => {
 		.select({ value: count() })
 		.from(equipment)
 		.where(eq(equipment.condition, 'BAIK'));
-	const [sedangResult] = await db
-		.select({ value: count() })
-		.from(equipment)
-		.where(eq(equipment.condition, 'RUSAK_RINGAN'));
 	const [rusakResult] = await db
 		.select({ value: count() })
 		.from(equipment)
-		.where(eq(equipment.condition, 'RUSAK_BERAT'));
+		.where(eq(equipment.condition, 'RUSAK'));
 	const [readyResult] = await db
 		.select({ value: count() })
 		.from(equipment)
@@ -39,8 +35,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			equipmentType: item.equipmentType,
 			total: count(),
 			baik: count(sql`CASE WHEN ${equipment.condition} = 'BAIK' THEN 1 END`),
-			rusakRingan: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_RINGAN' THEN 1 END`),
-			rusakBerat: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_BERAT' THEN 1 END`),
+			rusak: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK' THEN 1 END`),
 			ready: count(sql`CASE WHEN ${equipment.status} = 'READY' THEN 1 END`)
 		})
 		.from(equipment)
@@ -72,12 +67,11 @@ export const GET: RequestHandler = async ({ url }) => {
 				icon: 'CheckCircle'
 			},
 			{
-				label: 'Rusak Ringan',
-				value: sedangResult.value,
-				color: 'text-yellow-600',
-				icon: 'AlertTriangle'
+				label: 'Kondisi Rusak',
+				value: rusakResult.value,
+				color: 'text-red-600',
+				icon: 'XCircle'
 			},
-			{ label: 'Rusak Berat', value: rusakResult.value, color: 'text-red-600', icon: 'XCircle' },
 			{ label: 'Ready', value: readyResult.value, color: 'text-emerald-600', icon: 'ShieldCheck' }
 		],
 		items: itemStats,

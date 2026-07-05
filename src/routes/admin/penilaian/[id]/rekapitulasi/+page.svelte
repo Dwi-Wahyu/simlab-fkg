@@ -1,6 +1,6 @@
 <script lang="ts">
 	/* eslint-disable svelte/prefer-writable-derived, svelte/no-navigation-without-resolve, @typescript-eslint/no-explicit-any */
-
+	import { untrack } from 'svelte';
 	import {
 		BookOpen,
 		Calendar,
@@ -20,7 +20,7 @@
 
 	let { data } = $props();
 
-	let searchQuery = $state(data.search);
+	let searchQuery = $state(untrack(() => data.search));
 
 	$effect(() => {
 		searchQuery = data.search;

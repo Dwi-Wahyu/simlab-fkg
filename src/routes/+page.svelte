@@ -8,6 +8,7 @@
 		Loader2,
 		Lock,
 		LogIn,
+		Package,
 		Search,
 		ShieldAlert,
 		Terminal,
@@ -31,12 +32,13 @@
 
 	const quickAccessUsers = [
 		{ name: 'Superadmin', username: 'superadmin', role: 'superadmin' },
-		{ name: 'Koordinator', username: 'koordinator', role: 'koordinator' },
+		{ name: 'PJ Mata Kuliah', username: 'koordinator', role: 'koordinator' },
 		{ name: 'Kepala Lab', username: 'kepalalab', role: 'kepalaLab' },
 		{ name: 'Instruktur', username: 'instruktur', role: 'instruktur' },
 		{ name: 'Peneliti (Mhs)', username: 'peneliti', role: 'peneliti' },
 		{ name: 'Teknisi', username: 'teknisi', role: 'teknisi' },
-		{ name: 'SPMI', username: 'spmi', role: 'spmi' }
+		{ name: 'SPMI', username: 'spmi', role: 'spmi' },
+		{ name: 'Laboran', username: 'laboran', role: 'laboran' }
 	];
 
 	function quickLogin(user: (typeof quickAccessUsers)[0]) {
@@ -268,6 +270,8 @@
 											<Wrench size={18} />
 										{:else if user.role === 'spmi'}
 											<ClipboardCheck size={18} />
+										{:else if user.role === 'laboran'}
+											<Package size={18} />
 										{/if}
 									</span>
 									<div class="flex flex-col items-start text-left">

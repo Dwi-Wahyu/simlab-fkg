@@ -22,7 +22,7 @@
 
 	const roleLabels: Record<string, string> = {
 		superadmin: 'Super Admin',
-		koordinator: 'Koordinator Laboratorium',
+		koordinator: 'PJ Mata Kuliah',
 		kepalaLab: 'Kepala Laboratorium',
 		instruktur: 'Instruktur / Dosen',
 		peneliti: 'Peneliti / Mahasiswa',

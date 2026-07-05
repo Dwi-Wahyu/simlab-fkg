@@ -60,7 +60,7 @@ export const actions: Actions = {
 		const itemReturnData = JSON.parse(itemReturnDataRaw) as Array<{
 			lendingItemId: string;
 			equipmentId: string;
-			status: 'BAIK' | 'RUSAK_RINGAN' | 'RUSAK_BERAT';
+			status: 'BAIK' | 'RUSAK';
 			notes: string;
 			hasEvidence: boolean;
 		}>;

@@ -8,7 +8,7 @@ import {
 	user
 } from '$lib/server/db/schema';
 import { error } from '@sveltejs/kit';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, or, isNull } from 'drizzle-orm';
 import { buildRekapColumns } from '$lib/rekap/buildRekapMatrix';
 import type { PageServerLoad } from './$types';
 
@@ -21,7 +21,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	// 1. Instructor + series pickers, scoped to this koordinator/kepalaLab's lab.
 	const seriesOptions = await db.query.practicumSeries.findMany({
-		where: labId ? eq(practicumSeries.laboratoriumId, labId) : undefined,
+		where: labId
+			? or(eq(practicumSeries.laboratoriumId, labId), isNull(practicumSeries.laboratoriumId))
+			: undefined,
 		orderBy: (s, { asc }) => [asc(s.name)]
 	});
 

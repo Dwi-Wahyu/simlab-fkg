@@ -40,3 +40,7 @@ export const teknisi = accessControl.newRole({
 export const spmi = accessControl.newRole({
 	inventory: ['view', 'update']
 });
+
+export const laboran = accessControl.newRole({
+	inventory: ['create', 'update', 'delete', 'view']
+});

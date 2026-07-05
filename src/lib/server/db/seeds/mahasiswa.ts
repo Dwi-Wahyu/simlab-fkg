@@ -282,11 +282,77 @@ async function seedTestingPeneliti() {
 	}
 }
 
+async function seedKelompokMahasiswa() {
+	console.log('\nSedang melakukan seeding kelompok mahasiswa...');
+	const allClasses = await db.query.practicumClass.findMany();
+
+	for (const cls of allClasses) {
+		const groupsToCreate = ['Kelompok 1', 'Kelompok 2', 'Kelompok 3', 'Kelompok 4'];
+		const groupIds: string[] = [];
+
+		for (const name of groupsToCreate) {
+			let existing = await db.query.kelompokMahasiswa.findFirst({
+				where: and(
+					eq(schema.kelompokMahasiswa.classId, cls.id),
+					eq(schema.kelompokMahasiswa.name, name)
+				)
+			});
+
+			let groupId: string;
+			if (!existing) {
+				groupId = crypto.randomUUID();
+				await db.insert(schema.kelompokMahasiswa).values({
+					id: groupId,
+					name,
+					classId: cls.id,
+					createdAt: new Date()
+				});
+				console.log(`- Kelompok dibuat: ${name} untuk kelas ${cls.name} (${cls.batch})`);
+			} else {
+				groupId = existing.id;
+			}
+			groupIds.push(groupId);
+		}
+
+		// Distribute the class's members across the 4 groups
+		const members = await db.query.practicumClassMember.findMany({
+			where: eq(schema.practicumClassMember.classId, cls.id)
+		});
+
+		let addedCount = 0;
+		for (let i = 0; i < members.length; i++) {
+			const member = members[i];
+			const assignedGroupId = groupIds[i % groupIds.length];
+
+			const existingKmm = await db.query.kelompokMahasiswaMember.findFirst({
+				where: and(
+					eq(schema.kelompokMahasiswaMember.kelompokId, assignedGroupId),
+					eq(schema.kelompokMahasiswaMember.userId, member.userId)
+				)
+			});
+
+			if (!existingKmm) {
+				await db.insert(schema.kelompokMahasiswaMember).values({
+					id: crypto.randomUUID(),
+					kelompokId: assignedGroupId,
+					userId: member.userId,
+					createdAt: new Date()
+				});
+				addedCount++;
+			}
+		}
+		if (addedCount > 0) {
+			console.log(`- Berhasil mendistribusikan ${addedCount} mahasiswa ke kelompok kelas ${cls.name}`);
+		}
+	}
+}
+
 async function main() {
 	console.log('Sedang melakukan seeding mahasiswa...');
 	await seedTestingPeneliti();
 	await seedMahasiswa();
 	await seedLogbooks();
+	await seedKelompokMahasiswa();
 	console.log('\nSeeding mahasiswa selesai!');
 	process.exit(0);
 }

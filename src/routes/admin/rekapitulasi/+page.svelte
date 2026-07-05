@@ -10,19 +10,19 @@
 		Users,
 		ClipboardCheck
 	} from '@lucide/svelte';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import * as Table from '$lib/components/ui/table';
-	import * as Select from '$lib/components/ui/select';
-
+	import * as SearchableSelect from '$lib/components/ui/searchable-select';
+	import { untrack } from 'svelte';
 	let { data } = $props();
 
-	let selectedInstructorId = $state(data.instructorId || '');
-	let selectedSeriesId = $state(data.seriesId || '');
-	let searchQuery = $state('');
+	let selectedInstructorId = $state(untrack(() => data.instructorId || ''));
+	let selectedSeriesId = $state(untrack(() => data.seriesId || ''));
+	let searchQuery = $state(page.url.searchParams.get('search') || '');
 	let currentPage = $state(1);
 	const pageSize = 10;
 
@@ -35,6 +35,11 @@
 		const url = new URL(page.url);
 		url.searchParams.set('instructorId', selectedInstructorId);
 		url.searchParams.set('seriesId', selectedSeriesId);
+		if (searchQuery) {
+			url.searchParams.set('search', searchQuery);
+		} else {
+			url.searchParams.delete('search');
+		}
 		await goto(url.toString(), { keepFocus: true });
 	}
 
@@ -57,6 +62,19 @@
 	$effect(() => {
 		void searchQuery;
 		currentPage = 1;
+	});
+
+	// Sync search query to URL without navigation
+	$effect(() => {
+		if (searchQuery === (page.url.searchParams.get('search') || '')) return;
+
+		const url = new URL(page.url);
+		if (searchQuery) {
+			url.searchParams.set('search', searchQuery);
+		} else {
+			url.searchParams.delete('search');
+		}
+		replaceState(url, {});
 	});
 
 	const firstSchedule = $derived(data.schedules[0] || null);
@@ -112,45 +130,57 @@
 	</div>
 
 	<!-- Selector Dropdowns -->
-	<Card.Root>
-		<Card.Content class="p-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-			<div class="flex-1">
-				<label for="instructor-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Instruktur</label>
-				<Select.Root
-					type="single"
-					bind:value={selectedInstructorId}
-					onValueChange={handleSwitch}
-				>
-					<Select.Trigger class="w-full text-left">
-						{instructorTrigger}
-					</Select.Trigger>
-					<Select.Content>
-						{#each data.instructorOptions as inst (inst.id)}
-							<Select.Item value={inst.id} label={inst.name}>{inst.name}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			</div>
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-end">
+		<div class="flex-1">
+			<label for="instructor-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Instruktur</label>
+			<SearchableSelect.Root
+				type="single"
+				bind:value={
+					// @ts-ignore - Svelte 5 bind:value getter/setter syntax
+					() => selectedInstructorId,
+					(v) => {
+						if (!v) return;
+						selectedInstructorId = v;
+						handleSwitch();
+					}
+				}
+			>
+				<SearchableSelect.Trigger class="w-full text-left">
+					{instructorTrigger}
+				</SearchableSelect.Trigger>
+				<SearchableSelect.Content searchPlaceholder="Cari instruktur...">
+					{#each data.instructorOptions as inst (inst.id)}
+						<SearchableSelect.Item value={inst.id} label={inst.name}>{inst.name}</SearchableSelect.Item>
+					{/each}
+				</SearchableSelect.Content>
+			</SearchableSelect.Root>
+		</div>
 
-			<div class="flex-1">
-				<label for="series-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Seri Praktikum</label>
-				<Select.Root
-					type="single"
-					bind:value={selectedSeriesId}
-					onValueChange={handleSwitch}
-				>
-					<Select.Trigger class="w-full text-left">
-						{seriesTrigger}
-					</Select.Trigger>
-					<Select.Content>
-						{#each data.seriesOptions as series (series.id)}
-							<Select.Item value={series.id} label={series.name}>{series.name}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			</div>
-		</Card.Content>
-	</Card.Root>
+		<div class="flex-1">
+			<label for="series-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Seri Praktikum</label>
+			<SearchableSelect.Root
+				type="single"
+				bind:value={
+					// @ts-ignore
+					() => selectedSeriesId,
+					(v) => {
+						if (!v) return;
+						selectedSeriesId = v;
+						handleSwitch();
+					}
+				}
+			>
+				<SearchableSelect.Trigger class="w-full text-left">
+					{seriesTrigger}
+				</SearchableSelect.Trigger>
+				<SearchableSelect.Content searchPlaceholder="Cari seri praktikum...">
+					{#each data.seriesOptions as series (series.id)}
+						<SearchableSelect.Item value={series.id} label={series.name}>{series.name}</SearchableSelect.Item>
+					{/each}
+				</SearchableSelect.Content>
+			</SearchableSelect.Root>
+		</div>
+	</div>
 
 	<!-- Schedule Info Cards -->
 	{#if firstSchedule}

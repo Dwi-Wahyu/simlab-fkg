@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { maintenance, equipment, maintenanceCost } from '$lib/server/db/schema';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { maintenance, equipment, maintenanceCost, approval } from '$lib/server/db/schema';
+import { eq, desc, and, sql, inArray } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -102,10 +102,50 @@ export const load: PageServerLoad = async ({ locals }) => {
 		)
 		.reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
+	// Fetch all approvals related to the maintenance list to show their status
+	const maintenanceIds = maintenanceList.map((m) => m.id);
+	const approvalList = maintenanceIds.length > 0
+		? await db.query.approval.findMany({
+				where: and(
+					eq(approval.referenceType, 'MAINTENANCE'),
+					inArray(approval.referenceId, maintenanceIds)
+				)
+			})
+		: [];
+
+	let pendingApprovalsCount = 0;
+	if (['superadmin', 'kepalaLab'].includes(currentUser.role)) {
+		const allPending = await db.query.approval.findMany({
+			where: and(
+				eq(approval.referenceType, 'MAINTENANCE'),
+				eq(approval.status, 'PENDING')
+			),
+			with: {
+				maintenance: {
+					with: {
+						equipment: true
+					}
+				}
+			}
+		});
+
+		let filteredPending = allPending;
+		if (currentUser.role === 'kepalaLab') {
+			const userLabId = currentUser.laboratorium?.id;
+			filteredPending = allPending.filter(
+				(app) => app.maintenance?.equipment?.laboratoriumId === userLabId
+			);
+		}
+		pendingApprovalsCount = filteredPending.length;
+	}
+
 	return {
 		maintenance: maintenanceList,
 		calibrations: calibrationList,
 		costs,
+		approvals: approvalList,
+		pendingApprovalsCount,
+		userRole: currentUser.role,
 		summary: {
 			maintenanceThisMonth,
 			upcomingCount,

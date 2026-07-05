@@ -1,46 +1,104 @@
 <script lang="ts">
 	import {
-		ArrowLeft,
-		BookOpen,
-		CheckCircle2,
+		AlertCircle,
 		ChevronLeft,
 		ChevronRight,
-		ChevronsLeft,
-		ChevronsRight,
 		ClipboardEdit,
 		FileText,
 		Filter,
-		GraduationCap as GraduationIcon,
 		Search,
-		Stethoscope,
-		User,
 		Users
 	} from '@lucide/svelte';
 	import { IsMobile } from '@/hooks/is-mobile-svelte.js';
-	import * as Accordion from '$lib/components/ui/accordion';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
+	import { toast } from '$lib/components/toast';
 	import { badgeVariants } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
+	import { Textarea } from '$lib/components/ui/textarea';
+	import type { PageData } from './$types';
 
-	let { data } = $props();
+	let { data }: { data: PageData } = $props();
 	const isMobile = new IsMobile();
 
 	// Filter State
 	let searchQuery = $state('');
 	let statusFilter = $state('all');
 
-	// Group modules if they are multiple
-	const modules = $derived(data.schedule.modules.map((m: any) => m.module));
+	// Group columns derived state
+	const columns = $derived.by(() => {
+		const cols: any[] = [];
+		const groupedMap = new Map<string, any[]>();
+
+		for (const sm of data.schedule.modules) {
+			const m = sm.module;
+			if (m.groupLabel) {
+				if (!groupedMap.has(m.groupLabel)) {
+					groupedMap.set(m.groupLabel, []);
+				}
+				groupedMap.get(m.groupLabel)!.push(m);
+			} else {
+				cols.push({ kind: 'single', module: m });
+			}
+		}
+
+		for (const [label, list] of groupedMap.entries()) {
+			list.sort((a, b) => {
+				if (a.component === 'PREPARASI') return -1;
+				if (b.component === 'PREPARASI') return 1;
+				return 0;
+			});
+			cols.push({
+				kind: 'grouped',
+				label,
+				sub: list.map((m) => ({ component: m.component, module: m }))
+			});
+		}
+
+		const orderMap = new Map<string, number>();
+		data.schedule.modules.forEach((sm: any, index: number) => {
+			orderMap.set(sm.module.id, index);
+		});
+
+		cols.sort((a, b) => {
+			const idxA =
+				a.kind === 'single'
+					? orderMap.get(a.module.id)!
+					: Math.min(...a.sub.map((s: any) => orderMap.get(s.module.id)!));
+			const idxB =
+				b.kind === 'single'
+					? orderMap.get(b.module.id)!
+					: Math.min(...b.sub.map((s: any) => orderMap.get(s.module.id)!));
+			return idxA - idxB;
+		});
+
+		return cols;
+	});
+
+	const hasGroupedColumns = $derived(columns.some((c) => c.kind === 'grouped'));
+
+	// Calculate total colspans
+	const totalColspan = $derived.by(() => {
+		let count = 3; // Mahasiswa, Rata-rata, Aksi
+		for (const col of columns) {
+			if (col.kind === 'single') count += 1;
+			else count += col.sub.length;
+		}
+		return count;
+	});
 
 	// Filtered Students
 	const filteredStudents = $derived(
-		data.students.filter((member: any) => {
-			const student = member.user;
+		data.students.filter((student: any) => {
 			const studentAssessments = data.assessments.filter((a: any) => a.studentId === student.id);
-			const isCompleted = studentAssessments.length === modules.length && modules.length > 0;
+			const modulesCount = data.schedule.modules.length;
+			const isCompleted = studentAssessments.length === modulesCount && modulesCount > 0;
 
 			const matchesSearch =
 				student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,6 +155,173 @@
 		}
 		return pages;
 	}
+
+	// Dynamic save states
+	let savingStates = $state<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({});
+	let savingMessages = $state<Record<string, string>>({});
+
+	// Dialog scoring state
+	let isScoringDialogOpen = $state(false);
+	let activeStudent = $state<any>(null);
+	let activeModule = $state<any>(null);
+	let activeAssessment = $state<any>(null);
+	let criteriaValues = $state<Record<string, number>>({});
+	let notesValue = $state('');
+	let isSubmittingDialog = $state(false);
+
+	const dialogSections = $derived.by(() => {
+		if (!activeModule) return [];
+		const secs: Record<string, any[]> = {};
+		for (const crit of activeModule.criteria) {
+			const label = crit.sectionLabel || '';
+			if (!secs[label]) secs[label] = [];
+			secs[label].push(crit);
+		}
+		return Object.entries(secs).map(([label, items]) => ({ label, items }));
+	});
+
+	const liveChecklistScore = $derived.by(() => {
+		if (!activeModule || activeModule.scoringMode !== 'CHECKLIST') return 0;
+		let total = 0;
+		let max = 0;
+		for (const crit of activeModule.criteria) {
+			total += criteriaValues[crit.id] ?? 0;
+			max += crit.maxScore;
+		}
+		return max > 0 ? Math.round((total / max) * 100) : 0;
+	});
+
+	const liveRubrikScore = $derived.by(() => {
+		if (!activeModule || activeModule.scoringMode !== 'RUBRIK') return 0;
+		let total = 0;
+		for (const crit of activeModule.criteria) {
+			total += criteriaValues[crit.id] ?? 0;
+		}
+		const count = activeModule.criteria.length;
+		return count > 0 ? Math.round(total / count) : 0;
+	});
+
+	function getAssessment(studentId: string, moduleId: string) {
+		return data.assessments.find((a) => a.studentId === studentId && a.moduleId === moduleId);
+	}
+
+	function getStudentAverage(studentId: string) {
+		const studentAssessments = data.assessments.filter(
+			(a) => a.studentId === studentId && a.status === 'FINAL'
+		);
+		if (studentAssessments.length === 0) return '-';
+		const total = studentAssessments.reduce((sum, a) => sum + a.score, 0);
+		return Math.round(total / studentAssessments.length);
+	}
+
+	function hasChecklistAssessments(studentId: string) {
+		const studentAssessments = data.assessments.filter((a) => a.studentId === studentId);
+		return studentAssessments.some((a) => {
+			const sm = data.schedule.modules.find((m) => m.moduleId === a.moduleId);
+			return sm?.module?.scoringMode === 'CHECKLIST';
+		});
+	}
+
+	async function handleSaveScore(studentId: string, moduleId: string, valueStr: string) {
+		const key = `${studentId}_${moduleId}`;
+		const score = parseInt(valueStr);
+		if (valueStr.trim() === '') return;
+		if (isNaN(score) || score < 0 || score > 100) {
+			toast.destructive('Gagal', { description: 'Skor harus antara 0 dan 100.' });
+			return;
+		}
+
+		savingStates[key] = 'saving';
+
+		const formData = new FormData();
+		formData.append('studentId', studentId);
+		formData.append('moduleId', moduleId);
+		formData.append('score', String(score));
+
+		try {
+			const res = await fetch(`?/saveAssessment`, {
+				method: 'POST',
+				body: formData
+			});
+			const result = await res.json();
+			const responseObj = typeof result === 'string' ? JSON.parse(result) : result;
+
+			if (responseObj.type === 'success') {
+				savingStates[key] = 'saved';
+				await invalidateAll();
+				setTimeout(() => {
+					if (savingStates[key] === 'saved') {
+						savingStates[key] = 'idle';
+					}
+				}, 2000);
+			} else {
+				savingStates[key] = 'error';
+				const msg = responseObj.data?.message || 'Gagal menyimpan.';
+				savingMessages[key] = msg;
+				toast.destructive('Gagal', { description: msg });
+			}
+		} catch (err) {
+			console.error(err);
+			savingStates[key] = 'error';
+			savingMessages[key] = 'Kesalahan jaringan.';
+		}
+	}
+
+	function openScoringDialog(student: any, module: any) {
+		activeStudent = student;
+		activeModule = module;
+		activeAssessment = getAssessment(student.id, module.id);
+		notesValue = activeAssessment?.notes ?? '';
+
+		criteriaValues = {};
+		for (const crit of module.criteria) {
+			const existingScore = data.criteriaScores.find(
+				(cs) => cs.assessmentId === activeAssessment?.id && cs.criteriaId === crit.id
+			);
+			criteriaValues[crit.id] = existingScore?.score ?? 0;
+		}
+
+		isScoringDialogOpen = true;
+	}
+
+	async function submitDialogScore() {
+		if (!activeStudent || !activeModule) return;
+		isSubmittingDialog = true;
+
+		const formData = new FormData();
+		formData.append('studentId', activeStudent.id);
+		formData.append('moduleId', activeModule.id);
+		formData.append('notes', notesValue);
+
+		for (const [critId, val] of Object.entries(criteriaValues)) {
+			formData.append(`criteriaScore_${critId}`, String(val));
+		}
+
+		try {
+			const res = await fetch(`?/saveAssessment`, {
+				method: 'POST',
+				body: formData
+			});
+			const result = await res.json();
+			const responseObj = typeof result === 'string' ? JSON.parse(result) : result;
+
+			if (responseObj.type === 'success') {
+				toast.success('Berhasil', {
+					description: 'Penilaian berhasil disimpan.'
+				});
+				isScoringDialogOpen = false;
+				await invalidateAll();
+			} else {
+				const msg = responseObj.data?.message || 'Gagal menyimpan.';
+				toast.destructive('Gagal', { description: msg });
+			}
+		} catch (err) {
+			console.error(err);
+			toast.destructive('Gagal', { description: 'Kesalahan jaringan.' });
+		} finally {
+			isSubmittingDialog = false;
+		}
+	}
 </script>
 
 <div class="flex h-full flex-col gap-6 p-6">
@@ -108,8 +333,8 @@
 	<!-- Header Section -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Catat Nilai</h1>
-			<p class="text-muted-foreground">
+			<h1 class="text-3xl font-bold tracking-tight text-slate-900">Catat Nilai</h1>
+			<p class="text-slate-500">
 				{data.schedule.series?.name
 					? `${data.schedule.series.name} - ${data.schedule.title}`
 					: data.schedule.title} • {data.schedule.laboratorium.name}
@@ -119,26 +344,53 @@
 			<Button
 				href="/admin/penilaian/{data.schedule.id}/rekapitulasi"
 				size="lg"
-				class="w-full md:w-auto"
+				class="w-full bg-[#2D5A43] text-white hover:bg-[#234735] md:w-auto"
 			>
-				<FileText />
+				<FileText class="size-4" />
 				Rekapitulasi Nilai
 			</Button>
 		</div>
 	</div>
 
-	<!-- Main Content: Student List -->
-	<Card.Root
-		class="border-none bg-transparent py-0 shadow-none ring-0 outline-none md:bg-card md:py-6 md:shadow-sm md:ring-1"
-	>
-		<Card.Header class="px-0 md:px-6">
+	<!-- Filter Group Selection (Visible to Superadmin/Koordinator) -->
+	{#if ['superadmin', 'koordinator'].includes(data.userRole)}
+		<div class="flex items-center gap-4 rounded-lg border bg-white p-4">
+			<Label class="text-sm font-medium text-slate-700">Filter Kelompok:</Label>
+			<Select.Root
+				type="single"
+				value={data.selectedGroupId}
+				onValueChange={(val) => {
+					const url = new URL(page.url);
+					if (val) {
+						url.searchParams.set('groupId', val);
+					} else {
+						url.searchParams.delete('groupId');
+					}
+					goto(url.toString());
+				}}
+			>
+				<Select.Trigger class="w-[250px] bg-white">
+					{data.groups.find((g) => g.id === data.selectedGroupId)?.name || 'Semua Kelompok'}
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="" label="Semua Kelompok">Semua Kelompok</Select.Item>
+					{#each data.groups as group}
+						<Select.Item value={group.id} label={group.name}>{group.name}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+		</div>
+	{/if}
+
+	<!-- Main Table -->
+	<Card.Root class="overflow-hidden border bg-white p-0 shadow-sm ring-1 ring-slate-100">
+		<Card.Header class="border-b px-6 py-4">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<Card.Title>Daftar Mahasiswa</Card.Title>
-					<Card.Description>Kelola penilaian mahasiswa untuk jadwal ini.</Card.Description>
+					<Card.Title class="text-lg font-semibold text-slate-900">Daftar Mahasiswa</Card.Title>
+					<Card.Description>Lakukan penilaian mahasiswa secara dinamis dan live.</Card.Description>
 				</div>
 
-				<!-- Filters -->
 				<div class="flex flex-wrap items-center gap-3">
 					<div class="relative w-full max-w-sm md:w-64">
 						<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
@@ -151,7 +403,7 @@
 					</div>
 
 					<Select.Root type="single" bind:value={statusFilter}>
-						<Select.Trigger class="w-full sm:w-45">
+						<Select.Trigger class="w-full bg-white sm:w-45">
 							<Filter class="mr-2 h-4 w-4 text-muted-foreground" />
 							{selectedStatusLabel}
 						</Select.Trigger>
@@ -161,237 +413,172 @@
 							{/each}
 						</Select.Content>
 					</Select.Root>
-
-					<Select.Root
-						type="single"
-						value={String(pageSize)}
-						onValueChange={(val) => {
-							pageSize = Number(val);
-							currentPage = 1;
-						}}
-					>
-						<Select.Trigger class="w-full sm:w-45">
-							{pageSize} per halaman
-						</Select.Trigger>
-						<Select.Content>
-							{#each [10, 15, 25, 50] as size}
-								<Select.Item value={String(size)} label="{size} per halaman"
-									>{size} per halaman</Select.Item
-								>
-							{/each}
-						</Select.Content>
-					</Select.Root>
 				</div>
 			</div>
 		</Card.Header>
-		<Card.Content class="px-0 md:px-6">
-			{#if isMobile.current}
-				<Accordion.Root type="single" class="w-full">
-					{#each paginatedStudents as studentMember (studentMember.id)}
-						{@const student = studentMember.user}
-						{@const studentAssessments = data.assessments.filter(
-							(a: any) => a.studentId === student.id
-						)}
-						{@const isCompleted =
-							studentAssessments.length === modules.length && modules.length > 0}
-						<Accordion.Item value={student.id} class="border-b last:border-0">
-							<Accordion.Trigger class="px-0 py-4 hover:no-underline">
-								<div class="text-left">
-									<div class="flex items-center gap-3">
-										<div class="flex flex-col">
-											<span class="font-medium">{student.name}</span>
-											<span class="text-xs text-muted-foreground">{student.username}</span>
-										</div>
-									</div>
-									<div class="mt-1">
-										{#if isCompleted}
-											<div class="flex items-center gap-1.5 text-green-600">
-												<CheckCircle2 class="h-4 w-4" />
-												<span class="text-xs font-medium">Lengkap</span>
-											</div>
-										{:else if studentAssessments.length > 0}
-											<div class="flex items-center gap-1.5 text-amber-600">
-												<ClipboardEdit class="h-4 w-4" />
-												<span class="text-xs font-medium"
-													>Parsial ({studentAssessments.length}/{modules.length})</span
-												>
-											</div>
-										{:else}
-											<span class="text-xs text-muted-foreground">Belum dinilai</span>
-										{/if}
-									</div>
-								</div>
-							</Accordion.Trigger>
-							<Accordion.Content>
-								<div class="flex flex-col gap-4 py-3">
-									<div class="grid grid-cols-2 gap-4">
-										<div class="space-y-1">
-											<span class="text-[10px] font-semibold text-muted-foreground uppercase"
-												>Status Detail</span
-											>
-											<div class="text-xs font-medium">
-												{#if isCompleted}
-													<span class="text-green-600"
-														>Lengkap ({modules.length}/{modules.length})</span
-													>
-												{:else if studentAssessments.length > 0}
-													<span class="text-amber-600"
-														>Parsial ({studentAssessments.length}/{modules.length})</span
-													>
-												{:else}
-													<span class="text-muted-foreground">Belum dinilai</span>
-												{/if}
-											</div>
-										</div>
-										<div class="space-y-1">
-											<span class="text-[10px] font-semibold text-muted-foreground uppercase"
-												>Dinilai Oleh</span
-											>
-											<div class="flex flex-col gap-0.5">
-												{#each [...new Set(studentAssessments.map((a: any) => a.instructor?.name))].filter(Boolean) as instructorName (instructorName)}
-													<span class="text-xs">• {instructorName}</span>
-												{:else}
-													<span class="text-xs italic text-muted-foreground">-</span>
-												{/each}
-											</div>
-										</div>
-									</div>
-									<Button
-										variant="outline"
-										size="sm"
-										class="w-full"
-										href="/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
-									>
-										<ClipboardEdit />
-										Catat Nilai
-									</Button>
-								</div>
-							</Accordion.Content>
-						</Accordion.Item>
-					{:else}
-						<div class="flex h-24 items-center justify-center text-center">
-							<p class="text-muted-foreground">
-								{searchQuery || statusFilter !== 'all'
-									? 'Tidak ada mahasiswa yang cocok dengan filter.'
-									: 'Tidak ada mahasiswa dalam kelas ini.'}
-							</p>
-						</div>
-					{/each}
-				</Accordion.Root>
-			{:else}
-				<Table.Root>
-					<Table.Header>
+
+		<Card.Content class="overflow-hidden p-0">
+			<!-- Responsive Scroll Table -->
+			<div class="overflow-x-auto">
+				<Table.Root class="w-full min-w-[800px] table-fixed">
+					<Table.Header class="bg-slate-50">
+						<!-- Row 1 -->
 						<Table.Row>
-							<Table.Head>Mahasiswa</Table.Head>
-							<Table.Head>Status Nilai</Table.Head>
-							<Table.Head>Dinilai Oleh</Table.Head>
-							<Table.Head class="text-right">Aksi</Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#each paginatedStudents as studentMember (studentMember.id)}
-							{@const student = studentMember.user}
-							{@const studentAssessments = data.assessments.filter(
-								(a: any) => a.studentId === student.id
-							)}
-							{@const isCompleted =
-								studentAssessments.length === modules.length && modules.length > 0}
-							<Table.Row>
-								<Table.Cell>
-									<div class="flex items-center gap-3">
-										<div class="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-											<User class="h-4 w-4" />
-										</div>
-										<div class="flex flex-col">
-											<span class="font-medium">{student.name}</span>
-											<span class="text-xs text-muted-foreground">{student.username}</span>
-										</div>
-									</div>
-								</Table.Cell>
-								<Table.Cell>
-									{#if isCompleted}
-										<div class="flex items-center gap-1.5 text-green-600">
-											<CheckCircle2 class="h-4 w-4" />
-											<span class="text-sm font-medium">Lengkap</span>
-										</div>
-									{:else if studentAssessments.length > 0}
-										<div class="flex items-center gap-1.5 text-amber-600">
-											<ClipboardEdit class="h-4 w-4" />
-											<span class="text-sm font-medium"
-												>Parsial ({studentAssessments.length}/{modules.length})</span
-											>
-										</div>
-									{:else}
-										<span class="text-sm text-muted-foreground">Belum dinilai</span>
-									{/if}
-								</Table.Cell>
-								<Table.Cell>
-									<div class="flex flex-col gap-1">
-										{#each [...new Set(studentAssessments.map((a: any) => a.instructor?.name))].filter(Boolean) as instructorName (instructorName)}
-											<span class="text-xs text-muted-foreground">• {instructorName}</span>
-										{:else}
-											<span class="text-xs text-muted-foreground italic">-</span>
-										{/each}
-									</div>
-								</Table.Cell>
-								<Table.Cell class="text-right">
-									<Button
-										variant="outline"
-										size="lg"
-										href="/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
+							<Table.Head
+								rowspan={hasGroupedColumns ? 2 : 1}
+								class="w-[220px] px-4 py-3 align-middle font-semibold text-slate-900"
+							>
+								Mahasiswa
+							</Table.Head>
+							{#each columns as col}
+								{#if col.kind === 'single'}
+									<Table.Head
+										rowspan={hasGroupedColumns ? 2 : 1}
+										class="min-w-[120px] max-w-[200px] whitespace-normal break-words px-4 py-3 text-center align-middle font-semibold text-slate-900"
 									>
-										<ClipboardEdit />
-										Catat Nilai
-									</Button>
+										{col.module.name}
+									</Table.Head>
+								{:else}
+									<Table.Head
+										colspan={col.sub.length}
+										class="max-w-[250px] whitespace-normal break-words border-b px-4 py-2 text-center font-semibold text-slate-900"
+									>
+										{col.label}
+									</Table.Head>
+								{/if}
+							{/each}
+							<Table.Head
+								rowspan={hasGroupedColumns ? 2 : 1}
+								class="w-[120px] px-4 py-3 text-center align-middle font-semibold text-slate-900"
+							>
+								RATA-RATA
+							</Table.Head>
+							<Table.Head
+								rowspan={hasGroupedColumns ? 2 : 1}
+								class="w-[220px] px-4 py-3 text-right align-middle font-semibold text-slate-900"
+							>
+								Aksi
+							</Table.Head>
+						</Table.Row>
+
+						<!-- Row 2 -->
+						{#if hasGroupedColumns}
+							<Table.Row>
+								{#each columns as col}
+									{#if col.kind === 'grouped'}
+										{#each col.sub as sub}
+											<Table.Head
+												class="w-[100px] border-l px-3 py-1.5 text-center text-xs font-semibold text-slate-600"
+											>
+												{sub.component === 'PREPARASI' ? 'PREP' : 'RESTO'}
+											</Table.Head>
+										{/each}
+									{/if}
+								{/each}
+							</Table.Row>
+						{/if}
+					</Table.Header>
+
+					<Table.Body>
+						{#if paginatedStudents.length === 0}
+							<Table.Row>
+								<Table.Cell colspan={totalColspan} class="h-32 text-center text-slate-500">
+									Tidak ada mahasiswa dalam kelas/kelompok ini.
 								</Table.Cell>
 							</Table.Row>
 						{:else}
-							<Table.Row>
-								<Table.Cell colspan={4} class="h-24 text-center">
-									{searchQuery || statusFilter !== 'all'
-										? 'Tidak ada mahasiswa yang cocok dengan filter.'
-										: 'Tidak ada mahasiswa dalam kelas ini.'}
-								</Table.Cell>
-							</Table.Row>
-						{/each}
+							{#each paginatedStudents as student (student.id)}
+								<Table.Row class="hover:bg-slate-50/30">
+									<!-- Name / NIM -->
+									<Table.Cell class="px-4 py-3 font-medium text-slate-900">
+										<div class="flex flex-col">
+											<span class="text-sm font-semibold">{student.name}</span>
+											<span class="text-xs text-slate-500 uppercase">{student.username}</span>
+										</div>
+									</Table.Cell>
+
+									<!-- Assessment Cells -->
+									{#each columns as col}
+										{#if col.kind === 'single'}
+											<Table.Cell class="px-4 py-3 text-center">
+												{@render scoringCell(student, col.module)}
+											</Table.Cell>
+										{:else}
+											{#each col.sub as sub}
+												<Table.Cell class="border-l px-3 py-3 text-center">
+													{@render scoringCell(student, sub.module)}
+												</Table.Cell>
+											{/each}
+										{/if}
+									{/each}
+
+									<!-- Average -->
+									<Table.Cell class="px-4 py-3 text-center text-sm font-bold text-[#2D5A43]">
+										{getStudentAverage(student.id)}
+									</Table.Cell>
+
+									<!-- Action -->
+									<Table.Cell class="px-4 py-3 text-right">
+										<div class="flex items-center justify-end gap-2">
+											{#if hasChecklistAssessments(student.id)}
+												<Button
+													href="/admin/penilaian/{data.schedule
+														.id}/mahasiswa/{student.id}/export-csl"
+													variant="outline"
+													size="sm"
+													class="gap-1.5 text-[#2D5A43] hover:bg-slate-50 hover:text-[#234735]"
+												>
+													<FileText class="size-3.5" /> Export CSL
+												</Button>
+											{/if}
+											<Button
+												variant="outline"
+												size="sm"
+												href="/admin/penilaian/{data.schedule.id}/mahasiswa/{student.id}"
+												class="gap-1.5"
+											>
+												<ClipboardEdit class="size-3.5" /> Detail
+											</Button>
+										</div>
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						{/if}
 					</Table.Body>
 				</Table.Root>
-			{/if}
+			</div>
 		</Card.Content>
 
-		<!-- Pagination Controls -->
+		<!-- Pagination -->
 		{#if totalPages > 1}
 			<div
-				class="flex flex-col-reverse items-center gap-3 px-0 py-4 sm:flex-row sm:justify-between md:flex-row md:items-center md:px-6"
+				class="flex flex-col items-center justify-between gap-4 border-t bg-slate-50/50 px-6 py-4 sm:flex-row"
 			>
-				<div class="flex items-center gap-3">
-					<p class="text-sm text-muted-foreground">
-						Menampilkan {(currentPage - 1) * pageSize + 1}–{Math.min(
-							currentPage * pageSize,
-							filteredStudents.length
-						)} dari {filteredStudents.length} mahasiswa
-					</p>
-				</div>
+				<p class="text-sm text-slate-500">
+					Menampilkan {(currentPage - 1) * pageSize + 1}–{Math.min(
+						currentPage * pageSize,
+						filteredStudents.length
+					)} dari {filteredStudents.length} mahasiswa
+				</p>
 
 				<div class="flex items-center gap-1">
-				
 					<Button
 						variant="outline"
 						size="icon"
 						disabled={currentPage === 1}
 						onclick={() => currentPage--}
-						aria-label="Halaman sebelumnya"
 					>
 						<ChevronLeft class="h-4 w-4" />
 					</Button>
 
 					{#each getPageNumbers(currentPage, totalPages) as pg}
 						{#if pg === '...'}
-							<span class="px-2 text-muted-foreground">…</span>
+							<span class="px-2 text-slate-400">…</span>
 						{:else}
 							<Button
 								variant={currentPage === pg ? 'default' : 'outline'}
 								size="icon"
+								class={currentPage === pg ? 'bg-[#2D5A43] text-white' : ''}
 								onclick={() => (currentPage = pg as number)}
 							>
 								{pg}
@@ -404,76 +591,230 @@
 						size="icon"
 						disabled={currentPage === totalPages}
 						onclick={() => currentPage++}
-						aria-label="Halaman berikutnya"
 					>
 						<ChevronRight class="h-4 w-4" />
 					</Button>
-				
 				</div>
 			</div>
 		{/if}
 	</Card.Root>
-
-	<!-- Info Bar (Horizontal Summary) -->
-	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-					<Stethoscope class="h-5 w-5 text-primary" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Jenis</span
-					>
-					<span class="font-bold">{data.schedule.type}</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-					<GraduationIcon class="h-5 w-5 text-blue-500" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Kelas</span
-					>
-					<span class="font-bold">{data.schedule.class}</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-					<BookOpen class="h-5 w-5 text-amber-500" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Modul</span
-					>
-					<div class="mt-1 flex flex-wrap gap-1">
-						{#each modules as mod (mod.id)}
-							<span
-								class={badgeVariants({ variant: 'secondary' }) +
-									' h-4 py-0 text-[10px] wrap-break-word'}>{mod.name}</span
-							>
-						{/each}
-					</div>
-				</div>
-			</Card.Content>
-		</Card.Root>
-		<Card.Root>
-			<Card.Content class="flex items-center gap-4">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-					<Users class="h-5 w-5 text-green-500" />
-				</div>
-				<div class="flex flex-col gap-1">
-					<span class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-						>Peserta</span
-					>
-					<span class="font-bold">{data.students.length} Mahasiswa</span>
-				</div>
-			</Card.Content>
-		</Card.Root>
-	</div>
 </div>
+
+<!-- SCORING INLINE SNIPPET -->
+{#snippet scoringCell(student: any, module: any)}
+	{@const assess = getAssessment(student.id, module.id)}
+	{@const key = `${student.id}_${module.id}`}
+
+	{#if module.scoringMode === 'TOTAL'}
+		<div class="relative mx-auto flex w-[75px] items-center justify-center gap-1.5">
+			<input
+				type="number"
+				value={assess?.score ?? ''}
+				placeholder="-"
+				min="0"
+				max="100"
+				class="h-8 w-full rounded border border-slate-200 text-center text-sm outline-none focus:border-[#2D5A43] focus:ring-1 focus:ring-[#2D5A43]"
+				onblur={(e) => handleSaveScore(student.id, module.id, (e.target as HTMLInputElement).value)}
+			/>
+			{#if savingStates[key] === 'saving'}
+				<span class="absolute right-1 flex size-1.5 animate-ping rounded-full bg-blue-500"></span>
+			{:else if savingStates[key] === 'saved'}
+				<span class="absolute right-1 flex size-1.5 rounded-full bg-green-500"></span>
+			{:else if savingStates[key] === 'error'}
+				<span
+					class="absolute right-1 flex size-1.5 animate-bounce rounded-full bg-red-500"
+					title={savingMessages[key]}
+				></span>
+			{/if}
+		</div>
+	{:else if module.scoringMode === 'RUBRIK'}
+		<button
+			type="button"
+			onclick={() => openScoringDialog(student, module)}
+			class="inline-flex items-center justify-center rounded border px-2 py-1 text-xs font-semibold transition-all
+				{assess
+				? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+				: 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'}"
+		>
+			{assess?.score ?? 'Isi'}
+		</button>
+	{:else if module.scoringMode === 'CHECKLIST'}
+		<button
+			type="button"
+			onclick={() => openScoringDialog(student, module)}
+			class="inline-flex items-center justify-center rounded border px-2 py-1 text-xs font-semibold transition-all
+				{assess
+				? 'border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100'
+				: 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'}"
+		>
+			{assess ? `${assess.score}%` : 'Isi'}
+		</button>
+	{/if}
+{/snippet}
+
+<!-- DIALOG FOR RUBRIK/CHECKLIST SCORING -->
+<Dialog.Root bind:open={isScoringDialogOpen}>
+	<Dialog.Content class="max-h-[85vh] overflow-y-auto sm:max-w-[550px]">
+		<Dialog.Header>
+			<Dialog.Title class="text-lg font-bold text-slate-900">
+				{activeModule?.name}
+			</Dialog.Title>
+			<Dialog.Description class="text-sm">
+				<strong>{activeStudent?.name}</strong> ({activeStudent?.username})
+			</Dialog.Description>
+		</Dialog.Header>
+
+		{#if activeModule}
+			<div class="space-y-4 pt-2">
+				<!-- Caption score legend if CHECKLIST -->
+				{#if activeModule.scoringMode === 'CHECKLIST' && activeModule.scoreLegend}
+					<div class="space-y-1 rounded-lg border bg-slate-50 p-3 text-[11px] text-slate-600">
+						<p class="font-bold text-slate-700">Skala Penilaian:</p>
+						<div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+							{#each activeModule.scoreLegend as legend}
+								<div><strong>{legend.value}</strong>: {legend.label}</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
+				<!-- Criteria form list -->
+				<div class="max-h-[350px] space-y-4 overflow-y-auto pr-1">
+					{#if activeModule.scoringMode === 'CHECKLIST'}
+						{#each dialogSections as sec}
+							<div class="space-y-3">
+								{#if sec.label}
+									<h3
+										class="rounded bg-slate-100/80 px-2.5 py-1 text-xs font-bold text-slate-700 uppercase"
+									>
+										{sec.label}
+									</h3>
+								{/if}
+								{#each sec.items as crit}
+									<div class="flex flex-col gap-2 rounded-lg border border-slate-100 bg-white p-2">
+										<div class="flex items-start justify-between gap-4">
+											<span class="text-xs leading-tight font-medium text-slate-800"
+												>{crit.name}</span
+											>
+											<span class="shrink-0 text-xs font-semibold text-slate-400"
+												>Max {crit.maxScore}</span
+											>
+										</div>
+										{#if crit.maxScore === 2}
+											<div class="flex gap-2">
+												{#each [0, 1, 2] as val}
+													<button
+														type="button"
+														class="flex-1 rounded border py-1 text-xs font-bold transition-all
+															{criteriaValues[crit.id] === val
+															? 'border-[#2D5A43] bg-[#2D5A43] text-white shadow-xs'
+															: 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}"
+														onclick={() => (criteriaValues[crit.id] = val)}
+													>
+														{val}
+													</button>
+												{/each}
+											</div>
+										{:else}
+											<div class="flex items-center gap-3">
+												<input
+													type="range"
+													min="0"
+													max={crit.maxScore}
+													bind:value={criteriaValues[crit.id]}
+													class="flex-1 accent-[#2D5A43]"
+												/>
+												<Input
+													type="number"
+													min="0"
+													max={crit.maxScore}
+													bind:value={criteriaValues[crit.id]}
+													class="h-8 w-16 text-center"
+												/>
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/each}
+					{:else}
+						<!-- Flat list for RUBRIK -->
+						{#each activeModule.criteria as crit}
+							<div class="flex flex-col gap-2 rounded-lg border bg-white p-3">
+								<div class="flex items-start justify-between gap-4">
+									<div>
+										<span class="block text-xs leading-tight font-semibold text-slate-900"
+											>{crit.name}</span
+										>
+										{#if crit.description}
+											<p class="mt-0.5 text-[10px] text-slate-400">{crit.description}</p>
+										{/if}
+									</div>
+									<span class="shrink-0 text-xs font-semibold text-slate-400"
+										>Max {crit.maxScore}</span
+									>
+								</div>
+								<div class="mt-1 flex items-center gap-3">
+									<input
+										type="range"
+										min="0"
+										max={crit.maxScore}
+										bind:value={criteriaValues[crit.id]}
+										class="flex-1 accent-[#2D5A43]"
+									/>
+									<Input
+										type="number"
+										min="0"
+										max={crit.maxScore}
+										bind:value={criteriaValues[crit.id]}
+										class="h-8 w-16 text-center"
+									/>
+								</div>
+							</div>
+						{/each}
+					{/if}
+				</div>
+
+				<!-- Notes textarea -->
+				<div class="space-y-1.5">
+					<Label for="notes">Komentar / Catatan</Label>
+					<Textarea
+						id="notes"
+						bind:value={notesValue}
+						placeholder="Keterangan tambahan..."
+						class="h-16 resize-none text-xs"
+					/>
+				</div>
+
+				<!-- Live score readout -->
+				<div
+					class="flex items-center justify-between rounded-xl border border-[#2D5A43]/10 bg-[#2D5A43]/5 p-3"
+				>
+					<span class="text-xs font-bold text-slate-700 uppercase">Live Nilai Akhir:</span>
+					<span class="text-2xl font-black text-[#2D5A43]">
+						{activeModule.scoringMode === 'CHECKLIST' ? `${liveChecklistScore}%` : liveRubrikScore}
+					</span>
+				</div>
+			</div>
+
+			<Dialog.Footer class="border-t pt-4">
+				<Button
+					type="button"
+					variant="outline"
+					disabled={isSubmittingDialog}
+					onclick={() => (isScoringDialogOpen = false)}
+				>
+					Batal
+				</Button>
+				<Button
+					type="button"
+					disabled={isSubmittingDialog}
+					onclick={submitDialogScore}
+					class="bg-[#2D5A43] text-white hover:bg-[#234735]"
+				>
+					{isSubmittingDialog ? 'Menyimpan...' : 'Simpan Penilaian'}
+				</Button>
+			</Dialog.Footer>
+		{/if}
+	</Dialog.Content>
+</Dialog.Root>

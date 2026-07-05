@@ -367,9 +367,9 @@
 					<Users class="mt-0.5 h-4 w-4 text-muted-foreground" />
 					<div>
 						<div class="mb-0.5 font-medium">Instruktur</div>
-						{#each selectedSchedule.instructors as i (i.instructorId)}
-							<div>{i.user.name}</div>
-						{/each}
+						{#each [...new Map(selectedSchedule.instructors.map((i: any) => [i.instructorId, i])).values()] as i (i.instructorId)}
+						<div>{i.user.name}</div>
+					{/each}
 					</div>
 				</div>
 

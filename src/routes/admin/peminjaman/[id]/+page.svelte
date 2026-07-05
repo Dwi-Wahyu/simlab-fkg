@@ -66,8 +66,7 @@
 
 	const statusOptions = [
 		{ value: 'BAIK', label: 'Baik' },
-		{ value: 'RUSAK_RINGAN', label: 'Rusak Ringan' },
-		{ value: 'RUSAK_BERAT', label: 'Rusak Berat' }
+		{ value: 'RUSAK', label: 'Rusak' }
 	];
 
 	function handleFileChange(itemId: string, event: Event) {

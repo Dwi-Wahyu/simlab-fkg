@@ -1,33 +1,32 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-navigation-without-resolve */
-	import { invalidateAll } from '$app/navigation';
-	import { enhance } from '$app/forms';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import * as Table from '$lib/components/ui/table/index.js';
-	import { Badge } from '$lib/components/ui/badge/index.js';
-	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
-	import {
-		Wrench,
-		Plus,
-		Calendar,
-		Trash2,
-		Edit,
-		Box,
-		TrendingUp,
-		AlertTriangle,
-		DollarSign,
-		ChevronRight,
-		Filter,
-		FileUp,
-		ChevronDown,
-		ChevronUp
-	} from '@lucide/svelte';
 
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import {
+		AlertTriangle,
+		Box,
+		Calendar,
+		ChevronDown,
+		ChevronRight,
+		ChevronUp,
+		DollarSign,
+		Edit,
+		FileUp,
+		Filter,
+		Plus,
+		Trash2,
+		TrendingUp,
+		Wrench
+	} from '@lucide/svelte';
 	import Input from '@/components/ui/input/input.svelte';
+	import { enhance } from '$app/forms';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Table from '$lib/components/ui/table/index.js';
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
 
 	let { data } = $props();
 
@@ -144,6 +143,10 @@
 			minimumFractionDigits: 0
 		}).format(amount);
 	}
+
+	function getItemApproval(itemId: string) {
+		return data.approvals.find((a: any) => a.referenceId === itemId);
+	}
 </script>
 
 <svelte:head>
@@ -159,6 +162,16 @@
 				Monitor kesehatan alat laboratorium dan jadwal kalibrasi periodik.
 			</p>
 		</div>
+		{#if ['superadmin', 'kepalaLab'].includes(data.userRole) && data.pendingApprovalsCount > 0}
+			<Button
+				variant="outline"
+				href="/admin/pemeliharaan/approval"
+				class="w-full gap-1.5 border-amber-200 font-semibold text-amber-700 hover:bg-amber-50 hover:text-amber-800 md:w-auto"
+			>
+				<AlertTriangle class="size-4 animate-pulse text-amber-500" />
+				Menunggu Persetujuan ({data.pendingApprovalsCount})
+			</Button>
+		{/if}
 	</div>
 
 	<!-- Summary Cards -->
@@ -186,9 +199,7 @@
 		</Tabs.List>
 
 		<Card.Root mobileAware={true}>
-			<Card.Header
-				class=" flex flex-col gap-4 py-4 pt-0 sm:flex-row sm:items-center sm:justify-between md:pt-4"
-			>
+			<Card.Header class=" flex flex-col gap-4 pt-0 sm:flex-row sm:items-center sm:justify-between">
 				<Card.Title class="hidden text-xl md:block">
 					{#if activeTab === 'pemeliharaan'}
 						Jadwal Pemeliharaan
@@ -312,12 +323,33 @@
 												: 'hidden'} flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
 										>
 											<span class="text-xs font-semibold text-slate-400 md:hidden">Status</span>
-											<Badge
-												variant="outline"
-												class="w-fit px-3 py-1 {getStatusColor(item.status)}"
-											>
-												{item.status}
-											</Badge>
+											<div class="flex flex-col gap-1">
+												<Badge
+													variant="outline"
+													class="w-fit px-3 py-1 {getStatusColor(item.status)}"
+												>
+													{item.status}
+												</Badge>
+												{#if item.status === 'COMPLETED'}
+													{@const app = getItemApproval(item.id)}
+													{#if app}
+														<span
+															class="mt-1 w-fit rounded border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase
+															{app.status === 'APPROVED'
+																? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+																: app.status === 'REJECTED'
+																	? 'border-red-100 bg-red-50 text-red-700'
+																	: 'border-amber-100 bg-amber-50 text-amber-700'}"
+														>
+															{app.status === 'APPROVED'
+																? 'Disetujui'
+																: app.status === 'REJECTED'
+																	? 'Ditolak'
+																	: 'Menunggu Review'}
+														</span>
+													{/if}
+												{/if}
+											</div>
 										</Table.Cell>
 
 										<!-- Column 5: Aksi -->

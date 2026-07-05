@@ -9,8 +9,7 @@
 	const inventoryItems = $derived([
 		{ label: 'Total Alat', value: data.inventorySummary.totalEquipment, color: '' },
 		{ label: 'Kondisi Baik', value: data.inventorySummary.baik, color: 'text-green-600' },
-		{ label: 'Rusak Ringan', value: data.inventorySummary.rusakRingan, color: 'text-yellow-600' },
-		{ label: 'Rusak Berat', value: data.inventorySummary.rusakBerat, color: 'text-red-600' },
+		{ label: 'Kondisi Rusak', value: data.inventorySummary.rusak, color: 'text-red-600' },
 		{ label: 'Sedang Dipakai', value: data.inventorySummary.inUse, color: 'text-blue-600' },
 		{ label: 'Pemeliharaan', value: data.inventorySummary.maintenance, color: 'text-orange-600' }
 	]);
@@ -22,7 +21,7 @@
 		<p class="text-sm text-muted-foreground">Dashboard Kepala Laboratorium</p>
 	</div>
 
-	<div class="grid grid-cols-2 gap-3 md:grid-cols-6">
+	<div class="grid grid-cols-2 gap-3 md:grid-cols-5">
 		{#each inventoryItems as item}
 			<Card.Root>
 				<Card.Content>
@@ -33,7 +32,7 @@
 		{/each}
 	</div>
 
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between">
 				<Card.Title>Peminjaman Menunggu Persetujuan</Card.Title>
@@ -60,6 +59,23 @@
 			{#if data.pendingLendingApprovals.length !== 0}
 				<Card.Footer>
 					<Button href="/admin/peminjaman" variant="link">Lihat Semua</Button>
+				</Card.Footer>
+			{/if}
+		</Card.Root>
+
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>Pemeliharaan Menunggu Review</Card.Title>
+			</Card.Header>
+			<Card.Content class="flex flex-col items-center justify-center py-6">
+				<span class="text-4xl font-extrabold {data.pendingMaintenanceApprovals > 0 ? 'text-amber-600' : 'text-slate-400'}">
+					{data.pendingMaintenanceApprovals}
+				</span>
+				<p class="text-xs text-muted-foreground mt-2">Pekerjaan selesai menunggu verifikasi</p>
+			</Card.Content>
+			{#if data.pendingMaintenanceApprovals > 0}
+				<Card.Footer>
+					<Button href="/admin/pemeliharaan/approval" variant="link" class="w-full text-center">Tinjau Nota</Button>
 				</Card.Footer>
 			{/if}
 		</Card.Root>

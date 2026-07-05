@@ -66,13 +66,15 @@
 
 	const roleLabels: Record<string, string> = {
 		superadmin: 'Superadmin',
-		kakomlek: 'Koordinator',
+		kakomlek: 'PJ Mata Kuliah',
+		koordinator: 'PJ Mata Kuliah',
 		kepalaLab: 'Kepala Lab',
 		instruktur: 'Instruktur',
 		peneliti: 'Peneliti',
 		staff: 'Staff',
 		teknisi: 'Teknisi',
-		spmi: 'SPMI'
+		spmi: 'SPMI',
+		laboran: 'Laboran'
 	};
 
 	function formatDate(date: Date) {

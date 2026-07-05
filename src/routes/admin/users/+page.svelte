@@ -30,13 +30,14 @@
 
 	const roles = [
 		{ value: 'superadmin', label: 'Superadmin' },
-		{ value: 'koordinator', label: 'Koordinator' },
+		{ value: 'koordinator', label: 'PJ Mata Kuliah' },
 		{ value: 'kepalaLab', label: 'Kepala Lab' },
 		{ value: 'instruktur', label: 'Instruktur' },
 		{ value: 'peneliti', label: 'Peneliti (Mahasiswa)' },
 		{ value: 'admin', label: 'Admin' },
 		{ value: 'teknisi', label: 'Teknisi' },
-		{ value: 'spmi', label: 'SPMI' }
+		{ value: 'spmi', label: 'SPMI' },
+		{ value: 'laboran', label: 'Laboran' }
 	];
 
 	function getRoleLabel(roleValue: string) {

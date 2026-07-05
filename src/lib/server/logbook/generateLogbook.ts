@@ -322,7 +322,7 @@ async function getSeriesWithLab(seriesId: string) {
 
 async function convertDocxToPdf(docxBuffer: Buffer, fileName: string): Promise<Buffer> {
 	const formData = new FormData();
-	formData.append('files', new Blob([docxBuffer]), fileName);
+	formData.append('files', new Blob([new Uint8Array(docxBuffer)]), fileName);
 
 	const response = await fetch(`${env.GOTENBERG_URL || 'http://localhost:4000'}/forms/libreoffice/convert`, {
 		method: 'POST',
@@ -374,7 +374,12 @@ export async function generateLogbookForSeries(
 		});
 	}
 	const finalTemplate = templateRecord ?? (await db.query.practicumLogbookTemplate.findFirst());
-	if (!finalTemplate) throw new Error('Tidak ada template logbook di sistem');
+	if (!finalTemplate) {
+		throw new Error(
+			'Tidak ada template logbook terdaftar di database (tabel practicum_logbook_template kosong). ' +
+			'Jalankan `bun run db:seed-logbook-templates` setelah seeder modul dijalankan.'
+		);
+	}
 
 	const templateFields = await db.query.practicumLogbookTemplateField.findMany({
 		where: eq(practicumLogbookTemplateField.templateId, finalTemplate.id),

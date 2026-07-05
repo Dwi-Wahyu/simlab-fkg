@@ -59,12 +59,8 @@
 					<span class="font-medium text-green-600">{data.inventorySummary.baik}</span>
 				</div>
 				<div class="flex justify-between text-sm">
-					<span class="text-muted-foreground">Rusak Ringan</span>
-					<span class="font-medium text-yellow-600">{data.inventorySummary.rusakRingan}</span>
-				</div>
-				<div class="flex justify-between text-sm">
-					<span class="text-muted-foreground">Rusak Berat</span>
-					<span class="font-medium text-red-600">{data.inventorySummary.rusakBerat}</span>
+					<span class="text-muted-foreground">Rusak</span>
+					<span class="font-medium text-red-600">{data.inventorySummary.rusak}</span>
 				</div>
 			</Card.Content>
 		</Card.Root>

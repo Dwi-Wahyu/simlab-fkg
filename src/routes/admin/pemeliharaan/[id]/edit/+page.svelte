@@ -5,12 +5,51 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
-	import { ArrowLeft, Save } from '@lucide/svelte';
+	import { ArrowLeft, Save, Check, Upload, FileText } from '@lucide/svelte';
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 
 	let { data } = $props();
+
+	// File Preview States
+	let fileInput: HTMLInputElement | null = $state(null);
+	let fileName = $state(data.maintenance.notaFileName || '');
+	let fileSize = $state('');
+	let fileType = $state('');
+	let filePreviewUrl = $state<string | null>(
+		data.maintenance.notaFileName && !data.maintenance.notaFileName.toLowerCase().endsWith('.pdf')
+			? `/uploads/receipts/${data.maintenance.notaFileName}`
+			: null
+	);
+
+	function handleFileChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (file) {
+			fileName = file.name;
+			fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+			fileType = file.type;
+
+			if (file.type.startsWith('image/')) {
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					filePreviewUrl = e.target?.result as string;
+				};
+				reader.readAsDataURL(file);
+			} else {
+				filePreviewUrl = null;
+			}
+		}
+	}
+
+	function removeFile() {
+		fileName = '';
+		fileSize = '';
+		fileType = '';
+		filePreviewUrl = null;
+		if (fileInput) fileInput.value = '';
+	}
 
 	let formData = $state({ ...data.maintenance });
 
@@ -104,6 +143,7 @@
 		<Card.Content>
 			<form
 				method="POST"
+				enctype="multipart/form-data"
 				use:enhance={() => {
 					return async ({ result }) => {
 						if (result.type === 'success') {
@@ -245,6 +285,70 @@
 						placeholder="Jelaskan detail pemeliharaan..."
 					/>
 				</div>
+
+				<!-- Nota Upload -->
+				{#if formData.maintenanceType !== 'KALIBRASI'}
+					<div class="space-y-2">
+						<Label for="nota" class="text-xs font-bold text-slate-500 uppercase">Nota / Bukti Pembayaran (PDF/Gambar) (Opsional)</Label>
+						<div
+							class="group relative flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 transition-all hover:border-[#2D5A43] hover:bg-white"
+						>
+							{#if fileName}
+								<div class="flex w-full animate-in flex-col items-center gap-4 zoom-in-95 fade-in">
+									{#if filePreviewUrl}
+										<div class="relative">
+											<img
+												src={filePreviewUrl}
+												alt="Preview"
+												class="max-h-32 rounded-lg border border-slate-200 shadow-sm"
+											/>
+											<div
+												class="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#2D5A43] text-white shadow-sm"
+											>
+												<Check size={14} />
+											</div>
+										</div>
+									{:else}
+										<div class="rounded-xl bg-slate-100 p-4 text-slate-400">
+											<FileText size={48} />
+										</div>
+									{/if}
+									<div class="text-center">
+										<p class="max-w-[240px] truncate text-sm font-semibold text-slate-700">
+											{fileName}
+										</p>
+										<p class="text-xs text-slate-500">{fileSize}</p>
+									</div>
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-8 text-xs text-destructive hover:bg-red-50"
+										onclick={removeFile}
+									>
+										Hapus & Ganti File
+									</Button>
+								</div>
+							{:else}
+								<input
+									type="file"
+									name="nota"
+									id="nota"
+									bind:this={fileInput}
+									class="absolute inset-0 z-10 cursor-pointer opacity-0"
+									accept=".pdf,.png,.jpg,.jpeg"
+									onchange={handleFileChange}
+								/>
+								<div class="flex flex-col items-center gap-2 text-center">
+									<div class="rounded-full bg-slate-100 p-3 group-hover:bg-[#2D5A43]/10">
+										<Upload size={24} class="text-slate-400 group-hover:text-[#2D5A43]" />
+									</div>
+									<p class="text-sm font-medium text-slate-600">Klik untuk upload nota</p>
+									<p class="text-xs text-slate-400">PDF, PNG, JPG (Maks. 5MB)</p>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
 
 				<div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
 					<Button variant="outline" href="/admin/pemeliharaan" class="h-11 rounded-xl px-6"

@@ -7,7 +7,8 @@ import {
 	user,
 	practicumModule,
 	practicumClass,
-	practicumSeries
+	practicumSeries,
+	kelompokMahasiswa
 } from '$lib/server/db/schema';
 import { error, fail } from '@sveltejs/kit';
 import { eq, and, or, gte, lte } from 'drizzle-orm';
@@ -36,6 +37,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		},
 		orderBy: (pc, { desc }) => [desc(pc.batch), pc.name]
 	});
+	const groups = await db.query.kelompokMahasiswa.findMany({
+		orderBy: (km, { asc }) => [asc(km.name)]
+	});
 
 	return {
 		labs,
@@ -43,7 +47,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		blocks,
 		modules,
 		series,
-		classes
+		classes,
+		groups
 	};
 };
 
@@ -54,12 +59,16 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const title = formData.get('title') as string;
 		const seriesId = formData.get('seriesId') as string;
-		const semester = parseInt(formData.get('semester') as string) || null;
 		const type = formData.get('type') as 'PELATIHAN' | 'OSCE' | 'PRAKTIKUM';
 		const classId = formData.get('classId') as string;
 		const labId = formData.get('labId') as string;
 		const blockId = formData.get('blockId') as string;
-		const instructorIds = formData.getAll('instructorIds') as string[];
+		const assignmentPairs = formData.getAll('assignments') as string[];
+		const assignments = assignmentPairs.map((pair) => {
+			const [instructorId, groupId] = pair.split(':');
+			return { instructorId, groupId: groupId || null };
+		});
+		const instructorIds = [...new Set(assignments.map((a) => a.instructorId))];
 		const moduleIds = formData.getAll('moduleIds') as string[];
 		const dateStr = formData.get('date') as string;
 		const startTimeStr = formData.get('startTime') as string;
@@ -121,7 +130,6 @@ export const actions: Actions = {
 			await tx.insert(practicumSchedule).values({
 				id: scheduleId,
 				seriesId: seriesId || null,
-				semester,
 				title,
 				type,
 				class: classEnum,
@@ -134,11 +142,12 @@ export const actions: Actions = {
 				notes
 			});
 
-			for (const instructorId of instructorIds) {
+			for (const assignment of assignments) {
 				await tx.insert(practicumScheduleInstructor).values({
 					id: uuidv4(),
 					scheduleId,
-					instructorId
+					instructorId: assignment.instructorId,
+					groupId: assignment.groupId
 				});
 			}
 

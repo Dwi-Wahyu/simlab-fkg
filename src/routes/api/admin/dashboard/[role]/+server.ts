@@ -52,14 +52,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				.select({ value: count() })
 				.from(equipment)
 				.where(eq(equipment.condition, 'BAIK'));
-			const [ringanResult] = await db
+			const [rusakResult] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(eq(equipment.condition, 'RUSAK_RINGAN'));
-			const [beratResult] = await db
-				.select({ value: count() })
-				.from(equipment)
-				.where(eq(equipment.condition, 'RUSAK_BERAT'));
+				.where(eq(equipment.condition, 'RUSAK'));
 			const [totalEquipResult] = await db.select({ value: count() }).from(equipment);
 
 			const [incidentsResult] = await db
@@ -76,8 +72,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					inventorySummary: {
 						totalEquipment: Number(totalEquipResult.value),
 						baik: Number(baikResult.value),
-						rusakRingan: Number(ringanResult.value),
-						rusakBerat: Number(beratResult.value)
+						rusak: Number(rusakResult.value)
 					},
 					activeIncidents: Number(incidentsResult.value)
 				}
@@ -144,14 +139,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				.select({ value: count() })
 				.from(equipment)
 				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'BAIK')));
-			const [ringan] = await db
+			const [rusak] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'RUSAK_RINGAN')));
-			const [berat] = await db
-				.select({ value: count() })
-				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'RUSAK_BERAT')));
+				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'RUSAK')));
 			const [inUse] = await db
 				.select({ value: count() })
 				.from(equipment)
@@ -171,7 +162,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			const [pendingMaintResult] = await db
 				.select({ value: count() })
 				.from(approval)
-				.where(and(eq(approval.status, 'PENDING'), eq(approval.referenceType, 'MAINTENANCE')));
+				.innerJoin(maintenance, eq(approval.referenceId, maintenance.id))
+				.innerJoin(equipment, eq(maintenance.equipmentId, equipment.id))
+				.where(
+					and(
+						eq(approval.status, 'PENDING'),
+						eq(approval.referenceType, 'MAINTENANCE'),
+						eq(equipment.laboratoriumId, labId)
+					)
+				);
 
 			const latestReport = await db.query.inventoryReport.findFirst({
 				where: (r, { eq }) => eq(r.laboratoriumId, labId),
@@ -185,8 +184,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					inventorySummary: {
 						totalEquipment: Number(totalEquip.value),
 						baik: Number(baik.value),
-						rusakRingan: Number(ringan.value),
-						rusakBerat: Number(berat.value),
+						rusak: Number(rusak.value),
 						inUse: Number(inUse.value),
 						maintenance: Number(maint.value)
 					},

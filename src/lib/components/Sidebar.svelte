@@ -90,6 +90,11 @@
 					name: 'Daftar Mahasiswa',
 					path: `/admin/users/mahasiswa`,
 					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin']
+				},
+				{
+					name: 'Kelompok Mahasiswa',
+					path: `/admin/kelompok-mahasiswa`,
+					role: ['superadmin', 'koordinator']
 				}
 			]
 		},
@@ -140,17 +145,22 @@
 			path: `/admin/inventaris`,
 			icon: Package,
 			isDropdown: true,
-			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi'],
+			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi', 'laboran'],
 			children: [
 				{
 					name: 'Alat',
 					path: `/admin/inventaris/alat`,
-					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi']
+					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi', 'laboran']
 				},
 				{
 					name: 'Bahan Habis Pakai',
 					path: `/admin/inventaris/bhp`,
-					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi']
+					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi', 'laboran']
+				},
+				{
+					name: 'Kategori',
+					path: `/admin/inventaris/kategori`,
+					role: ['superadmin', 'kepalaLab', 'laboran']
 				}
 			]
 		},
@@ -205,7 +215,7 @@
 			role: ['superadmin'],
 			children: [
 				{
-					name: 'Koordinator',
+					name: 'PJ Mata Kuliah',
 					path: `/admin/users/koordinator`,
 					role: ['superadmin']
 				},
@@ -227,6 +237,11 @@
 				{
 					name: 'SPMI',
 					path: `/admin/users/spmi`,
+					role: ['superadmin']
+				},
+				{
+					name: 'Laboran',
+					path: `/admin/users/laboran`,
 					role: ['superadmin']
 				}
 			]
