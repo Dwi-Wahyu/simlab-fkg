@@ -1,0 +1,32 @@
+module.exports = {
+	apps: [
+		{
+			name: 'simlab',
+			script: 'build/index.js', // Output path for adapter-node
+			instances: '1',
+			exec_mode: 'fork',
+			autorestart: true,
+			watch: false,
+			max_memory_restart: '1G',
+			env: {
+				NODE_ENV: 'production',
+				PORT: 1239891312, // example only
+				ORIGIN: 'http://simlab.minmat2026.my.id',
+				DATABASE_URL: '',
+				BETTER_AUTH_SECRET: ''
+				GOTENBERG_URL: 'http://localhost:123989132'
+			}
+		},
+		{
+			name: 'gotenberg',
+			script: 'docker',
+			args: ['run', '--rm', '--name', 'gotenberg-api', '-p', '123989132:3000', 'gotenberg/gotenberg:8'],
+			interpreter: 'none', 
+			autorestart: true,
+			max_restarts: 10,
+			restart_delay: 3000, 
+			kill_timeout: 10000, 
+			watch: false
+		}
+	]
+};
