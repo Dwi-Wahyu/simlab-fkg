@@ -165,7 +165,7 @@ async function main() {
 			.set({ role: roleName })
 			.where(eq(authSchema.user.id, userId));
 
-		if (roleName === 'koordinator' || roleName === 'teknisi' || roleName === 'laboran') {
+		if (roleName === 'teknisi' || roleName === 'laboran') {
 			// Tambahkan User ke Laboratorium dengan Role tersebut jika belum ada
 			const existingMember = await db.query.laboratoriumMember.findFirst({
 				where: and(
