@@ -209,12 +209,19 @@
 			<form
 				method="POST"
 				enctype="multipart/form-data"
-				use:enhance={() => {
+				use:enhance={({ cancel }) => {
+					if (!formData.equipmentId) {
+						showErrorNotification('Silakan pilih peralatan terlebih dahulu.');
+						cancel();
+						return;
+					}
 					return async ({ result }) => {
 						if (result.type === 'success') {
 							showSuccessNotification();
 						} else if (result.type === 'failure') {
-							showErrorNotification('Terjadi kesalahan');
+							showErrorNotification(result.data?.message || 'Terjadi kesalahan');
+						} else if (result.type === 'error') {
+							showErrorNotification(result.error?.message || 'Terjadi kesalahan sistem');
 						}
 					};
 				}}

@@ -72,54 +72,66 @@ export const actions: Actions = {
 		if (!locals.user) throw fail(401, { message: 'Unauthorized' });
 		const formData = await request.formData();
 
-		const rawScheduledDate = formData.get('scheduledDate')?.toString();
-		const rawCompletionDate = formData.get('completionDate')?.toString();
-		const rawTechnicianId = formData.get('technicianId')?.toString();
-		const rawCost = formData.get('cost')?.toString();
-
-		let finalTechnicianId = rawTechnicianId && rawTechnicianId !== '' ? rawTechnicianId : null;
-		if (locals.user.role === 'teknisi') {
-			finalTechnicianId = locals.user.id;
-		}
-
-		const data = {
-			equipmentId: formData.get('equipmentId')?.toString(),
-			maintenanceType: formData.get('maintenanceType')?.toString(),
-			description: formData.get('description')?.toString(),
-			scheduledDate:
-				rawScheduledDate && rawScheduledDate !== ''
-					? new Date(rawScheduledDate).toISOString()
-					: null,
-			completionDate:
-				rawCompletionDate && rawCompletionDate !== ''
-					? new Date(rawCompletionDate).toISOString()
-					: null,
-			status: formData.get('status')?.toString() || 'PENDING',
-			technicianId: finalTechnicianId,
-			cost: rawCost ? parseInt(rawCost) : 0
-		};
-
-		const notaFile = formData.get('nota') as File;
-		let notaFileName: string | null = null;
-
-		if (notaFile && notaFile.size > 0) {
-			try {
-				const ext = notaFile.name.split('.').pop();
-				const generatedName = `${uuidv4()}.${ext}`;
-				const uploadDir = join(process.cwd(), 'static', 'uploads', 'receipts');
-
-				await mkdir(uploadDir, { recursive: true });
-
-				const arrayBuffer = await notaFile.arrayBuffer();
-				await writeFile(join(uploadDir, generatedName), Buffer.from(arrayBuffer));
-
-				notaFileName = generatedName;
-			} catch (uploadErr) {
-				console.error('Failed to upload receipt:', uploadErr);
-			}
-		}
-
 		try {
+			const rawScheduledDate = formData.get('scheduledDate')?.toString();
+			const rawCompletionDate = formData.get('completionDate')?.toString();
+			const rawTechnicianId = formData.get('technicianId')?.toString();
+			const rawCost = formData.get('cost')?.toString();
+
+			let finalTechnicianId = rawTechnicianId && rawTechnicianId !== '' ? rawTechnicianId : null;
+			if (locals.user.role === 'teknisi') {
+				finalTechnicianId = locals.user.id;
+			}
+
+			let scheduledDateIso: string | null = null;
+			if (rawScheduledDate && rawScheduledDate !== '') {
+				const dateObj = new Date(rawScheduledDate);
+				if (isNaN(dateObj.getTime())) {
+					return fail(400, { message: 'Tanggal jadwal tidak valid' });
+				}
+				scheduledDateIso = dateObj.toISOString();
+			}
+
+			let completionDateIso: string | null = null;
+			if (rawCompletionDate && rawCompletionDate !== '') {
+				const dateObj = new Date(rawCompletionDate);
+				if (isNaN(dateObj.getTime())) {
+					return fail(400, { message: 'Tanggal selesai tidak valid' });
+				}
+				completionDateIso = dateObj.toISOString();
+			}
+
+			const data = {
+				equipmentId: formData.get('equipmentId')?.toString(),
+				maintenanceType: formData.get('maintenanceType')?.toString(),
+				description: formData.get('description')?.toString(),
+				scheduledDate: scheduledDateIso,
+				completionDate: completionDateIso,
+				status: formData.get('status')?.toString() || 'PENDING',
+				technicianId: finalTechnicianId,
+				cost: rawCost ? parseInt(rawCost) : 0
+			};
+
+			const notaFile = formData.get('nota') as File;
+			let notaFileName: string | null = null;
+
+			if (notaFile && notaFile.size > 0) {
+				try {
+					const ext = notaFile.name.split('.').pop();
+					const generatedName = `${uuidv4()}.${ext}`;
+					const uploadDir = join(process.cwd(), 'static', 'uploads', 'receipts');
+
+					await mkdir(uploadDir, { recursive: true });
+
+					const arrayBuffer = await notaFile.arrayBuffer();
+					await writeFile(join(uploadDir, generatedName), Buffer.from(arrayBuffer));
+
+					notaFileName = generatedName;
+				} catch (uploadErr) {
+					console.error('Failed to upload receipt:', uploadErr);
+				}
+			}
+
 			const validated = maintenanceSchema.parse(data);
 			const newId = uuidv4();
 
@@ -143,7 +155,11 @@ export const actions: Actions = {
 			return { success: true };
 		} catch (err) {
 			console.error(err);
-			return fail(400, { message: 'Gagal membuat pemeliharaan' });
+			if (err instanceof z.ZodError) {
+				const errorMessages = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+				return fail(400, { message: `Validasi gagal: ${errorMessages}` });
+			}
+			return fail(400, { message: err instanceof Error ? err.message : 'Gagal membuat pemeliharaan' });
 		}
 	}
 };

@@ -14,12 +14,21 @@
  *   bucketed into BAIK/RUSAK from the free-text "KONDISI" column.
  * - "Bahan" sheet -> CONSUMABLE items: upserts `item` by name, upserts one
  *   `stock` row per (item, brand, variant) — "KONDISI" is stored verbatim
- *   in `stock.condition` (free text column, no enum to fight with).
+ *   in `stock.condition` (free text column, no enum to fight with) — and
+ *   inserts one `stock_batch` row per SOURCE ROW that fed that `stock` row
+ *   (qty = initialQty = that row's qty), with `expiryDate` parsed from
+ *   "EXP. DATE" where unambiguous (see fix #8 below), so `stock.qty` stays
+ *   a true aggregate of its batches per the stock_batch design.
+ * - Every item name gets registered in the `item` catalog even when its
+ *   qty can't be read (0 stock/0 equipment in that case) — see fix #6.
+ *   Getting every name into inventory is the priority; stock/batches can be
+ *   corrected manually afterward.
  * - "Rencana Pengadaan baru" sheet is intentionally NOT read (out of scope
  *   per instruction — that's procurement planning, not current inventory).
- * - "PENGGUNAAN BLOK ... SEMESTER ..." / "EXP. DATE" columns on both sheets
- *   are NOT imported — there's no schedule-usage or expiry column on
- *   `stock`/`equipment` yet to put them in. Revisit if/when that's added.
+ * - "PENGGUNAAN BLOK ... SEMESTER ..." columns on both sheets are NOT
+ *   imported — there's no schedule-usage column on `stock`/`equipment` yet
+ *   to put it in. Revisit if/when that's added. (EXP. DATE, unlike that
+ *   column, now IS imported — see fix #8.)
  *
  * USAGE
  *   bun run src/lib/server/db/seeds/inventaris-preparasi.ts [--dry-run] [--no-reset] [path/to/file.xlsx]
@@ -71,6 +80,43 @@
  * 5. Bahan SATUAN values that imply a multiplier (e.g. "box(1 box isi 4)")
  *    get a distinct, louder log message from a plain unmapped-unit default,
  *    since defaulting to PCS there silently understates real stock 4x.
+ * 6. CRITICAL — rows with an unreadable JUMLAH TERSEDIA (e.g. all
+ *    "stainless steel crown" rows, "Chisel", "caries indikator") used to
+ *    `continue` before ever calling upsertItem, so the item's NAME never
+ *    reached the `item` catalog at all — not just "zero stock", genuinely
+ *    absent from inventory. Fixed: the item is now always registered (with
+ *    0 stock/0 equipment), only the qty-bearing row is skipped. Getting
+ *    every name into inventory is the priority; stock/batches can be
+ *    corrected manually afterward.
+ * 7. `stock_batch` (added after this script was first written — see
+ *    module-12-bhp-expiry-date-batch-tracking.md) was not populated at all;
+ *    `stock.qty` was written directly with no batch rows backing it, so
+ *    `stock.qty` (meant to be a fast aggregate of its batches) silently
+ *    stopped being one, and the BHP detail page (which reads batches) would
+ *    show an item with stock but an empty batch list. Fixed: every source
+ *    row that contributes qty to a `stock` row now gets its own
+ *    `stock_batch` row (qty = initialQty = that row's qty), instead of
+ *    being flattened into just a combined text note. This also means what
+ *    used to be logged as "duplicate rows merged" is now genuinely
+ *    preserved as separate batches under one aggregated `stock` row — no
+ *    information is lost, it just moved from a text note to real rows.
+ * 8. The sheet's EXP. DATE column (previously not imported — no column to
+ *    put it in) is now parsed into `stock_batch.expiryDate` where it's
+ *    unambiguous: a real Excel date, "MM/YY", "MM-YY", or "YYYY-MM"/"YYYY/MM".
+ *    Bare years ("2025"), unrecognizable numbers, and cells describing
+ *    several sub-batches at once (e.g. "2 pack 03/29 3 pack 08/29") are left
+ *    null and logged for manual review rather than guessed at — same
+ *    "log, don't guess" policy as the KONDISI classifier.
+ * 9. Stock upsert switched from `onDuplicateKeyUpdate` (relying on the
+ *    unique index on itemId/laboratoriumId/brand/variant) to an explicit
+ *    find-then-insert/update. MySQL unique indexes treat NULL as distinct
+ *    from NULL, so two rows that both have a null brand/variant do NOT
+ *    collide on that index — onDuplicateKeyUpdate would silently insert a
+ *    second row instead of updating the first for any such item. In
+ *    practice the in-memory aggregation map already prevented this within a
+ *    single run, but the explicit lookup is also what's needed to get the
+ *    real `stock.id` to attach `stock_batch` rows to, so both problems are
+ *    fixed by the same change.
  */
 
 import { config } from 'dotenv';
@@ -129,11 +175,11 @@ function logReview(
 // in it carries the group's real value, without guessing at cells that
 // merely LOOK blank but aren't part of an actual merge (those stay null,
 // which is the correct "not provided" for that row).
-function sheetToGrid(ws: XLSX.WorkSheet): (string | number | null)[][] {
+function sheetToGrid(ws: XLSX.WorkSheet): (string | number | Date | null)[][] {
 	const range = XLSX.utils.decode_range(ws['!ref']!);
-	const grid: (string | number | null)[][] = [];
+	const grid: (string | number | Date | null)[][] = [];
 	for (let r = range.s.r; r <= range.e.r; r++) {
-		const row: (string | number | null)[] = [];
+		const row: (string | number | Date | null)[] = [];
 		for (let c = range.s.c; c <= range.e.c; c++) {
 			const cell = ws[XLSX.utils.encode_cell({ r, c })];
 			row.push(cell ? cell.v : null);
@@ -170,9 +216,25 @@ function buildMergeGroupMap(ws: XLSX.WorkSheet, col: number, rowCount: number): 
 	return map;
 }
 
+// Strips Unicode "format" characters (category Cf: word joiner, zero-width
+// space/non-joiner/joiner, BOM, etc.) and normalizes non-breaking spaces to
+// regular ones before trimming/collapsing whitespace. Source data has at
+// least one name ("micro applicator / microbrush") with a leading U+2060
+// WORD JOINER that's invisible in Excel but is still a real character in
+// the cell string — left in place, it wouldn't match a plainly-typed version
+// of the same name (e.g. if someone re-adds the item manually later via the
+// UI), silently fragmenting it into a second, separate `item` row.
+function stripInvisible(s: string): string {
+	return s
+		.replace(/\p{Cf}/gu, '') // zero-width/word-joiner/BOM/format chars
+		.replace(/\u00a0/g, ' ') // non-breaking space -> regular space
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
 function clean(v: string | number | null): string | null {
 	if (v === null || v === undefined) return null;
-	const s = String(v).trim();
+	const s = stripInvisible(String(v));
 	return s === '' ? null : s;
 }
 
@@ -194,6 +256,92 @@ function parseQtyCell(v: string | number | null): {
 	if (isNaN(n)) return { qty: null, hadExtraText: false, raw: s };
 	const strictlyNumeric = /^-?\d+([.,]\d+)?$/.test(s);
 	return { qty: n, hadExtraText: !strictlyNumeric, raw: s };
+}
+
+// ─── "EXP. DATE" parsing (Bahan sheet only) ──────────────────────────────────
+// Free-text/mixed-type column, same spirit as KONDISI: parse what's
+// unambiguous, log and leave null what isn't, never guess a split we can't
+// verify. Handles:
+//  - a real Excel date (arrives as a JS Date when the workbook is read with
+//    `cellDates: true`, which main() below now does)
+//  - "MM/YY", "MM-YY" (month first, 2-4 digit year) -> last day of that month
+//  - "YYYY-MM", "YYYY/MM" (year first) -> last day of that month
+// Left null + logged (never guessed):
+//  - a bare year with no month ("2025") — not precise enough for a real date
+//  - a number that isn't a recognizable date at all (e.g. stray "97")
+//  - cells describing several sub-batches at once (e.g. "2 pack 03/29 3 pack
+//    08/29 4 pack 10/29", "3 botol 02/29 1 botol 12/24") — splitting these
+//    into separate batches would require guessing which fraction of the
+//    row's JUMLAH TERSEDIA each sub-quantity corresponds to, same reasoning
+//    as why KONDISI breakdowns are applied as a ratio, not literal counts
+//  - anything else that doesn't cleanly match the patterns above
+function parseExpiryCell(raw: string | number | Date | null): {
+	expiryDate: string | null;
+	issue: string | null;
+} {
+	if (raw === null || raw === undefined) return { expiryDate: null, issue: null };
+
+	if (raw instanceof Date) {
+		if (isNaN(raw.getTime())) return { expiryDate: null, issue: null };
+		return { expiryDate: raw.toISOString().slice(0, 10), issue: null };
+	}
+
+	const s = String(raw).trim();
+	if (s === '') return { expiryDate: null, issue: null };
+
+	const lastDayOf = (year: number, month: number) => {
+		const lastDay = new Date(year, month, 0).getDate();
+		return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+	};
+
+	if (/^\d{4}$/.test(s)) {
+		return {
+			expiryDate: null,
+			issue: `EXP. DATE "${s}" hanya berupa tahun (tanpa bulan) — tidak cukup presisi untuk expiryDate, tinjau manual`
+		};
+	}
+
+	if (/^-?\d+([.,]\d+)?$/.test(s)) {
+		return {
+			expiryDate: null,
+			issue: `EXP. DATE "${s}" berupa angka yang tidak dikenali sebagai tanggal — tinjau manual`
+		};
+	}
+
+	const monthFirstTokens = s.match(/\b\d{1,2}[/-]\d{2,4}\b/g) ?? [];
+	const yearFirstTokens = s.match(/\b\d{4}[/-]\d{1,2}\b/g) ?? [];
+	const totalTokens = monthFirstTokens.length + yearFirstTokens.length;
+
+	if (totalTokens > 1) {
+		return {
+			expiryDate: null,
+			issue: `EXP. DATE "${s}" berisi beberapa tanggal per sub-batch — tidak dipecah otomatis (perlu tahu proporsi qty per sub-batch), tinjau dan buat batch terpisah manual jika perlu`
+		};
+	}
+
+	if (monthFirstTokens.length === 1) {
+		const m = monthFirstTokens[0].match(/^(\d{1,2})[/-](\d{2,4})$/)!;
+		const month = parseInt(m[1], 10);
+		let year = parseInt(m[2], 10);
+		if (year < 100) year += 2000;
+		if (month >= 1 && month <= 12) {
+			return { expiryDate: lastDayOf(year, month), issue: null };
+		}
+	}
+
+	if (yearFirstTokens.length === 1) {
+		const m = yearFirstTokens[0].match(/^(\d{4})[/-](\d{1,2})$/)!;
+		const year = parseInt(m[1], 10);
+		const month = parseInt(m[2], 10);
+		if (month >= 1 && month <= 12) {
+			return { expiryDate: lastDayOf(year, month), issue: null };
+		}
+	}
+
+	return {
+		expiryDate: null,
+		issue: `EXP. DATE "${s}" tidak dikenali formatnya — tinjau manual`
+	};
 }
 
 // ─── "Alat" (ASSET) condition classifier ────────────────────────────────────
@@ -442,20 +590,28 @@ async function seedAlat(labId: string) {
 		const brand = clean(row[2] as string);
 		const variant = clean(row[3] as string);
 		const kondisi = clean(row[5] as string);
-		const { qty: qtyRaw, hadExtraText, raw: qtyRawText } = parseQtyCell(row[4]);
+		const {
+			qty: qtyRaw,
+			hadExtraText,
+			raw: qtyRawText
+		} = parseQtyCell(row[4] as string | number | null);
 
 		if (!name) continue; // spacer/section rows with no item name — nothing to seed
 
 		if (qtyRaw === null) {
-			// Has a name but no readable quantity at all — previously dropped
-			// with zero trace. Flag it: could be a genuine "0 on hand" gap in
-			// the source, or a typo, but either way a human should know.
+			// Has a name but no readable quantity at all. The item is still
+			// registered in the catalog (0 equipment units) — the priority is
+			// every name existing in inventory; only the qty-bearing row is
+			// skipped. Previously this `continue` ran before upsertItem, so
+			// the name never reached the catalog at all.
+			await upsertItem(name, 'ASSET', 'UNIT');
+			itemCount++;
 			logReview(
 				'Alat',
 				name,
 				brand,
 				variant,
-				'JUMLAH TERSEDIA kosong/tidak terbaca — baris dilewati, tidak diimpor'
+				'JUMLAH TERSEDIA kosong/tidak terbaca — item didaftarkan ke katalog dengan 0 unit, baris qty dilewati (isi manual)'
 			);
 			continue;
 		}
@@ -480,7 +636,19 @@ async function seedAlat(labId: string) {
 				`JUMLAH TERSEDIA "${qtyRawText}" mengandung teks selain angka — diambil angka depan (${Math.trunc(qtyRaw)}) sebagai qty; tinjau apakah ini benar jumlah unit individual atau jumlah kemasan (box/set)`
 			);
 		}
-		if (qty <= 0) continue;
+		if (qty <= 0) {
+			// Same "still register the name" rule as the unreadable-qty case.
+			await upsertItem(name, 'ASSET', 'UNIT');
+			itemCount++;
+			logReview(
+				'Alat',
+				name,
+				brand,
+				variant,
+				`JUMLAH TERSEDIA bernilai ${qty} setelah dibulatkan — item didaftarkan ke katalog dengan 0 unit`
+			);
+			continue;
+		}
 
 		const groupId = qtyMergeGroup[r];
 
@@ -518,22 +686,24 @@ async function seedAlat(labId: string) {
 
 // ─── Bahan (CONSUMABLE) import ───────────────────────────────────────────────
 // Columns (0-indexed): A=NO(0) B=URAIAN(1) C=MEREK(2) D=TIPE(3) E=JUMLAH(4)
-// F=SATUAN(5) G=KONDISI(6). Single header row, data starts row 2 (0-indexed 1).
+// F=SATUAN(5) G=KONDISI(6) H=EXP. DATE(7). Single header row, data starts
+// row 2 (0-indexed 1).
 //
 // stock's unique index is (itemId, laboratoriumId, brand, variant) — it does
-// NOT include condition. Some rows in the sheet share the same item/brand/
-// variant but differ only by a KONDISI split (e.g. "Disposable diagnostik
-// set": 16 units "lengkap/baru" + 53 units "Tidak lengkap/lama", both with
-// no brand/variant). Those get aggregated into one stock row: quantities
-// summed, condition notes joined, so the total on-hand count stays correct
-// even though the per-condition breakdown becomes a combined note rather
-// than two separate rows.
+// NOT include condition or expiry. Several source rows can legitimately
+// share the same item/brand/variant (a KONDISI split, or simply separate
+// "Receive" events at different times with different expiry dates) — those
+// are aggregated into one `stock` row for the qty total, but each source
+// row keeps its own `stock_batch` row underneath (qty, its own expiryDate
+// if parseable, its own condition note), instead of being flattened into
+// just a combined text note. `stock.qty` is then a true sum of its batches.
 async function seedBahan(labId: string) {
-	const wb = XLSX.readFile(FILE_PATH);
+	const wb = XLSX.readFile(FILE_PATH, { cellDates: true });
 	const ws = wb.Sheets['Bahan'];
 	if (!ws) throw new Error('Sheet "Bahan" tidak ditemukan di file');
 	const grid = sheetToGrid(ws);
 
+	type BatchEntry = { qty: number; expiryDate: string | null; kondisi: string | null };
 	type Agg = {
 		itemName: string;
 		brand: string | null;
@@ -541,6 +711,7 @@ async function seedBahan(labId: string) {
 		qty: number;
 		conditions: string[];
 		unit: string | null;
+		batches: BatchEntry[];
 	};
 	const aggregated = new Map<string, Agg>();
 
@@ -551,17 +722,28 @@ async function seedBahan(labId: string) {
 		const variant = clean(row[3] as string);
 		const satuan = clean(row[5] as string);
 		const kondisi = clean(row[6] as string);
-		const { qty: qtyRaw, hadExtraText, raw: qtyRawText } = parseQtyCell(row[4]);
+		const {
+			qty: qtyRaw,
+			hadExtraText,
+			raw: qtyRawText
+		} = parseQtyCell(row[4] as string | number | null);
 
 		if (!name) continue;
 
 		if (qtyRaw === null) {
+			// Item still goes into the catalog (0 stock) — the priority is
+			// every name existing in inventory, not that every row carries a
+			// usable qty. Previously this `continue` ran before upsertItem,
+			// so the name never reached the catalog at all (e.g. all the
+			// "stainless steel crown" / "caries indikator" rows).
+			const baseUnit = mapBahanUnit(satuan, { item: name });
+			await upsertItem(name, 'CONSUMABLE', baseUnit);
 			logReview(
 				'Bahan',
 				name,
 				brand,
 				variant,
-				'JUMLAH TERSEDIA kosong/tidak terbaca — baris dilewati, tidak diimpor'
+				'JUMLAH TERSEDIA kosong/tidak terbaca — item didaftarkan ke katalog dengan 0 stok, baris qty dilewati (isi manual)'
 			);
 			continue;
 		}
@@ -586,19 +768,36 @@ async function seedBahan(labId: string) {
 				`JUMLAH TERSEDIA "${qtyRawText}" mengandung teks selain angka — diambil angka depan (${Math.trunc(qtyRaw)}) sebagai qty; tinjau apakah ini benar jumlah unit individual atau jumlah kemasan (box/set)`
 			);
 		}
-		if (qty <= 0) continue;
+		if (qty <= 0) {
+			const baseUnit = mapBahanUnit(satuan, { item: name });
+			await upsertItem(name, 'CONSUMABLE', baseUnit);
+			logReview(
+				'Bahan',
+				name,
+				brand,
+				variant,
+				`JUMLAH TERSEDIA bernilai ${qty} setelah dibulatkan — item didaftarkan ke katalog dengan 0 stok`
+			);
+			continue;
+		}
+
+		const { expiryDate, issue: expiryIssue } = parseExpiryCell(
+			row[7] as string | number | Date | null
+		);
+		if (expiryIssue) logReview('Bahan', name, brand, variant, expiryIssue);
 
 		const key = `${name}::${brand ?? ''}::${variant ?? ''}`;
 		const existing = aggregated.get(key);
 		if (existing) {
 			existing.qty += qty;
 			if (kondisi) existing.conditions.push(kondisi);
+			existing.batches.push({ qty, expiryDate, kondisi });
 			logReview(
 				'Bahan',
 				name,
 				brand,
 				variant,
-				`Baris duplikat item/brand/tipe digabung (stock tidak punya kolom kondisi unik) — qty dijumlahkan, kondisi digabung`
+				`Baris duplikat item/brand/tipe digabung ke satu baris stock — qty dijumlahkan, kondisi digabung; masing-masing baris tetap jadi stock_batch terpisah`
 			);
 		} else {
 			aggregated.set(key, {
@@ -607,13 +806,15 @@ async function seedBahan(labId: string) {
 				variant,
 				qty,
 				conditions: kondisi ? [kondisi] : [],
-				unit: satuan
+				unit: satuan,
+				batches: [{ qty, expiryDate, kondisi }]
 			});
 		}
 	}
 
 	let itemCount = 0;
 	let stockCount = 0;
+	let batchCount = 0;
 
 	for (const agg of aggregated.values()) {
 		const baseUnit = mapBahanUnit(agg.unit, { item: agg.itemName });
@@ -623,34 +824,67 @@ async function seedBahan(labId: string) {
 		const condition = agg.conditions.length > 0 ? agg.conditions.join('; ') : 'baik';
 
 		if (!DRY_RUN) {
-			// Relies on stock's real unique index (itemId, laboratoriumId, brand,
-			// variant) rather than hand-rolled equality checks — MySQL's NULL !=
-			// NULL semantics make matching nullable brand/variant columns via a
-			// plain WHERE unreliable, but the unique index itself treats them
-			// consistently for conflict detection.
-			await db
-				.insert(schema.stock)
-				.values({
-					id: crypto.randomUUID(),
+			// Explicit find-then-insert/update instead of onDuplicateKeyUpdate:
+			// MySQL treats NULL as distinct from NULL in a unique index, so two
+			// rows that both have a null brand/variant would NOT collide on
+			// stock's unique index and onDuplicateKeyUpdate would silently
+			// insert a second row instead of updating the first. This lookup
+			// also gives us the real stock.id to attach stock_batch rows to.
+			const existingStockRow = await db.query.stock.findFirst({
+				where: (s, { eq: eqOp, and: andOp, isNull }) =>
+					andOp(
+						eqOp(s.itemId, itemId),
+						eqOp(s.laboratoriumId, labId),
+						agg.brand ? eqOp(s.brand, agg.brand) : isNull(s.brand),
+						agg.variant ? eqOp(s.variant, agg.variant) : isNull(s.variant)
+					)
+			});
+
+			let stockId: string;
+			if (existingStockRow) {
+				stockId = existingStockRow.id;
+				await db
+					.update(schema.stock)
+					.set({
+						qty: sql`${schema.stock.qty} + ${agg.qty}`,
+						condition,
+						updatedAt: new Date()
+					})
+					.where(eq(schema.stock.id, stockId));
+			} else {
+				stockId = crypto.randomUUID();
+				await db.insert(schema.stock).values({
+					id: stockId,
 					itemId,
 					laboratoriumId: labId,
 					qty: agg.qty,
 					brand: agg.brand,
 					variant: agg.variant,
 					condition
-				})
-				.onDuplicateKeyUpdate({
-					set: {
-						qty: sql`${schema.stock.qty} + ${agg.qty}`,
-						condition,
-						updatedAt: new Date()
-					}
 				});
+			}
+
+			for (const batch of agg.batches) {
+				await db.insert(schema.stockBatch).values({
+					stockId,
+					qty: batch.qty,
+					initialQty: batch.qty,
+					expiryDate: batch.expiryDate,
+					notes: batch.kondisi
+						? `Kondisi asal (impor seed): ${batch.kondisi}`
+						: 'Diimpor dari file inventaris (seed)'
+				});
+				batchCount++;
+			}
+		} else {
+			batchCount += agg.batches.length;
 		}
 		stockCount++;
 	}
 
-	console.log(`[Bahan] ${itemCount} item unik -> ${stockCount} baris stock`);
+	console.log(
+		`[Bahan] ${itemCount} item unik -> ${stockCount} baris stock, ${batchCount} baris stock_batch`
+	);
 }
 
 // ─── Reset (scoped to this lab only) ────────────────────────────────────────

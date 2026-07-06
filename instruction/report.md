@@ -94,8 +94,23 @@ This report documents the implementation of the batch/lot model for tracked BHP 
 ### 8. Expiry Date Robust Validation (500 Error Fix)
 * **Files:**
   * `src/routes/api/admin/inventaris/bhp/stock/+server.ts`
-  * `src/routes/admin/inventaris/bhp/tambah/+page.server.ts`
+  * `src/routes/api/admin/inventaris/bhp/tambah/+page.server.ts`
 * **Changes:**
   * Implemented robust date validation: `const parsedExpiryDate = expiryDate && !isNaN(new Date(expiryDate).getTime()) ? new Date(expiryDate) : null;`.
   * This prevents the server from attempting to parse empty strings `""` or malformed inputs into `Invalid Date` objects and sending them to the MySQL database, which was resulting in prepared statement insertion crashes (500 errors).
   * Now, all invalid or missing dates default cleanly to `null` database values.
+
+### 9. Varian / Brand Selection in Stock Mutations & Laboran Lock
+* **Files:**
+  * `src/routes/admin/inventaris/bhp/+page.svelte`
+  * `src/routes/api/admin/inventaris/bhp/+server.ts`
+  * `src/routes/api/admin/inventaris/bhp/stock/+server.ts`
+* **Changes:**
+  * Expanded the user laboratory lock behavior to check for both `kepalaLab` and `laboran` roles (`isRestrictedLabUser`). This locks the mutation preselected lab value cleanly to the logged-in user's assigned lab, preventing mutation into wrong labs.
+  * Updated the BHP catalog API query response to include the full `stocks` array containing specific batches (with unique `id`, `brand`, `variant`, and `qty`).
+  * Updated the stock mutation endpoint to support and query specific stock rows by `(itemId, laboratoriumId, brand, variant)` instead of just the item ID globally. Newly received stock rows are also inserted with the specified brand and variant.
+  * Re-architected the "Ubah Stok" modal:
+    * Implemented a **"Merk / Varian Stok"** selector interface.
+    * For `RECEIVE` (Masuk), users can either pick an existing brand/variant to increment, or choose "+ Tambah Merk/Varian Baru" which displays inputs to specify a custom Brand and Variant.
+    * For `ISSUE` (Keluar) and `ADJUSTMENT` (Penyesuaian), users are restricted to selecting an existing brand/variant from the active laboratory's stocks. Client-side validation prevents issuing more stock than is available for the selected variant.
+  * Derived a type-safe `selectedStockRow` in the Svelte component script to pass Svelte-Kit type checking validation cleanly.

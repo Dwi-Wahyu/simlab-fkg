@@ -4,7 +4,14 @@
 		AlertCircle,
 		AlertTriangle,
 		CheckCircle,
+		ChevronDown,
+		ChevronLeft,
+		ChevronRight,
+		ChevronsLeft,
+		ChevronsRight,
+		ChevronUp,
 		Database,
+		Download,
 		Eye,
 		FileEdit,
 		MoreHorizontal,
@@ -13,27 +20,19 @@
 		Search,
 		ShieldCheck,
 		Trash2,
-		XCircle,
-		ChevronLeft,
-		ChevronRight,
-		ChevronsLeft,
-		ChevronsRight,
-		ChevronDown,
-		ChevronUp,
-		Download
+		XCircle
 	} from '@lucide/svelte';
+	import { onMount, untrack } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page as pageStore } from '$app/state';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Input } from '$lib/components/ui/input';
-	import * as Table from '$lib/components/ui/table';
 	import * as Select from '$lib/components/ui/select';
-	import { goto } from '$app/navigation';
-	import { page as pageStore } from '$app/state';
-	import { untrack } from 'svelte';
+	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
-	import { onMount } from 'svelte';
 
 	let { data } = $props();
 
@@ -145,10 +144,8 @@
 						<Table.Row>
 							<Table.Head>Nama Alat</Table.Head>
 							<Table.Head>Total</Table.Head>
-							<Table.Head>Rusak Berat</Table.Head>
-							<Table.Head>Rusak Ringan</Table.Head>
+							<Table.Head>Rusak</Table.Head>
 							<Table.Head>Baik</Table.Head>
-							<Table.Head>Ready</Table.Head>
 							<Table.Head class="text-right">Aksi</Table.Head>
 						</Table.Row>
 					</Table.Header>
@@ -213,7 +210,7 @@
 				{#if data.user?.role === 'superadmin'}
 					<div class="flex items-center gap-2">
 						<Select.Root type="single" bind:value={selectedExportLabId}>
-							<Select.Trigger class="w-[200px] h-10 bg-white">
+							<Select.Trigger class="h-10 w-[200px] bg-white">
 								{exportLabName}
 							</Select.Trigger>
 							<Select.Content>
@@ -222,7 +219,12 @@
 								{/each}
 							</Select.Content>
 						</Select.Root>
-						<Button href="/admin/laporan/inventaris/export?labId={selectedExportLabId}" variant="outline" class="gap-2" disabled={!selectedExportLabId}>
+						<Button
+							href="/admin/laporan/inventaris/export?labId={selectedExportLabId}"
+							variant="outline"
+							class="gap-2"
+							disabled={!selectedExportLabId}
+						>
 							<Download class="size-4" /> Export XLSX
 						</Button>
 					</div>
@@ -250,7 +252,6 @@
 							<Table.Head>Total</Table.Head>
 							<Table.Head>Rusak</Table.Head>
 							<Table.Head>Baik</Table.Head>
-							<Table.Head>Ready</Table.Head>
 							<Table.Head class="pr-6 text-right">Aksi</Table.Head>
 						</Table.Row>
 					</Table.Header>
@@ -326,16 +327,6 @@
 										{item.baik}
 									</Table.Cell>
 
-									<!-- Ready -->
-									<Table.Cell
-										class={cn(
-											expandedItems[item.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
-										)}
-									>
-										{item.ready}
-									</Table.Cell>
-
 									<!-- Aksi -->
 									<Table.Cell
 										class={cn(
@@ -347,7 +338,11 @@
 											<Eye /> Detail
 										</Button>
 										{#if data.user?.role !== 'teknisi'}
-											<Button size="sm" variant="outline" href="/admin/inventaris/alat/{item.id}/edit">
+											<Button
+												size="sm"
+												variant="outline"
+												href="/admin/inventaris/alat/{item.id}/edit"
+											>
 												<FileEdit /> Edit
 											</Button>
 										{/if}
