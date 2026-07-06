@@ -1,8 +1,25 @@
 import { json, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { item, stock, warehouse, movement } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { item, stock, warehouse, movement, stockBatch } from '$lib/server/db/schema';
+import { eq, and, sql, asc } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
+
+async function deductFefo(tx: any, stockId: string, amount: number) {
+	let remaining = amount;
+	const batches = await tx.query.stockBatch.findMany({
+		where: and(eq(stockBatch.stockId, stockId), sql`${stockBatch.qty} > 0`),
+		orderBy: (b: any, { asc, sql }: any) => [sql`${b.expiryDate} IS NULL`, asc(b.expiryDate)]
+	});
+	for (const batch of batches) {
+		if (remaining <= 0) break;
+		const take = Math.min(batch.qty, remaining);
+		await tx
+			.update(stockBatch)
+			.set({ qty: batch.qty - take })
+			.where(eq(stockBatch.id, batch.id));
+		remaining -= take;
+	}
+}
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
@@ -14,6 +31,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		notes?: string;
 		laboratoriumId: string;
 		warehouseId?: string;
+		expiryDate?: string;
 	};
 	try {
 		body = await request.json();
@@ -21,7 +39,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(400, 'Invalid JSON body');
 	}
 
-	const { itemId, eventType, qty, notes, laboratoriumId, warehouseId: reqWarehouseId } = body;
+	const { itemId, eventType, qty, notes, laboratoriumId, warehouseId: reqWarehouseId, expiryDate } = body;
 
 	if (!itemId || !eventType || qty == null || !laboratoriumId) {
 		throw error(400, 'itemId, eventType, qty, laboratoriumId required');
@@ -40,10 +58,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!wid) {
 		let defaultWarehouse = await db.query.warehouse.findFirst();
 		if (!defaultWarehouse) {
-			const [{ insertId }] = await db
+			const newWarehouseId = crypto.randomUUID();
+			await db
 				.insert(warehouse)
-				.values({ name: 'Gudang Utama', location: 'Default' });
-			wid = String(insertId);
+				.values({ id: newWarehouseId, name: 'Gudang Utama', location: 'Default' });
+			wid = newWarehouseId;
 		} else {
 			wid = defaultWarehouse.id;
 		}
@@ -82,6 +101,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// Transaction: update stock + insert movement
 	const movementId = crypto.randomUUID();
 	await db.transaction(async (tx) => {
+		const stockId = existingStock ? existingStock.id : crypto.randomUUID();
 		if (existingStock) {
 			await tx
 				.update(stock)
@@ -89,11 +109,37 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				.where(eq(stock.id, existingStock.id));
 		} else {
 			await tx.insert(stock).values({
-				id: crypto.randomUUID(),
+				id: stockId,
 				itemId,
 				warehouseId: wid,
 				qty: newQty
 			});
+		}
+
+		if (eventType === 'RECEIVE') {
+			await tx.insert(stockBatch).values({
+				stockId,
+				qty,
+				initialQty: qty,
+				expiryDate: expiryDate ? new Date(expiryDate) : null,
+				movementId
+			});
+		} else if (eventType === 'ISSUE') {
+			await deductFefo(tx, stockId, qty);
+		} else if (eventType === 'ADJUSTMENT') {
+			const delta = newQty - currentQty;
+			if (delta > 0) {
+				await tx.insert(stockBatch).values({
+					stockId,
+					qty: delta,
+					initialQty: delta,
+					expiryDate: null,
+					movementId,
+					notes: 'Batch dari penyesuaian stok (tanggal kedaluwarsa tidak diketahui)'
+				});
+			} else if (delta < 0) {
+				await deductFefo(tx, stockId, Math.abs(delta));
+			}
 		}
 
 		await tx.insert(movement).values({

@@ -10,7 +10,8 @@ import {
 	item,
 	movement,
 	equipmentCategory,
-	laboratorium
+	laboratorium,
+	stockBatch
 } from '$lib/server/db/schema';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -52,6 +53,7 @@ export const actions: Actions = {
 		const labId = formData.get('laboratoriumId') as string;
 		const initialStock = parseInt((formData.get('initialStock') as string) || '0');
 		const condition = (formData.get('condition') as string) || 'baik';
+		const expiryDateRaw = formData.get('expiryDate') as string;
 
 		if (!name || !baseUnit || !labId) {
 			return fail(400, {
@@ -105,7 +107,7 @@ export const actions: Actions = {
 						minStock,
 						qrCodePath
 					});
-				} else {
+				} else if (existingItem) {
 					// update categoryId or minStock if not set
 					const updates: any = {};
 					if (categoryId && !existingItem.categoryId) {
@@ -130,6 +132,7 @@ export const actions: Actions = {
 						)
 				});
 
+				const newStockId = uuidv4();
 				if (existingStockRow) {
 					await tx.update(stock)
 						.set({
@@ -139,7 +142,7 @@ export const actions: Actions = {
 						.where(eq(stock.id, existingStockRow.id));
 				} else {
 					await tx.insert(stock).values({
-						id: uuidv4(),
+						id: newStockId,
 						itemId: itemId,
 						laboratoriumId: labId,
 						qty: initialStock,
@@ -150,9 +153,10 @@ export const actions: Actions = {
 				}
 
 				if (initialStock > 0) {
+					const movementId = uuidv4();
 					// Create Movement Entry
 					await tx.insert(movement).values({
-						id: uuidv4(),
+						id: movementId,
 						itemId: itemId,
 						eventType: 'RECEIVE',
 						qty: initialStock,
@@ -161,6 +165,16 @@ export const actions: Actions = {
 						notes: 'Stok awal saat pendaftaran item',
 						picId: session.id,
 						createdAt: new Date()
+					});
+
+					const stockRowId = existingStockRow ? existingStockRow.id : newStockId;
+					await tx.insert(stockBatch).values({
+						stockId: stockRowId,
+						qty: initialStock,
+						initialQty: initialStock,
+						expiryDate: expiryDateRaw ? new Date(expiryDateRaw) : null,
+						movementId
+						// receivedAt: omitted — defaultNow() handles "Tanggal Masuk" automatically
 					});
 				}
 			});

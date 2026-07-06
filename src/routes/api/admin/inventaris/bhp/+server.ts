@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { item, stock } from '$lib/server/db/schema';
-import { sql, eq, count, and } from 'drizzle-orm';
+import { sql, eq, count, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url }) => {
@@ -18,6 +18,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			}
 			return baseWhere;
 		},
+		orderBy: (fields, { desc }) => [desc(fields.createdAt)],
 		with: {
 			stocks: true
 		}

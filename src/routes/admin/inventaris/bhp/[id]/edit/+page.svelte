@@ -56,7 +56,7 @@
 
 	// Derived trigger content
 	const categoryTrigger = $derived(
-		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori Keluarga'
+		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori'
 	);
 	const unitTrigger = $derived(
 		unitOptions.find((o) => o.value === selectedUnit)?.label ?? 'Pilih Satuan'

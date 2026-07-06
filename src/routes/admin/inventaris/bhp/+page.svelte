@@ -118,6 +118,7 @@
 	let stockEventType = $state<'RECEIVE' | 'ISSUE' | 'ADJUSTMENT'>('RECEIVE');
 	let stockQty = $state<number>(0);
 	let stockNotes = $state('');
+	let stockExpiryDate = $state<string>('');
 	let stockLaboratoriumId = $state('');
 	let laboratoriumList = $state<{ id: string; name: string }[]>([]);
 
@@ -150,6 +151,7 @@
 		stockEventType = 'RECEIVE';
 		stockQty = 0;
 		stockNotes = '';
+		stockExpiryDate = '';
 		if (!isKepalaLab && laboratoriumList.length === 0) {
 			fetch('/api/admin/laboratorium')
 				.then((r) => r.json())
@@ -196,7 +198,8 @@
 					eventType: stockEventType,
 					qty: stockQty,
 					notes: stockNotes || undefined,
-					laboratoriumId: labId
+					laboratoriumId: labId,
+					expiryDate: stockEventType === 'RECEIVE' ? stockExpiryDate || undefined : undefined
 				})
 			});
 			if (!res.ok) {
@@ -492,6 +495,12 @@
 											</DropdownMenu.Trigger>
 											<DropdownMenu.Content align="end">
 												<DropdownMenu.Label>Aksi</DropdownMenu.Label>
+												<a href="/admin/inventaris/bhp/{item.id}">
+													<DropdownMenu.Item>
+														<Eye /> Detail
+													</DropdownMenu.Item>
+												</a>
+												<DropdownMenu.Separator />
 												<DropdownMenu.Item onclick={() => openStockModal(item)}>
 													<ArrowUpDown /> Ubah Stok
 												</DropdownMenu.Item>
@@ -647,6 +656,16 @@
 				</div>
 			{/if}
 		</div>
+
+		{#if stockEventType === 'RECEIVE'}
+			<div class="flex flex-col gap-2">
+				<Label for="stockExpiryDate">Tanggal Kedaluwarsa (opsional)</Label>
+				<Input type="date" id="stockExpiryDate" bind:value={stockExpiryDate} />
+				<p class="text-xs text-gray-400">
+					Kosongkan jika batch stok ini tidak memiliki tanggal kedaluwarsa.
+				</p>
+			</div>
+		{/if}
 
 		<div class="flex flex-col gap-2">
 			<Label for="stockNotes">Catatan (Opsional)</Label>

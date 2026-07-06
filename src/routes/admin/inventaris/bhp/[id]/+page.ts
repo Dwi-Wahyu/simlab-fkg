@@ -1,0 +1,21 @@
+import type { PageLoad } from './$types';
+
+export const load: PageLoad = ({ fetch, url, params, data }) => {
+	const { id } = params;
+
+	const page = url.searchParams.get('page') || '1';
+	const limit = url.searchParams.get('limit') || '10';
+	const search = url.searchParams.get('search') || '';
+
+	const fetchData = async () => {
+		const query = new URLSearchParams({ page, limit, search });
+		const res = await fetch(`/api/admin/inventaris/bhp/${id}/entry?${query.toString()}`);
+		if (!res.ok) throw new Error('Gagal memuat data stok BHP');
+		return await res.json();
+	};
+
+	return {
+		...data,
+		bhpBatchPromise: fetchData()
+	};
+};

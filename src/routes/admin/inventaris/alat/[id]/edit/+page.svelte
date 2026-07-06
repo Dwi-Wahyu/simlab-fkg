@@ -27,7 +27,14 @@
 	let selectedCategory = $state(item.categoryId || '');
 	let selectedEquipmentType = $state(item.equipmentType ?? '');
 	let selectedUnit = $state(item.baseUnit);
-	let selectedLab = $state(eqp.laboratoriumId || '');
+	const isRestrictedLabUser = $derived(
+		data.user?.role === 'kepalaLab' || data.user?.role === 'laboran'
+	);
+	let selectedLab = $state(
+		isRestrictedLabUser && data.user?.laboratorium?.id
+			? data.user.laboratorium.id
+			: (eqp.laboratoriumId || '')
+	);
 	let selectedCondition = $state(eqp.condition || 'BAIK');
 	let selectedStatus = $state(eqp.status || 'READY');
 	let createdAt = $state(
@@ -40,7 +47,11 @@
 		selectedCategory = item.categoryId || '';
 		selectedEquipmentType = item.equipmentType ?? '';
 		selectedUnit = item.baseUnit;
-		selectedLab = eqp.laboratoriumId || '';
+		if (isRestrictedLabUser && data.user?.laboratorium?.id) {
+			selectedLab = data.user.laboratorium.id;
+		} else {
+			selectedLab = eqp.laboratoriumId || '';
+		}
 		selectedCondition = eqp.condition || 'BAIK';
 		selectedStatus = eqp.status || 'READY';
 		createdAt = eqp.createdAt
@@ -94,7 +105,7 @@
 
 	// Derived trigger content
 	const categoryTrigger = $derived(
-		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori Keluarga'
+		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori'
 	);
 	const equipTrigger = $derived(
 		equipmentTypeOptions.find((o) => o.value === selectedEquipmentType)?.label ?? 'Pilih Jenis'
@@ -232,10 +243,7 @@
 				<!-- Jenis Alat -->
 				<div class="flex flex-col gap-2">
 					<Label for="equipmentType">Jenis Alat</Label>
-					<Select.Root
-						type="single"
-						bind:value={selectedEquipmentType}
-					>
+					<Select.Root type="single" bind:value={selectedEquipmentType}>
 						<Select.Trigger class="w-full text-left">
 							{equipTrigger}
 						</Select.Trigger>
@@ -267,7 +275,7 @@
 				<!-- Laboratorium Penugasan -->
 				<div class="flex flex-col gap-2">
 					<Label for="laboratoriumId">Laboratorium Storing (Wajib)</Label>
-					<Select.Root type="single" bind:value={selectedLab}>
+					<Select.Root type="single" bind:value={selectedLab} disabled={isRestrictedLabUser}>
 						<Select.Trigger class="w-full text-left">
 							{labTrigger}
 						</Select.Trigger>
@@ -283,7 +291,13 @@
 				<!-- Nomor Seri -->
 				<div class="flex flex-col gap-2">
 					<Label for="serialNumber">Nomor Seri (Opsional)</Label>
-					<Input type="text" name="serialNumber" id="serialNumber" value={eqp.serialNumber || ''} placeholder="S/N: 123456" />
+					<Input
+						type="text"
+						name="serialNumber"
+						id="serialNumber"
+						value={eqp.serialNumber || ''}
+						placeholder="S/N: 123456"
+					/>
 				</div>
 
 				<!-- Merk / Brand -->
@@ -424,7 +438,11 @@
 				<!-- Buttons -->
 				<div class="mt-4 flex gap-3 md:col-span-2">
 					<Button variant="outline" class="flex-1" onclick={() => history.back()}>Batal</Button>
-					<Button type="submit" disabled={isLoading} class="flex-1 bg-[#2D5A43] text-white hover:bg-[#234735]">
+					<Button
+						type="submit"
+						disabled={isLoading}
+						class="flex-1 bg-[#2D5A43] text-white hover:bg-[#234735]"
+					>
 						{isLoading ? 'Menyimpan...' : 'Perbarui Alat'}
 					</Button>
 				</div>

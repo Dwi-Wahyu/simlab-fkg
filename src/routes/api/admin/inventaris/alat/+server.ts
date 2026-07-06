@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { count, eq, sql } from 'drizzle-orm';
+import { count, eq, sql, desc } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { equipment, item, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
@@ -43,7 +43,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		.leftJoin(warehouse, eq(equipment.warehouseId, warehouse.id))
 		.where(whereClause)
 		.groupBy(item.id)
-		.orderBy(item.name)
+		.orderBy(desc(item.createdAt))
 		.limit(limit)
 		.offset(offset);
 

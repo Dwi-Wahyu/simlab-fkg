@@ -1,0 +1,69 @@
+import { json } from '@sveltejs/kit';
+import { and, count, eq, like, sql, desc } from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import { stockBatch, stock, item, warehouse, laboratorium } from '$lib/server/db/schema';
+import type { RequestHandler } from './$types';
+
+export const GET: RequestHandler = async ({ url, params }) => {
+	const { id } = params;
+	const page = parseInt(url.searchParams.get('page') || '1');
+	const limit = parseInt(url.searchParams.get('limit') || '10');
+	const search = url.searchParams.get('search') || '';
+	const offset = (page - 1) * limit;
+
+	try {
+		const itemData = await db.select().from(item).where(eq(item.id, id));
+		if (itemData.length === 0) {
+			throw new Error('BHP tidak ditemukan');
+		}
+
+		const baseCondition = eq(stock.itemId, id);
+		const whereClause = search
+			? and(baseCondition, like(laboratorium.name, `%${search}%`))
+			: baseCondition;
+
+		const [totalItemsResult] = await db
+			.select({ value: count() })
+			.from(stockBatch)
+			.innerJoin(stock, eq(stockBatch.stockId, stock.id))
+			.leftJoin(laboratorium, eq(stock.laboratoriumId, laboratorium.id))
+			.where(whereClause);
+
+		const totalItems = Number(totalItemsResult.value);
+		const totalPages = Math.ceil(totalItems / limit);
+
+		const batches = await db
+			.select({
+				id: stockBatch.id,
+				qty: stockBatch.qty,
+				initialQty: stockBatch.initialQty,
+				expiryDate: stockBatch.expiryDate,
+				receivedAt: stockBatch.receivedAt, // "Tanggal Masuk"
+				laboratoriumName: laboratorium.name,
+				warehouseName: warehouse.name,
+				brand: stock.brand,
+				variant: stock.variant
+			})
+			.from(stockBatch)
+			.innerJoin(stock, eq(stockBatch.stockId, stock.id))
+			.leftJoin(laboratorium, eq(stock.laboratoriumId, laboratorium.id))
+			.leftJoin(warehouse, eq(stock.warehouseId, warehouse.id))
+			.where(whereClause)
+			// Longest expiry first; NULL (no expiry) sorts first, ahead of any dated batch
+			.orderBy(sql`${stockBatch.expiryDate} IS NULL DESC`, desc(stockBatch.expiryDate))
+			.limit(limit)
+			.offset(offset);
+
+		return json({
+			item: itemData[0],
+			batches,
+			pagination: { totalItems, totalPages, currentPage: page, limit }
+		});
+	} catch {
+		return json({
+			item: null,
+			batches: [],
+			pagination: { totalItems: 0, totalPages: 0, currentPage: page, limit }
+		});
+	}
+};

@@ -30,6 +30,16 @@
 	let selectedUnit = $state('UNIT'); // Satuan Dasar
 	let selectedLab = $state(''); // Laboratorium
 	let selectedCondition = $state('BAIK'); // Kondisi
+
+	const isRestrictedLabUser = $derived(
+		data.user?.role === 'kepalaLab' || data.user?.role === 'laboran'
+	);
+
+	$effect(() => {
+		if (isRestrictedLabUser && data.user?.laboratorium?.id) {
+			selectedLab = data.user.laboratorium.id;
+		}
+	});
 	let selectedStatus = $state('READY'); // Status
 
 	// State untuk Dialog Pencarian Aset
@@ -114,7 +124,7 @@
 
 	// Derived trigger content
 	const categoryTrigger = $derived(
-		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori Kategori'
+		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori'
 	);
 	const equipTrigger = $derived(
 		equipmentTypeOptions.find((o) => o.value === selectedEquipmentType)?.label ?? 'Pilih Jenis Alat'
@@ -302,7 +312,7 @@
 
 				<!-- Kategori Alat (equipmentCategory) -->
 				<div class="flex flex-col gap-2">
-					<Label for="categoryId">Kategori Keluarga Alat (Opsional)</Label>
+					<Label for="categoryId">Kategori Alat (Opsional)</Label>
 					<Select.Root type="single" bind:value={selectedCategory}>
 						<Select.Trigger class="w-full text-left">
 							{categoryTrigger}
@@ -320,10 +330,7 @@
 				<!-- Jenis Alat -->
 				<div class="flex flex-col gap-2">
 					<Label for="equipmentType">Jenis Alat</Label>
-					<Select.Root
-						type="single"
-						bind:value={selectedEquipmentType}
-					>
+					<Select.Root type="single" bind:value={selectedEquipmentType}>
 						<Select.Trigger class="w-full text-left">
 							{equipTrigger}
 						</Select.Trigger>
@@ -355,7 +362,7 @@
 				<!-- Laboratorium Penugasan -->
 				<div class="flex flex-col gap-2">
 					<Label for="laboratoriumId">Laboratorium Storing (Wajib)</Label>
-					<Select.Root type="single" bind:value={selectedLab}>
+					<Select.Root type="single" bind:value={selectedLab} disabled={isRestrictedLabUser}>
 						<Select.Trigger class="w-full text-left">
 							{labTrigger}
 						</Select.Trigger>

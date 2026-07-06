@@ -28,6 +28,16 @@
 	let selectedUnit = $state('PCS'); // Satuan Dasar
 	let selectedLab = $state(''); // Laboratorium
 
+	const isRestrictedLabUser = $derived(
+		data.user?.role === 'kepalaLab' || data.user?.role === 'laboran'
+	);
+
+	$effect(() => {
+		if (isRestrictedLabUser && data.user?.laboratorium?.id) {
+			selectedLab = data.user.laboratorium.id;
+		}
+	});
+
 	// State untuk Dialog Pencarian Aset
 	let isDialogOpen = $state(false);
 	let bhpSearchQuery = $state('');
@@ -81,7 +91,7 @@
 
 	// Derived trigger content
 	const categoryTrigger = $derived(
-		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori Keluarga'
+		data.categories.find((o: any) => o.id === selectedCategory)?.name ?? 'Pilih Kategori'
 	);
 	const unitTrigger = $derived(
 		unitOptions.find((o) => o.value === selectedUnit)?.label ?? 'Pilih Satuan'
@@ -295,7 +305,7 @@
 				<!-- Laboratorium Penugasan -->
 				<div class="flex flex-col gap-2">
 					<Label for="laboratoriumId">Laboratorium Penempatan (Wajib)</Label>
-					<Select.Root type="single" bind:value={selectedLab}>
+					<Select.Root type="single" bind:value={selectedLab} disabled={isRestrictedLabUser}>
 						<Select.Trigger class="w-full text-left">
 							{labTrigger}
 						</Select.Trigger>
@@ -348,6 +358,15 @@
 				<div class="flex flex-col gap-2">
 					<Label for="initialStock">Stok Awal</Label>
 					<Input type="number" name="initialStock" id="initialStock" min="0" placeholder="0" />
+				</div>
+
+				<!-- Tanggal Kedaluwarsa -->
+				<div class="flex flex-col gap-2">
+					<Label for="expiryDate">Tanggal Kedaluwarsa (opsional)</Label>
+					<Input type="date" id="expiryDate" name="expiryDate" />
+					<p class="text-xs text-gray-400">
+						Kosongkan jika bahan ini tidak memiliki tanggal kedaluwarsa.
+					</p>
 				</div>
 
 				<!-- Stok Minimum -->

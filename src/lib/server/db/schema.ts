@@ -10,7 +10,8 @@ import {
 	uniqueIndex,
 	unique,
 	foreignKey,
-	json
+	json,
+	date
 } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 import { laboratorium, user, laboratoriumMember, session, account, apiKey } from './auth.schema';
@@ -191,6 +192,53 @@ export const stock = mysqlTable(
 		uniqueIndex('stock_unique_idx').on(table.itemId, table.laboratoriumId, table.brand, table.variant)
 	]
 );
+
+export const stockBatch = mysqlTable(
+	'stock_batch',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+
+		stockId: varchar('stock_id', { length: 36 })
+			.notNull()
+			.references(() => stock.id, { onDelete: 'cascade' }),
+
+		// Remaining quantity in this batch (decremented on ISSUE/ADJUSTMENT, never negative)
+		qty: int('qty').notNull().default(0),
+
+		// Quantity originally received in this batch — kept for audit/history, never mutated after insert
+		initialQty: int('initial_qty').notNull(),
+
+		// Nullable: not every BHP item is perishable (e.g. non-expiring lab hardware consumables)
+		expiryDate: date('expiry_date'),
+
+		// "Tanggal Masuk" — always set to now() at insert time by the server, never user-editable
+		receivedAt: timestamp('received_at').defaultNow().notNull(),
+
+		// Optional link back to the movement row that created this batch, for traceability
+		movementId: varchar('movement_id', { length: 36 }).references(() => movement.id),
+
+		notes: text('notes'),
+
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('stock_batch_stock_idx').on(table.stockId),
+		index('stock_batch_expiry_idx').on(table.expiryDate)
+	]
+);
+
+export const stockBatchRelations = relations(stockBatch, ({ one }) => ({
+	stock: one(stock, {
+		fields: [stockBatch.stockId],
+		references: [stock.id]
+	}),
+	movement: one(movement, {
+		fields: [stockBatch.movementId],
+		references: [movement.id]
+	})
+}));
 
 export const movementEventTypeEnum = mysqlEnum('movement_event_type', [
 	'RECEIVE', // Incoming stock/equipment (IN, MASUK)
@@ -1068,7 +1116,7 @@ export const itemUnitConversionRelations = relations(itemUnitConversion, ({ one 
 	})
 }));
 
-export const stockRelations = relations(stock, ({ one }) => ({
+export const stockRelations = relations(stock, ({ one, many }) => ({
 	item: one(item, {
 		fields: [stock.itemId],
 		references: [item.id]
@@ -1080,7 +1128,8 @@ export const stockRelations = relations(stock, ({ one }) => ({
 	laboratorium: one(laboratorium, {
 		fields: [stock.laboratoriumId],
 		references: [laboratorium.id]
-	})
+	}),
+	batches: many(stockBatch)
 }));
 
 export const safetyIncidentRelations = relations(safetyIncident, ({ one }) => ({
