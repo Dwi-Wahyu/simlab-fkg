@@ -54,7 +54,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 };
 
 export const actions: Actions = {
-	delete: async ({ request, locals, headers }) => {
+	delete: async ({ request, locals }) => {
 		if (!locals.user || locals.user.role !== 'superadmin') {
 			return fail(403, { message: 'Forbidden' });
 		}
@@ -67,8 +67,8 @@ export const actions: Actions = {
 		}
 
 		try {
-			await auth.api.deleteUser({
-				headers,
+			await auth.api.removeUser({
+				headers: request.headers,
 				body: {
 					userId
 				}

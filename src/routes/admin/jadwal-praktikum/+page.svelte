@@ -187,10 +187,12 @@
 				Kelola jadwal praktikum, OSCE, dan pelatihan di laboratorium.
 			</p>
 		</div>
-		<Button href="/admin/jadwal-praktikum/tambah" class="w-full justify-center gap-2  sm:w-auto">
-			<Plus class="size-4" />
-			Tambah Jadwal
-		</Button>
+		{#if data.userRole !== 'instruktur'}
+			<Button href="/admin/jadwal-praktikum/tambah" class="w-full justify-center gap-2  sm:w-auto">
+				<Plus class="size-4" />
+				Tambah Jadwal
+			</Button>
+		{/if}
 	</div>
 
 	{#if form?.message}
@@ -321,22 +323,24 @@
 								>
 									<Info class="h-4 w-4" />
 								</Button>
-								<Button
-									variant="ghost"
-									size="icon"
-									class="h-8 w-8"
-									href="/admin/jadwal-praktikum/{schedule.id}/edit"
-								>
-									<Edit class="h-4 w-4" />
-								</Button>
-								<Button
-									variant="ghost"
-									size="icon"
-									class="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-									onclick={() => confirmDelete(schedule.id)}
-								>
-									<Trash2 class="h-4 w-4" />
-								</Button>
+								{#if data.userRole !== 'instruktur'}
+									<Button
+										variant="ghost"
+										size="icon"
+										class="h-8 w-8"
+										href="/admin/jadwal-praktikum/{schedule.id}/edit"
+									>
+										<Edit class="h-4 w-4" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										class="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+										onclick={() => confirmDelete(schedule.id)}
+									>
+										<Trash2 class="h-4 w-4" />
+									</Button>
+								{/if}
 							</div>
 						</Table.Cell>
 					</Table.Row>

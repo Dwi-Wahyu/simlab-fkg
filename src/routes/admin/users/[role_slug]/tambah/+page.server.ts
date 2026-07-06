@@ -44,7 +44,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals, params, headers }) => {
+	create: async ({ request, locals, params }) => {
 		if (!locals.user || locals.user.role !== 'superadmin') {
 			return fail(403, { message: 'Forbidden' });
 		}
@@ -63,22 +63,22 @@ export const actions: Actions = {
 			return fail(400, { message: 'Data wajib diisi' });
 		}
 
-		if ((role === 'kepalaLab' || role === 'laboran') && !laboratoriumId) {
-			return fail(400, { message: 'Laboratorium penugasan wajib diisi untuk Kepala Lab atau Laboran' });
+		if (role === 'kepalaLab' && !laboratoriumId) {
+			return fail(400, { message: 'Laboratorium penugasan wajib diisi untuk Kepala Lab' });
 		}
 
 		try {
 			// 1. Create User via Better Auth Admin API
 			// This prevents automatic login as the newly created user
-			const createUserResponse = await auth.api.admin.createUser({
-				headers,
+			const createUserResponse = await auth.api.createUser({
+				headers: request.headers,
 				body: {
 					name,
 					email,
 					password,
 					username,
-					role // Directly set role via Admin API
-				}
+					role
+				} as any
 			});
 
 			if (!createUserResponse) throw new Error('Gagal membuat user');

@@ -1,17 +1,16 @@
 <script lang="ts">
+	import { Check, ChevronLeft, FileText, Save, Search, Upload } from '@lucide/svelte';
+	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import { Label } from '$lib/components/ui/label';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { Save, ChevronLeft, Check, Upload, FileText, Search } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import * as Select from '$lib/components/ui/select';
 	import * as Dialog from '$lib/components/ui/dialog';
-
-	import { untrack } from 'svelte';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
+	import { Textarea } from '$lib/components/ui/textarea';
 
 	let { data } = $props();
 
@@ -81,11 +80,11 @@
 	// Debounce effect
 	$effect(() => {
 		const query = equipmentSearchQuery;
-		
+
 		untrack(() => {
 			isEquipmentSearching = true;
 			if (equipmentSearchTimeout) clearTimeout(equipmentSearchTimeout);
-			
+
 			equipmentSearchTimeout = setTimeout(() => {
 				debouncedEquipmentSearchQuery = query;
 				equipmentCurrentPage = 1;
@@ -110,7 +109,9 @@
 		)
 	);
 
-	const equipmentTotalPages = $derived(Math.ceil(filteredEquipments.length / EQUIPMENT_PAGE_SIZE) || 1);
+	const equipmentTotalPages = $derived(
+		Math.ceil(filteredEquipments.length / EQUIPMENT_PAGE_SIZE) || 1
+	);
 
 	function selectEquipment(id: string) {
 		formData.equipmentId = id;
@@ -118,8 +119,8 @@
 	}
 
 	const maintenanceTypes = [
-		{ value: 'PREVENTIF', label: 'Preventif (Perawatan)' },
-		{ value: 'KOREKTIF', label: 'Korektif (Perbaikan)' }
+		{ value: 'PREVENTIF', label: 'Perawatan' },
+		{ value: 'KOREKTIF', label: 'Perbaikan' }
 		// { value: 'KALIBRASI', label: 'Kalibrasi' }
 	];
 	const statusOptions = [
@@ -227,8 +228,10 @@
 						<Button
 							type="button"
 							variant="outline"
-							class="h-11 w-full justify-start rounded-xl border-slate-200 font-normal shadow-none hover:bg-slate-50 {formData.equipmentId ? 'text-slate-900' : 'text-slate-500'}"
-							onclick={() => isEquipmentDialogOpen = true}
+							class="h-11 w-full justify-start rounded-xl border-slate-200 font-normal shadow-none hover:bg-slate-50 {formData.equipmentId
+								? 'text-slate-900'
+								: 'text-slate-500'}"
+							onclick={() => (isEquipmentDialogOpen = true)}
 						>
 							{selectedEquipmentTrigger}
 						</Button>
@@ -440,11 +443,11 @@
 			</Dialog.Header>
 			<div class="flex flex-col gap-4 py-4">
 				<div class="relative">
-					<Search class="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+					<Search class="absolute top-3 left-3 h-4 w-4 text-slate-400" />
 					<Input
 						type="text"
 						placeholder="Cari nama atau serial number..."
-						class="pl-9 h-10 rounded-xl"
+						class="h-10 rounded-xl pl-9"
 						bind:value={equipmentSearchQuery}
 					/>
 				</div>
@@ -453,7 +456,9 @@
 					{#if isEquipmentSearching}
 						<!-- Mock Skeleton -->
 						{#each Array(5) as _}
-							<div class="flex h-16 w-full animate-pulse flex-col justify-center rounded-lg border border-slate-100 bg-slate-50 p-3 px-4">
+							<div
+								class="flex h-16 w-full animate-pulse flex-col justify-center rounded-lg border border-slate-100 bg-slate-50 p-3 px-4"
+							>
 								<div class="h-4 w-2/3 rounded bg-slate-200"></div>
 								<div class="mt-2 h-3 w-1/3 rounded bg-slate-200"></div>
 							</div>

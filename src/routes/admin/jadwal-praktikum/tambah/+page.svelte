@@ -169,6 +169,19 @@
 				cancel();
 				return;
 			}
+			if (groupsForClass.length > 0) {
+				const instructorWithoutGroup = selectedInstructorIds.find(
+					(id) => (instructorGroupMap[id] ?? []).length === 0
+				);
+				if (instructorWithoutGroup) {
+					notificationType = 'error';
+					notificationTitle = 'Gagal!';
+					notificationDescription = 'Setiap DPJP yang dipilih harus ditugaskan minimal 1 kelompok.';
+					showNotification = true;
+					cancel();
+					return;
+				}
+			}
 			conflictError = null;
 			return async ({ result }) => {
 				if (result.type === 'success') {

@@ -1,14 +1,14 @@
 <script lang="ts">
+	import { ArrowLeft, Check, FileText, Save, Upload } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import { Label } from '$lib/components/ui/label';
-	import { ArrowLeft, Save, Check, Upload, FileText } from '@lucide/svelte';
-	import * as Card from '$lib/components/ui/card';
-	import * as Select from '$lib/components/ui/select';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
+	import { Textarea } from '$lib/components/ui/textarea';
 
 	let { data } = $props();
 
@@ -51,7 +51,10 @@
 		if (fileInput) fileInput.value = '';
 	}
 
-	let formData = $state({ ...data.maintenance });
+	let formData = $state({
+		...data.maintenance,
+		technicianId: data.maintenance.technicianId ?? undefined
+	});
 
 	// State untuk dialog notifikasi
 	let showNotification = $state(false);
@@ -61,8 +64,8 @@
 	let notificationActionLabel = $state('OK');
 
 	const maintenanceTypes = [
-		{ value: 'PREVENTIF', label: 'Preventif (Perawatan)' },
-		{ value: 'KOREKTIF', label: 'Korektif (Perbaikan)' },
+		{ value: 'PREVENTIF', label: 'Perawatan' },
+		{ value: 'KOREKTIF', label: 'Perbaikan' },
 		{ value: 'KALIBRASI', label: 'Kalibrasi' }
 	];
 	const statusOptions = [
@@ -149,7 +152,7 @@
 						if (result.type === 'success') {
 							showSuccessNotification();
 						} else if (result.type === 'failure') {
-							showErrorNotification(result.data?.message || 'Terjadi kesalahan');
+							showErrorNotification((result.data as any)?.message || 'Terjadi kesalahan');
 						}
 					};
 				}}
@@ -240,7 +243,9 @@
 					<!-- Teknisi -->
 					{#if data.userRole !== 'teknisi'}
 						<div class="space-y-2">
-							<Label for="technicianId" class="text-xs font-bold text-slate-500 uppercase">Teknisi (Opsional)</Label>
+							<Label for="technicianId" class="text-xs font-bold text-slate-500 uppercase"
+								>Teknisi (Opsional)</Label
+							>
 							<Select.Root type="single" name="technicianId" bind:value={formData.technicianId}>
 								<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
 									{selectedTechnicianTrigger}
@@ -289,7 +294,9 @@
 				<!-- Nota Upload -->
 				{#if formData.maintenanceType !== 'KALIBRASI'}
 					<div class="space-y-2">
-						<Label for="nota" class="text-xs font-bold text-slate-500 uppercase">Nota / Bukti Pembayaran (PDF/Gambar) (Opsional)</Label>
+						<Label for="nota" class="text-xs font-bold text-slate-500 uppercase"
+							>Nota / Bukti Pembayaran (PDF/Gambar) (Opsional)</Label
+						>
 						<div
 							class="group relative flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 transition-all hover:border-[#2D5A43] hover:bg-white"
 						>

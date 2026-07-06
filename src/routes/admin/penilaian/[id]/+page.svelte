@@ -493,7 +493,14 @@
 									<Table.Cell class="px-4 py-3 font-medium text-slate-900">
 										<div class="flex flex-col">
 											<span class="text-sm font-semibold">{student.name}</span>
-											<span class="text-xs text-slate-500 uppercase">{student.username}</span>
+											<div class="flex items-center gap-1.5 mt-0.5">
+												<span class="text-xs text-slate-500 uppercase">{student.username}</span>
+												{#if data.studentKelompokMap?.[student.id]}
+													<span class="inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10">
+														{data.studentKelompokMap[student.id]}
+													</span>
+												{/if}
+											</div>
 										</div>
 									</Table.Cell>
 

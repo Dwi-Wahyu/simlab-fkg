@@ -1,24 +1,24 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import * as Card from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
-	import * as Tabs from '$lib/components/ui/tabs';
-	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 	import {
-		UserRound,
-		Mail,
 		Calendar,
+		Globe,
+		History,
+		Lock,
+		Mail,
 		Monitor,
 		Smartphone,
-		Globe,
-		Lock,
 		Trash2,
-		History
+		UserRound
 	} from '@lucide/svelte';
 	import { enhance } from '$app/forms';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 	import { toast } from '$lib/components/toast';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Table from '$lib/components/ui/table';
+	import * as Tabs from '$lib/components/ui/tabs';
 
 	let { data, form } = $props();
 
@@ -82,6 +82,25 @@
 		selectedToken = token;
 		revokeDialogOpen = true;
 	}
+
+	const toTitleCase = (str: string) => {
+		if (!str) return '';
+		return str
+			.toLowerCase()
+			.split('_')
+			.join(' ')
+			.split(' ')
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(' ');
+	};
+
+	const roleLabelMap: Record<string, string> = {
+		instruktur: 'DPJP',
+		koordinator: 'PJ Mata Kuliah',
+		peneliti: 'Mahasiswa'
+	};
+
+	const roleLabel = $derived(roleLabelMap[data.user.role] ?? toTitleCase(data.user.role));
 </script>
 
 <div class="space-y-6 p-6">
@@ -122,7 +141,7 @@
 
 					<div class="flex items-center gap-2 text-sm">
 						<Lock class="h-4 w-4 text-muted-foreground" />
-						{data.user.role.toUpperCase()}
+						{roleLabel}
 					</div>
 				</div>
 			</Card.Content>

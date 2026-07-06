@@ -120,6 +120,20 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		orderBy: (km, { asc }) => [asc(km.name)]
 	});
 
+	const groupMembersInfo = groups.length > 0
+		? await db.query.kelompokMahasiswaMember.findMany({
+				where: inArray(kelompokMahasiswaMember.kelompokId, groups.map((g) => g.id)),
+				with: {
+					kelompok: true
+				}
+			})
+		: [];
+
+	const studentKelompokMap: Record<string, string> = {};
+	for (const gm of groupMembersInfo) {
+		studentKelompokMap[gm.userId] = gm.kelompok.name;
+	}
+
 	return {
 		schedule: {
 			...schedule,
@@ -129,6 +143,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		assessments,
 		criteriaScores,
 		groups,
+		studentKelompokMap,
 		selectedGroupId: filterGroupId || '',
 		userRole: locals.user.role
 	};

@@ -110,7 +110,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const buffer = buildRekapWorkbookBuffer({
 		groups,
-		students,
+		sheets: [
+			{
+				sheetName: 'Rekapitulasi Nilai',
+				penilai: instructor.name,
+				students
+			}
+		],
 		getScore
 	});
 

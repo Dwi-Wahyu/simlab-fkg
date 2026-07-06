@@ -30,10 +30,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 		orderBy: (practicumSchedule, { desc }) => [desc(practicumSchedule.startTime)]
 	});
 
+	const currentUser = locals.user;
+	let filteredSchedules = schedules;
+	if (currentUser && currentUser.role === 'instruktur') {
+		filteredSchedules = schedules.filter((s) =>
+			s.instructors.some((i) => i.instructorId === currentUser.id)
+		);
+	}
+
 	return {
 		labs,
 		instructors,
-		schedules
+		schedules: filteredSchedules,
+		userRole: currentUser?.role
 	};
 };
 

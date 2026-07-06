@@ -4,25 +4,25 @@
 		Award,
 		Calendar,
 		CheckCircle2,
+		ChevronDown,
 		ChevronLeft,
+		ChevronUp,
 		Clock,
 		Download,
 		FileText,
 		FlaskConical,
 		Loader2,
-		RefreshCw,
-		ChevronDown,
-		ChevronUp
+		RefreshCw
 	} from '@lucide/svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { badgeVariants } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 
 	let { data } = $props();
 	let expandedItems = $state<Record<string, boolean>>({});
@@ -177,7 +177,13 @@
 			if (!res.ok) throw new Error('File PDF tidak ditemukan');
 			const blob = await res.blob();
 			triggerDownload(blob, data.lastGeneration.pdfUrl);
-			toast.success('Logbook PDF berhasil diunduh');
+			toast('Logbook PDF berhasil diunduh', {
+				description: 'Pastikan untuk menyimpan file PDF ini di tempat yang aman.',
+				action: {
+					label: 'Tutup',
+					onClick: () => {}
+				}
+			});
 		} catch (e: any) {
 			toast.error(e.message ?? 'Gagal mengunduh file PDF');
 		} finally {

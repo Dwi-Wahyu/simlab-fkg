@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals, headers }) => {
+	create: async ({ request, locals }) => {
 		if (!locals.user || locals.user.role !== 'superadmin') {
 			return fail(403, { message: 'Forbidden' });
 		}
@@ -38,8 +38,8 @@ export const actions: Actions = {
 		try {
 			// 1. Create User via Better Auth Admin API
 			// This prevents automatic login as the newly created user
-			const newUserResponse = await auth.api.admin.createUser({
-				headers,
+			const newUserResponse = await auth.api.createUser({
+				headers: request.headers,
 				body: {
 					name,
 					email,
@@ -47,7 +47,7 @@ export const actions: Actions = {
 					// Use email as username if not provided, or it will be handled by the plugin
 					username: email.split('@')[0], 
 					role: 'user' // Default global role
-				}
+				} as any
 			});
 
 			if (!newUserResponse) throw new Error('Gagal membuat user');
@@ -57,11 +57,11 @@ export const actions: Actions = {
 			// 2. Add to Laboratorium if provided
 			if (laboratoriumId && labRole) {
 				await auth.api.addMember({
-					headers,
+					headers: request.headers,
 					body: {
 						organizationId: laboratoriumId, 
 						userId: newUser.id,
-						role: labRole
+						role: labRole as any
 					}
 				});
 			}
@@ -72,7 +72,7 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	updateRole: async ({ request, locals, headers }) => {
+	updateRole: async ({ request, locals }) => {
 		if (!locals.user || locals.user.role !== 'superadmin') {
 			return fail(403, { message: 'Forbidden' });
 		}
@@ -99,7 +99,7 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	delete: async ({ request, locals, headers }) => {
+	delete: async ({ request, locals }) => {
 		if (!locals.user || locals.user.role !== 'superadmin') {
 			return fail(403, { message: 'Forbidden' });
 		}
@@ -113,8 +113,8 @@ export const actions: Actions = {
 
 		try {
 			// Hapus user via Better Auth API
-			await auth.api.deleteUser({
-				headers,
+			await auth.api.removeUser({
+				headers: request.headers,
 				body: {
 					userId
 				}

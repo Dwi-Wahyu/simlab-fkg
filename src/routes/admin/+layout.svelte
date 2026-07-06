@@ -51,6 +51,14 @@
 			: '??'
 	);
 
+	const roleLabelMap: Record<string, string> = {
+		instruktur: 'DPJP',
+		koordinator: 'PJ Mata Kuliah',
+		peneliti: 'Mahasiswa'
+	};
+
+	const roleLabel = $derived(roleLabelMap[data.user.role] ?? toTitleCase(data.user.role));
+
 	// Get page title from URL or data
 	const pageTitle = $derived.by(() => {
 		const path = page.url.pathname;
@@ -132,7 +140,7 @@
 								>{data.user.name}</span
 							>
 							<span class="text-[11px] font-medium text-slate-400">
-								{toTitleCase(data.user.role)}
+								{roleLabel}
 							</span>
 						</div>
 					</a>
@@ -166,7 +174,7 @@
 								<div class="flex flex-col space-y-1">
 									<p class="text-sm leading-none font-semibold">{data.user.name}</p>
 									<p class="text-xs leading-none text-muted-foreground">
-										{toTitleCase(data.user.role)}
+										{roleLabel}
 									</p>
 								</div>
 							</DropdownMenu.Label>

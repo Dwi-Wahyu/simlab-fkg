@@ -18,15 +18,23 @@ interface Student {
 	name: string;
 }
 
+interface RekapSheet {
+	sheetName: string;      // e.g. "Kelompok 1", or "Tanpa Kelompok"
+	penilai: string;        // e.g. "Budi Santoso, S.Ked" or "-" if none assigned
+	students: Student[];
+}
+
 interface Params {
 	groups: Group[];
-	students: Student[];
+	sheets: RekapSheet[];
 	getScore: (studentId: string, scheduleId: string, moduleId: string) => number | string | null;
 }
 
-export function buildRekapWorkbookBuffer({ groups, students, getScore }: Params): Buffer {
-	const columns = groups.flatMap((g) => g.columns);
-
+function buildHeaderRows(groups: Group[]): {
+	headerRow1: (string | number)[];
+	headerRow2: (string | number)[];
+	merges: XLSX.Range[];
+} {
 	const headerRow1: (string | number)[] = ['No', 'NIM', 'Nama Mahasiswa'];
 	const headerRow2: (string | number)[] = ['', '', ''];
 	const merges: XLSX.Range[] = [];
@@ -51,17 +59,60 @@ export function buildRekapWorkbookBuffer({ groups, students, getScore }: Params)
 	merges.push({ s: { r: 0, c: 1 }, e: { r: 1, c: 1 } });
 	merges.push({ s: { r: 0, c: 2 }, e: { r: 1, c: 2 } });
 
-	const rows: (string | number)[][] = [headerRow1, headerRow2];
-	students.forEach((s, i) => {
-		const scores = columns.map((c) => getScore(s.userId, c.scheduleId, c.moduleId));
-		const valid = scores.filter((v): v is number => typeof v === 'number');
-		const avg = valid.length ? Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10 : '';
-		rows.push([i + 1, s.username, s.name, ...scores.map((v) => v ?? ''), avg]);
-	});
+	return { headerRow1, headerRow2, merges };
+}
 
-	const ws = XLSX.utils.aoa_to_sheet(rows);
-	ws['!merges'] = merges;
+function sanitizeSheetName(name: string, used: Set<string>): string {
+	let clean = name.replace(/[:\\\/\?\*\[\]]/g, '').slice(0, 31).trim() || 'Sheet';
+	let candidate = clean;
+	let i = 2;
+	while (used.has(candidate)) {
+		const suffix = ` (${i})`;
+		candidate = clean.slice(0, 31 - suffix.length) + suffix;
+		i++;
+	}
+	used.add(candidate);
+	return candidate;
+}
+
+export function buildRekapWorkbookBuffer({ groups, sheets, getScore }: Params): Buffer {
 	const wb = XLSX.utils.book_new();
-	XLSX.utils.book_append_sheet(wb, ws, 'Rekapitulasi Nilai');
+	const columns = groups.flatMap((g) => g.columns);
+
+	if (sheets.length === 0) {
+		const { headerRow1, headerRow2, merges } = buildHeaderRows(groups);
+		const ws = XLSX.utils.aoa_to_sheet([headerRow1, headerRow2]);
+		ws['!merges'] = merges;
+		XLSX.utils.book_append_sheet(wb, ws, 'Rekapitulasi Nilai');
+	} else {
+		const usedNames = new Set<string>();
+		for (const sheet of sheets) {
+			const { headerRow1, headerRow2, merges } = buildHeaderRows(groups);
+			const titleRow = [`Penilai (DPJP): ${sheet.penilai}`];
+
+			// Shift merges by +1 row and add title merge
+			const shiftedMerges = merges.map((m) => ({
+				s: { r: m.s.r + 1, c: m.s.c },
+				e: { r: m.e.r + 1, c: m.e.c }
+			}));
+			shiftedMerges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: headerRow1.length - 1 } });
+
+			// Student rows
+			const studentRows: (string | number)[][] = [];
+			sheet.students.forEach((s, i) => {
+				const scores = columns.map((c) => getScore(s.userId, c.scheduleId, c.moduleId));
+				const valid = scores.filter((v): v is number => typeof v === 'number');
+				const avg = valid.length ? Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10 : '';
+				studentRows.push([i + 1, s.username, s.name, ...scores.map((v) => v ?? ''), avg]);
+			});
+
+			const ws = XLSX.utils.aoa_to_sheet([titleRow, headerRow1, headerRow2, ...studentRows]);
+			ws['!merges'] = shiftedMerges;
+
+			const sanitizedName = sanitizeSheetName(sheet.sheetName, usedNames);
+			XLSX.utils.book_append_sheet(wb, ws, sanitizedName);
+		}
+	}
+
 	return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 }

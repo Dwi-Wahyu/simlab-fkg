@@ -13,7 +13,7 @@ const maintenanceSchema = z.object({
 	scheduledDate: z.string().datetime(),
 	completionDate: z.string().datetime().optional().nullable(),
 	status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED']).default('PENDING'),
-	technicianId: z.string().uuid().optional().nullable(),
+	technicianId: z.string().max(36).optional().nullable(),
 	cost: z.number().int().min(0).default(0)
 });
 
