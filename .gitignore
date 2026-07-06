@@ -33,7 +33,9 @@ vite.config.ts.timestamp-*
 # contexts/
 
 src/lib/server/db/seeds/*.xlsx
-static/generated/
+static/generated/**/*
+!static/generated/**/
+!static/generated/**/.gitkeep
 
 simlab-fkg-images.tar.gz
 
