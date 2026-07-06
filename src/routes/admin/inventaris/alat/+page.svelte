@@ -232,9 +232,11 @@
 					</Button>
 				{/if}
 
-				<Button href="/admin/inventaris/alat/tambah">
-					<Plus /> Tambah Alat
-				</Button>
+				{#if data.user?.role !== 'teknisi'}
+					<Button href="/admin/inventaris/alat/tambah">
+						<Plus /> Tambah Alat
+					</Button>
+				{/if}
 			</div>
 		</div>
 
@@ -344,9 +346,11 @@
 										<Button href="/admin/inventaris/alat/{item.id}" size="sm" variant="outline">
 											<Eye /> Detail
 										</Button>
-										<Button size="sm" variant="outline" href="/admin/inventaris/alat/{item.id}/edit">
-											<FileEdit /> Edit
-										</Button>
+										{#if data.user?.role !== 'teknisi'}
+											<Button size="sm" variant="outline" href="/admin/inventaris/alat/{item.id}/edit">
+												<FileEdit /> Edit
+											</Button>
+										{/if}
 									</Table.Cell>
 								</Table.Row>
 							{/each}

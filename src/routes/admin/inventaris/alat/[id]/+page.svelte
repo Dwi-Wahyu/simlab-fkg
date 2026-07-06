@@ -155,9 +155,11 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				<Button href="/admin/inventaris/alat/tambah">
-					<Plus /> Tambah Alat
-				</Button>
+				{#if data.user?.role !== 'teknisi'}
+					<Button href="/admin/inventaris/alat/tambah">
+						<Plus /> Tambah Alat
+					</Button>
+				{/if}
 			</div>
 		</div>
 
@@ -259,22 +261,24 @@
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Aksi</span>
 										<div class="flex items-center gap-2 md:justify-end">
-											<Button
-												variant="outline"
-												size="icon"
-												class="h-8 w-8"
-												href="/admin/inventaris/alat/{res.equipment.id}/edit?equipmentId={equipment.id}"
-											>
-												<Edit class="h-4 w-4" />
-											</Button>
-											<Button
-												variant="outline"
-												size="icon"
-												class="h-8 w-8 text-destructive"
-												onclick={() => openDeleteDialog(equipment.id)}
-											>
-												<Trash2 class="h-4 w-4" />
-											</Button>
+											{#if data.user?.role !== 'teknisi'}
+												<Button
+													variant="outline"
+													size="icon"
+													class="h-8 w-8"
+													href="/admin/inventaris/alat/{res.equipment.id}/edit?equipmentId={equipment.id}"
+												>
+													<Edit class="h-4 w-4" />
+												</Button>
+												<Button
+													variant="outline"
+													size="icon"
+													class="h-8 w-8 text-destructive"
+													onclick={() => openDeleteDialog(equipment.id)}
+												>
+													<Trash2 class="h-4 w-4" />
+												</Button>
+											{/if}
 										</div>
 									</Table.Cell>
 								</Table.Row>

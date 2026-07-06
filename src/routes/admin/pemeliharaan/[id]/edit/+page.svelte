@@ -159,6 +159,7 @@
 				class="space-y-6"
 			>
 				<input type="hidden" name="equipmentId" value={formData.equipmentId} />
+				<input type="hidden" name="existingNota" value={fileName ? data.maintenance.notaFileName || '' : ''} />
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 					<!-- Equipment (Read-only display) -->
 					<div class="space-y-2">
@@ -300,6 +301,16 @@
 						<div
 							class="group relative flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 transition-all hover:border-[#2D5A43] hover:bg-white"
 						>
+							<input
+								type="file"
+								name="nota"
+								id="nota"
+								bind:this={fileInput}
+								class="absolute inset-0 z-10 cursor-pointer opacity-0"
+								class:hidden={fileName !== ''}
+								accept=".pdf,.png,.jpg,.jpeg"
+								onchange={handleFileChange}
+							/>
 							{#if fileName}
 								<div class="flex w-full animate-in flex-col items-center gap-4 zoom-in-95 fade-in">
 									{#if filePreviewUrl}
@@ -336,15 +347,6 @@
 									</Button>
 								</div>
 							{:else}
-								<input
-									type="file"
-									name="nota"
-									id="nota"
-									bind:this={fileInput}
-									class="absolute inset-0 z-10 cursor-pointer opacity-0"
-									accept=".pdf,.png,.jpg,.jpeg"
-									onchange={handleFileChange}
-								/>
 								<div class="flex flex-col items-center gap-2 text-center">
 									<div class="rounded-full bg-slate-100 p-3 group-hover:bg-[#2D5A43]/10">
 										<Upload size={24} class="text-slate-400 group-hover:text-[#2D5A43]" />

@@ -163,7 +163,7 @@
 
 				<!-- Kategori Keluarga (equipmentCategory) -->
 				<div class="flex flex-col gap-2">
-					<Label for="categoryId">Kategori Keluarga (Opsional)</Label>
+					<Label for="categoryId">Kategori (Opsional)</Label>
 					<Select.Root type="single" bind:value={selectedCategory}>
 						<Select.Trigger class="w-full text-left">
 							{categoryTrigger}
@@ -265,7 +265,11 @@
 				<!-- Buttons -->
 				<div class="mt-4 flex gap-3 md:col-span-2">
 					<Button variant="outline" class="flex-1" onclick={() => history.back()}>Batal</Button>
-					<Button type="submit" disabled={isLoading} class="flex-1 bg-[#2D5A43] text-white hover:bg-[#234735]">
+					<Button
+						type="submit"
+						disabled={isLoading}
+						class="flex-1 bg-[#2D5A43] text-white hover:bg-[#234735]"
+					>
 						{isLoading ? 'Menyimpan...' : 'Perbarui BHP'}
 					</Button>
 				</div>

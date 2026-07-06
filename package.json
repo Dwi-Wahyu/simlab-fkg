@@ -25,6 +25,7 @@
 		"db:seed-users": "bun run src/lib/server/db/seeds/users.ts",
 		"db:seed-mahasiswa": "bun run src/lib/server/db/seeds/mahasiswa.ts",
 		"db:seed-logbook-templates": "bun run src/lib/server/db/seeds/logbook-templates.ts",
+		"db:seed-rename-users": "bun run src/lib/server/db/seeds/rename-users.ts",
 		"auth:schema": "better-auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"
 	},
 	"overrides": {

@@ -261,7 +261,7 @@
 
 				<!-- Kategori Keluarga (equipmentCategory) -->
 				<div class="flex flex-col gap-2">
-					<Label for="categoryId">Kategori Keluarga (Opsional)</Label>
+					<Label for="categoryId">Kategori (Opsional)</Label>
 					<Select.Root type="single" bind:value={selectedCategory}>
 						<Select.Trigger class="w-full text-left">
 							{categoryTrigger}

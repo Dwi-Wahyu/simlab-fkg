@@ -127,8 +127,10 @@ export const actions: Actions = {
 			cost: rawCost ? parseInt(rawCost) : 0
 		};
 
+		const existingNota = formData.get('existingNota')?.toString();
+		let notaFileName: string | null = existingNota && existingNota !== '' ? existingNota : null;
+
 		const notaFile = formData.get('nota') as File;
-		let notaFileName: string | null = null;
 
 		if (notaFile && notaFile.size > 0) {
 			try {
@@ -158,12 +160,9 @@ export const actions: Actions = {
 				technicianId: validated.technicianId,
 				scheduledDate: new Date(validated.scheduledDate),
 				completionDate: validated.completionDate ? new Date(validated.completionDate) : null,
-				cost: validated.cost
+				cost: validated.cost,
+				notaFileName
 			};
-
-			if (notaFileName) {
-				updateValues.notaFileName = notaFileName;
-			}
 
 			await db
 				.update(maintenance)
