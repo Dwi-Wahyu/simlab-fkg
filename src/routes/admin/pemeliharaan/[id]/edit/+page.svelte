@@ -238,22 +238,22 @@
 					</div>
 
 					<!-- Teknisi -->
-					<div class="space-y-2">
-						<Label for="technicianId" class="text-xs font-bold text-slate-500 uppercase"
-							>Teknisi (Opsional)</Label
-						>
-						<Select.Root type="single" name="technicianId" bind:value={formData.technicianId}>
-							<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
-								{selectedTechnicianTrigger}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="" label="Pilih teknisi">Pilih teknisi</Select.Item>
-								{#each data.technicians as tech (tech.id)}
-									<Select.Item value={tech.id} label={tech.name}>{tech.name}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</div>
+					{#if data.userRole !== 'teknisi'}
+						<div class="space-y-2">
+							<Label for="technicianId" class="text-xs font-bold text-slate-500 uppercase">Teknisi (Opsional)</Label>
+							<Select.Root type="single" name="technicianId" bind:value={formData.technicianId}>
+								<Select.Trigger class="h-11 w-full rounded-xl border-slate-200">
+									{selectedTechnicianTrigger}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Item value="" label="Pilih teknisi">Pilih teknisi</Select.Item>
+									{#each data.technicians as tech (tech.id)}
+										<Select.Item value={tech.id} label={tech.name}>{tech.name}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</div>
+					{/if}
 
 					<!-- Biaya -->
 					<div class="space-y-2">

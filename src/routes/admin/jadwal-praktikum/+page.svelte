@@ -137,7 +137,7 @@
 					<span class="col-span-2 text-sm">{currentSchedule.laboratorium.name}</span>
 				</div>
 				<div class="grid grid-cols-3 gap-2">
-					<span class="text-sm font-medium text-muted-foreground">Instruktur</span>
+					<span class="text-sm font-medium text-muted-foreground">DPJP</span>
 					<div class="col-span-2 flex flex-col gap-1">
 						{#each [...new Map(currentSchedule.instructors.map((i: any) => [i.instructorId, i])).values()] as instr (instr.instructorId)}
 							<span class="text-sm">• {instr.user.name}</span>
@@ -205,7 +205,7 @@
 				<Table.Row class="md:table-row">
 					<Table.Head>Kegiatan</Table.Head>
 					<Table.Head>Waktu & Lokasi</Table.Head>
-					<Table.Head>Instruktur</Table.Head>
+					<Table.Head>DPJP</Table.Head>
 					<Table.Head>Peserta</Table.Head>
 					<Table.Head class="text-right">Aksi</Table.Head>
 				</Table.Row>
@@ -268,13 +268,13 @@
 							</div>
 						</Table.Cell>
 
-						<!-- Column 3: Instruktur -->
+						<!-- Column 3: DPJP -->
 						<Table.Cell
 							class="{expandedSchedules[schedule.id]
 								? 'flex'
 								: 'hidden'} flex-col gap-1.5 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:p-4"
 						>
-							<span class="mb-0.5 text-xs font-semibold text-slate-400 md:hidden">Instruktur</span>
+							<span class="mb-0.5 text-xs font-semibold text-slate-400 md:hidden">DPJP</span>
 							<div class="flex flex-wrap gap-2">
 								{#each [...new Map(schedule.instructors.map((i: any) => [i.instructorId, i])).values()] as instr (instr.instructorId)}
 									<div

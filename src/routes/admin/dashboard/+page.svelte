@@ -24,8 +24,8 @@
 		superadmin: 'Super Admin',
 		koordinator: 'PJ Mata Kuliah',
 		kepalaLab: 'Kepala Laboratorium',
-		instruktur: 'Instruktur / Dosen',
-		peneliti: 'Peneliti / Mahasiswa',
+		instruktur: 'DPJP / Dosen',
+		peneliti: 'Mahasiswa',
 		teknisi: 'Teknisi',
 		spmi: 'SPMI'
 	};

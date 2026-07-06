@@ -157,7 +157,7 @@
 						</Select.Root>
 						<input type="hidden" name="scoringMode" value={selectedScoringMode} />
 						<p class="text-xs text-muted-foreground">
-							<i>Total: instruktur mengisi satu nilai akhir langsung. Rubrik: nilai akhir dihitung otomatis dari beberapa kriteria/tugas di bawah.</i>
+							<i>Total: DPJP mengisi satu nilai akhir langsung. Rubrik: nilai akhir dihitung otomatis dari beberapa kriteria/tugas di bawah.</i>
 						</p>
 					</div>
 

@@ -447,7 +447,7 @@
 								<Table.Row>
 									<Table.Head class="px-6 py-4">Jadwal</Table.Head>
 									<Table.Head>Modul</Table.Head>
-									<Table.Head>Instruktur</Table.Head>
+									<Table.Head>DPJP</Table.Head>
 									<Table.Head class="text-center">Nilai</Table.Head>
 									<Table.Head class="pr-6">Catatan</Table.Head>
 								</Table.Row>
@@ -569,14 +569,14 @@
 												</Button>
 											</Table.Cell>
 
-											<!-- Instruktur -->
+											<!-- DPJP -->
 											<Table.Cell
 												class={cn(
 													expandedItems[assessment.id] ? 'flex' : 'hidden',
 													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2'
 												)}
 											>
-												<span class="text-xs font-semibold text-slate-400">Instruktur</span>
+												<span class="text-xs font-semibold text-slate-400">DPJP</span>
 												<span class="text-sm text-slate-600">{assessment.instructorName}</span>
 											</Table.Cell>
 

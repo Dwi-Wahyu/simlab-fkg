@@ -10,7 +10,7 @@
 	let viewMode = $state<'month' | 'day'>('month');
 	let currentDate = $state(new Date());
 
-	// Filter state (non-instruktur only)
+	// Filter state (non-DPJP only)
 	let selectedSeriesIds = $state<string[]>([]);
 	let selectedInstructorIds = $state<string[]>([]);
 
@@ -142,7 +142,7 @@
 </script>
 
 <div class="flex h-full">
-	<!-- Sidebar Filter (non-instruktur) -->
+	<!-- Sidebar Filter (non-DPJP) -->
 	{#if data.role !== 'instruktur'}
 		<aside class="flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
 			<div>
@@ -161,7 +161,7 @@
 			</div>
 
 			<div>
-				<h3 class="mb-2 text-sm font-semibold">Instruktur</h3>
+				<h3 class="mb-2 text-sm font-semibold">DPJP</h3>
 				<div class="flex max-h-60 flex-col gap-1.5">
 					{#each data.instructors as instr (instr.id)}
 						<label class="flex cursor-pointer items-center gap-2 text-sm">
@@ -366,7 +366,7 @@
 				<div class="flex items-start gap-2">
 					<Users class="mt-0.5 h-4 w-4 text-muted-foreground" />
 					<div>
-						<div class="mb-0.5 font-medium">Instruktur</div>
+						<div class="mb-0.5 font-medium">DPJP</div>
 						{#each [...new Map(selectedSchedule.instructors.map((i: any) => [i.instructorId, i])).values()] as i (i.instructorId)}
 						<div>{i.user.name}</div>
 					{/each}

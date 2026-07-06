@@ -34,7 +34,7 @@
 
 	const groupsForClass = $derived(data.groups.filter((g: any) => g.classId === selectedClassId));
 
-	// Union semua kelompok yang sudah dipakai instruktur MANAPUN
+	// Union semua kelompok yang sudah dipakai DPJP MANAPUN
 	function assignedElsewhere(instructorId: string): Set<string> {
 		const used = new Set<string>();
 		for (const [id, groupIds] of Object.entries(instructorGroupMap)) {
@@ -69,7 +69,7 @@
 		instructorGroupMap = { ...instructorGroupMap, [instructorId]: next };
 	}
 
-	// Kelompok kelas yang belum dipilih instruktur manapun
+	// Kelompok kelas yang belum dipilih DPJP manapun
 	const unassignedGroups = $derived(
 		groupsForClass.filter((g: any) => !Object.values(instructorGroupMap).flat().includes(g.id))
 	);
@@ -156,7 +156,7 @@
 			if (selectedInstructorIds.length === 0) {
 				notificationType = 'error';
 				notificationTitle = 'Gagal!';
-				notificationDescription = 'Pilih minimal satu instruktur.';
+				notificationDescription = 'Pilih minimal satu DPJP.';
 				showNotification = true;
 				cancel();
 				return;
@@ -164,7 +164,7 @@
 			if (hasUnassignedGroups) {
 				notificationType = 'error';
 				notificationTitle = 'Gagal!';
-				notificationDescription = 'Semua kelompok harus ditugaskan ke instruktur.';
+				notificationDescription = 'Semua kelompok harus ditugaskan ke DPJP.';
 				showNotification = true;
 				cancel();
 				return;
@@ -415,13 +415,13 @@
 		<div class="space-y-6">
 			<Card.Root class="flex h-full max-h-[700px] flex-col">
 				<Card.Header>
-					<Card.Title>Instruktur</Card.Title>
-					<Card.Description>Pilih satu atau lebih instruktur untuk jadwal ini.</Card.Description>
+					<Card.Title>DPJP</Card.Title>
+					<Card.Description>Pilih satu atau lebih DPJP untuk jadwal ini.</Card.Description>
 					<div class="relative mt-2">
 						<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
 							type="search"
-							placeholder="Cari nama instruktur..."
+							placeholder="Cari nama DPJP..."
 							class="pl-9"
 							bind:value={instructorSearch}
 						/>
@@ -473,14 +473,14 @@
 						</div>
 					{:else}
 						<p class="text-center text-sm text-muted-foreground py-8">
-							Instruktur tidak ditemukan.
+							DPJP tidak ditemukan.
 						</p>
 					{/each}
 				</Card.Content>
 				<Card.Footer class="flex flex-col items-stretch gap-2 border-t bg-muted/20 p-4">
 					<div class="flex items-center justify-between">
 						<span class="text-sm text-muted-foreground">
-							{selectedInstructorIds.length} Instruktur dipilih
+							{selectedInstructorIds.length} DPJP dipilih
 						</span>
 						{#if selectedInstructorIds.length > 0}
 							<Button variant="ghost" size="sm" onclick={() => (instructorGroupMap = {})}
@@ -490,8 +490,7 @@
 					</div>
 					{#if hasUnassignedGroups}
 						<div class="flex flex-col gap-2 rounded-md bg-amber-50 p-2 text-xs text-amber-700">
-							<span>{unassignedGroups.length} kelompok belum ditugaskan ke instruktur manapun.</span
-							>
+							<span>{unassignedGroups.length} kelompok belum ditugaskan ke DPJP manapun.</span>
 							<Button type="button" variant="outline" size="sm" onclick={autoDistributeGroups}>
 								Bagi Rata Otomatis
 							</Button>

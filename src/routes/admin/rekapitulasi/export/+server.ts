@@ -61,7 +61,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	);
 
 	if (teachingSchedules.length === 0) {
-		throw error(404, 'Tidak ada jadwal mengajar ditemukan untuk instruktur ini');
+		throw error(404, 'Tidak ada jadwal mengajar ditemukan untuk DPJP ini');
 	}
 
 	// 3. Union class members

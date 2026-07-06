@@ -65,7 +65,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	const scheduleIds = series.schedules.map((s) => s.id);
 
-	// Ambil semua penilaian mahasiswa di seri ini, sekaligus modul & instruktur
+	// Ambil semua penilaian mahasiswa di seri ini, sekaligus modul & DPJP
 	const assessments =
 		scheduleIds.length > 0
 			? await db.query.practicumAssessment.findMany({

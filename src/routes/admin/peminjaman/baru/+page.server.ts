@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, `/admin/peminjaman`);
 	}
 
-	// 1. Fetch potential requesters (Peneliti & Instruktur)
+	// 1. Fetch potential requesters (Mahasiswa & DPJP)
 	const requesters = await db.query.user.findMany({
 		where: inArray(user.role, ['peneliti', 'instruktur']),
 		columns: {

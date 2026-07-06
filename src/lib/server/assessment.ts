@@ -176,7 +176,7 @@ export async function saveAssessment(params: {
 	} catch (err: any) {
 		if (err.message === 'UNAUTHORIZED_UPDATE') {
 			return fail(403, { 
-				message: 'Anda tidak memiliki akses untuk mengubah nilai ini. Hanya instruktur yang memberikan nilai pertama kali yang dapat mengubahnya.' 
+				message: 'Anda tidak memiliki akses untuk mengubah nilai ini. Hanya DPJP yang memberikan nilai pertama kali yang dapat mengubahnya.' 
 			});
 		}
 		console.error('Error saving assessment:', err);

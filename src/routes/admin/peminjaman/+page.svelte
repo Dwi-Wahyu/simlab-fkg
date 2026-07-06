@@ -83,7 +83,7 @@
 		}
 	};
 
-	// --- MAHASISWA (PENELITI) LAZY LOAD STATE & LOGIC ---
+	// --- MAHASISWA LAZY LOAD STATE & LOGIC ---
 	let studentLendings = $state<any[]>([]);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);

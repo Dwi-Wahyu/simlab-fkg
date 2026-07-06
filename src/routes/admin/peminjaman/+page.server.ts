@@ -4,7 +4,7 @@ import { desc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	// If student (peneliti), do not load all lendings on server side (lazy loaded via client API)
+	// If student (mahasiswa), do not load all lendings on server side (lazy loaded via client API)
 	if (locals.user?.role === 'peneliti') {
 		return {
 			lendings: []

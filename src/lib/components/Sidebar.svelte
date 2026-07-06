@@ -72,7 +72,7 @@
 					role: ['superadmin', 'koordinator']
 				},
 				{
-					name: 'Rekapitulasi per Instruktur',
+					name: 'Rekapitulasi per DPJP',
 					path: `/admin/rekapitulasi`,
 					role: ['superadmin', 'koordinator', 'kepalaLab']
 				},
@@ -225,7 +225,7 @@
 					role: ['superadmin']
 				},
 				{
-					name: 'Instruktur',
+					name: 'DPJP',
 					path: `/admin/users/instruktur`,
 					role: ['superadmin']
 				},

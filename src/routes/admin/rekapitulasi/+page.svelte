@@ -59,6 +59,22 @@
 		filteredStudents.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 	);
 
+	const emptyStateMessage = $derived.by(() => {
+		if (!data.instructorId || !data.seriesId) {
+			return 'Pilih DPJP dan Seri Praktikum untuk menampilkan data.';
+		}
+		if (data.schedules.length === 0) {
+			return 'DPJP ini tidak memiliki jadwal pada seri praktikum yang dipilih.';
+		}
+		if (data.students.length === 0) {
+			return 'Tidak ada mahasiswa terdaftar pada kelas jadwal ini.';
+		}
+		if (filteredStudents.length === 0 && searchQuery) {
+			return `Tidak ada mahasiswa yang cocok dengan pencarian "${searchQuery}".`;
+		}
+		return 'Tidak ada data mahasiswa ditemukan.';
+	});
+
 	$effect(() => {
 		void searchQuery;
 		currentPage = 1;
@@ -94,7 +110,7 @@
 	}
 
 	const instructorTrigger = $derived(
-		data.instructorOptions.find((i: any) => i.id === selectedInstructorId)?.name ?? 'Pilih Instruktur'
+		data.instructorOptions.find((i: any) => i.id === selectedInstructorId)?.name ?? 'Pilih DPJP'
 	);
 
 	const seriesTrigger = $derived(
@@ -117,22 +133,23 @@
 		</div>
 
 		<div class="flex items-center gap-2">
-			<Button
-				variant="outline"
-				class="hidden md:flex"
-				href="/admin/rekapitulasi/export?instructorId={data.instructorId}&seriesId={data.seriesId}"
-				disabled={!data.instructorId || !data.seriesId}
-			>
-				<Download class="mr-2 h-4 w-4" />
-				Export Excel
-			</Button>
+			{#if data.instructorId && data.seriesId && data.schedules.length > 0 && data.students.length > 0}
+				<Button
+					variant="outline"
+					class="hidden md:flex"
+					href="/admin/rekapitulasi/export?instructorId={data.instructorId}&seriesId={data.seriesId}"
+				>
+					<Download class="mr-2 h-4 w-4" />
+					Export Excel
+				</Button>
+			{/if}
 		</div>
 	</div>
 
 	<!-- Selector Dropdowns -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-end">
 		<div class="flex-1">
-			<label for="instructor-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Instruktur</label>
+			<label for="instructor-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">DPJP</label>
 			<SearchableSelect.Root
 				type="single"
 				bind:value={
@@ -148,7 +165,7 @@
 				<SearchableSelect.Trigger class="w-full text-left">
 					{instructorTrigger}
 				</SearchableSelect.Trigger>
-				<SearchableSelect.Content searchPlaceholder="Cari instruktur...">
+				<SearchableSelect.Content searchPlaceholder="Cari DPJP...">
 					{#each data.instructorOptions as inst (inst.id)}
 						<SearchableSelect.Item value={inst.id} label={inst.name}>{inst.name}</SearchableSelect.Item>
 					{/each}
@@ -323,8 +340,8 @@
 							</Table.Row>
 						{:else}
 							<Table.Row>
-								<Table.Cell colspan={allColumns.length + 2} class="h-24 text-center">
-									Tidak ada data mahasiswa ditemukan.
+								<Table.Cell colspan={allColumns.length + 2} class="h-24 text-center text-muted-foreground">
+									{emptyStateMessage}
 								</Table.Cell>
 							</Table.Row>
 						{/each}

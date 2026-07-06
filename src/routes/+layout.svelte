@@ -1,9 +1,10 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
-	import { onMount } from 'svelte';
 	import { pwaInfo } from 'virtual:pwa-info';
+	import { onMount } from 'svelte';
 	import { Toaster } from 'svelte-sonner';
+	import NavProgress from '@/components/NavProgress.svelte';
+	import favicon from '$lib/assets/favicon.svg';
 	import { ToastProvider } from '$lib/components/toast';
 
 	let { children } = $props();
@@ -34,4 +35,5 @@
 	{@html webManifestLink}
 </svelte:head>
 
+<NavProgress />
 {@render children()}

@@ -131,7 +131,7 @@
 							<Table.Head>Kegiatan & Modul</Table.Head>
 							<Table.Head>Laboratorium</Table.Head>
 							<Table.Head>Waktu Pelaksanaan</Table.Head>
-							<Table.Head>Instruktur</Table.Head>
+							<Table.Head>DPJP</Table.Head>
 							<Table.Head class="text-center">Nilai</Table.Head>
 							<Table.Head>Catatan</Table.Head>
 						</Table.Row>
@@ -208,7 +208,7 @@
 							<Table.Head class="px-6 py-4">Kegiatan & Modul</Table.Head>
 							<Table.Head>Laboratorium</Table.Head>
 							<Table.Head>Waktu Pelaksanaan</Table.Head>
-							<Table.Head>Instruktur</Table.Head>
+							<Table.Head>DPJP</Table.Head>
 							<Table.Head class="text-center">Nilai</Table.Head>
 							<Table.Head>Catatan</Table.Head>
 						</Table.Row>
@@ -299,14 +299,14 @@
 										</div>
 									</Table.Cell>
 
-									<!-- Instruktur -->
+									<!-- DPJP -->
 									<Table.Cell
 										class={cn(
 											expandedItems[item.id] ? 'flex' : 'hidden',
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Instruktur</span>
+										<span class="text-xs font-semibold text-slate-400 md:hidden">DPJP</span>
 										<div class="flex items-center gap-2">
 											<div
 												class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500"

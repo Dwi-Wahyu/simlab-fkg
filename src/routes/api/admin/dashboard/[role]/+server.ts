@@ -209,7 +209,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		case 'instruktur': {
 			const userId = locals.user.id;
 
-			// Jadwal yang diampu instruktur ini
+			// Jadwal yang diampu DPJP ini
 			const myScheduleLinks = await db.query.practicumScheduleInstructor.findMany({
 				where: (s, { eq }) => eq(s.instructorId, userId),
 				with: {
@@ -240,7 +240,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				limit: 5
 			});
 
-			// Logbook terbaru instruktur ini
+			// Logbook terbaru DPJP ini
 			const myLogbooks = await db.query.practicumLogbook.findMany({
 				where: (l, { eq }) => eq(l.userId, userId),
 				orderBy: [desc(practicumLogbook.updatedAt)],

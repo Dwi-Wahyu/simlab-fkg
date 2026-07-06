@@ -115,7 +115,9 @@ async function main() {
 	const rolesToSeed = ['koordinator', 'instruktur', 'teknisi', 'spmi', 'laboran'];
 
 	for (const roleName of rolesToSeed) {
-		const email = `${roleName.toLowerCase()}@unhas.ac.id`;
+		const isInstruktur = roleName === 'instruktur';
+		const prefix = isInstruktur ? 'dpjp' : roleName.toLowerCase();
+		const email = `${prefix}@unhas.ac.id`;
 
 		// Cek apakah user sudah ada
 		const existingUser = await db.query.user.findFirst({
@@ -129,9 +131,9 @@ async function main() {
 			const userResponse = await auth.api.signUpEmail({
 				body: {
 					email: email,
-					username: roleName.toLowerCase(),
+					username: prefix,
 					password: process.env.DEFAULT_PASSWORD ?? 'password',
-					name: faker.person.fullName()
+					name: isInstruktur ? 'DPJP' : faker.person.fullName()
 				}
 			});
 

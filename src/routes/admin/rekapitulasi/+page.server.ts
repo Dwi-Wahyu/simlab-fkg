@@ -1,4 +1,5 @@
 import { db } from '$lib/server/db';
+import { laboratoriumMember } from '$lib/server/db/auth.schema';
 import {
 	practicumSchedule,
 	practicumScheduleInstructor,
@@ -28,19 +29,27 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	});
 
 	const scheduleFilter = labId ? eq(practicumSchedule.laboratoriumId, labId) : undefined;
-	const scopedSchedules = await db.query.practicumSchedule.findMany({
-		where: scheduleFilter,
-		with: { instructors: { with: { user: true } } }
-	});
-	const instructorMap = new Map<string, typeof user.$inferSelect>();
-	for (const s of scopedSchedules) {
-		for (const i of s.instructors) {
-			if (i.user) {
-				instructorMap.set(i.instructorId, i.user);
-			}
-		}
+	let instructorOptions: (typeof user.$inferSelect)[];
+	if (labId) {
+		const memberRows = await db
+			.select({ userId: laboratoriumMember.userId })
+			.from(laboratoriumMember)
+			.where(eq(laboratoriumMember.laboratoriumId, labId));
+		const memberUserIds = memberRows.map((m) => m.userId).filter((id): id is string => !!id);
+
+		instructorOptions = memberUserIds.length
+			? await db.query.user.findMany({
+					where: and(eq(user.role, 'instruktur'), inArray(user.id, memberUserIds)),
+					orderBy: (u, { asc }) => [asc(u.name)]
+				})
+			: [];
+	} else {
+		// superadmin: no lab scoping
+		instructorOptions = await db.query.user.findMany({
+			where: eq(user.role, 'instruktur'),
+			orderBy: (u, { asc }) => [asc(u.name)]
+		});
 	}
-	const instructorOptions = [...instructorMap.values()];
 
 	// 2. Selected instructor/series (query params), default to first available.
 	const instructorId = url.searchParams.get('instructorId') ?? instructorOptions[0]?.id ?? null;
@@ -123,7 +132,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		seriesOptions,
 		instructorId,
 		seriesId,
-		selectedInstructor: instructorMap.get(instructorId) ?? null,
+		selectedInstructor: instructorOptions.find((i) => i.id === instructorId) ?? null,
 		selectedSeries: seriesOptions.find((s) => s.id === seriesId) ?? null,
 		schedules: teachingSchedules,
 		students,

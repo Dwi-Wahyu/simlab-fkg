@@ -434,14 +434,14 @@
 								{#if col.kind === 'single'}
 									<Table.Head
 										rowspan={hasGroupedColumns ? 2 : 1}
-										class="min-w-[120px] max-w-[200px] whitespace-normal break-words px-4 py-3 text-center align-middle font-semibold text-slate-900"
+										class="max-w-[200px] min-w-[120px] px-4 py-3 text-center align-middle font-semibold break-words whitespace-normal text-slate-900"
 									>
 										{col.module.name}
 									</Table.Head>
 								{:else}
 									<Table.Head
 										colspan={col.sub.length}
-										class="max-w-[250px] whitespace-normal break-words border-b px-4 py-2 text-center font-semibold text-slate-900"
+										class="max-w-[250px] border-b px-4 py-2 text-center font-semibold break-words whitespace-normal text-slate-900"
 									>
 										{col.label}
 									</Table.Head>

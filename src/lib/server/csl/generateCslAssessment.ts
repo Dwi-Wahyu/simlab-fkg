@@ -198,7 +198,7 @@ function buildCslBlockXml(data: CslModuleData): string {
 		xml += `
 		<w:p>
 			<w:pPr><w:spacing w:before="120"/></w:pPr>
-			<w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Catatan / Feedback Instruktur:</w:t></w:r>
+			<w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Catatan / Feedback DPJP:</w:t></w:r>
 		</w:p>
 		<w:p>
 			<w:r><w:rPr><w:sz w:val="18"/><w:i/></w:rPr><w:t>"${escapeXml(data.comment)}"</w:t></w:r>

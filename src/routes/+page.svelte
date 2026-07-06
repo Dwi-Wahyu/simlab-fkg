@@ -34,8 +34,8 @@
 		{ name: 'Superadmin', username: 'superadmin', role: 'superadmin' },
 		{ name: 'PJ Mata Kuliah', username: 'koordinator', role: 'koordinator' },
 		{ name: 'Kepala Lab', username: 'kepalalab', role: 'kepalaLab' },
-		{ name: 'Instruktur', username: 'instruktur', role: 'instruktur' },
-		{ name: 'Peneliti (Mhs)', username: 'peneliti', role: 'peneliti' },
+		{ name: 'DPJP', username: 'dpjp', role: 'instruktur' },
+		{ name: 'Mahasiswa', username: 'peneliti', role: 'peneliti' },
 		{ name: 'Teknisi', username: 'teknisi', role: 'teknisi' },
 		{ name: 'SPMI', username: 'spmi', role: 'spmi' },
 		{ name: 'Laboran', username: 'laboran', role: 'laboran' }

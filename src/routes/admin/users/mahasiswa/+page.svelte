@@ -83,7 +83,7 @@
 <div class="flex flex-col gap-6 p-4 md:p-8">
 	<div class="flex flex-col gap-2">
 		<h1 class="text-2xl font-bold tracking-tight text-slate-900">Daftar Mahasiswa</h1>
-		<p class="text-slate-500">Manajemen data mahasiswa peneliti dan penempatan kelas.</p>
+		<p class="text-slate-500">Manajemen data mahasiswa dan penempatan kelas.</p>
 	</div>
 
 	{#await data.studentsPromise}
