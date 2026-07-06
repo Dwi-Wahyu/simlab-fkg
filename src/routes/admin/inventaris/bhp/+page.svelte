@@ -114,6 +114,13 @@
 		totalQty: number;
 		minStock: number;
 		baseUnit: string;
+		stocks?: {
+			id: string;
+			brand: string;
+			variant: string;
+			qty: number;
+			laboratoriumId: string;
+		}[];
 	} | null>(null);
 	let stockEventType = $state<'RECEIVE' | 'ISSUE' | 'ADJUSTMENT'>('RECEIVE');
 	let stockQty = $state<number>(0);
@@ -122,12 +129,42 @@
 	let stockLaboratoriumId = $state('');
 	let laboratoriumList = $state<{ id: string; name: string }[]>([]);
 
-	const isKepalaLab = $derived(data.user?.role === 'kepalaLab');
+	let selectedStockRowId = $state('');
+	let isNewVariant = $state(false);
+	let stockBrand = $state('');
+	let stockVariant = $state('');
+
+	const isRestrictedLabUser = $derived(
+		data.user?.role === 'kepalaLab' || data.user?.role === 'laboran'
+	);
 	const userLabId = $derived(data.user?.laboratorium?.id ?? '');
 
 	$effect(() => {
-		if (isKepalaLab && userLabId) {
+		if (isRestrictedLabUser && userLabId) {
 			stockLaboratoriumId = userLabId;
+		}
+	});
+
+	const activeLabId = $derived(isRestrictedLabUser ? userLabId : stockLaboratoriumId);
+	const currentLabStocks = $derived(
+		stockItem?.stocks?.filter((s) => s.laboratoriumId === activeLabId) ?? []
+	);
+	const selectedStockRow = $derived(
+		currentLabStocks.find((s) => s.id === selectedStockRowId)
+	);
+
+	$effect(() => {
+		if (stockEventType !== 'RECEIVE') {
+			isNewVariant = false;
+			if (currentLabStocks.length > 0 && !currentLabStocks.some((s) => s.id === selectedStockRowId)) {
+				selectedStockRowId = currentLabStocks[0].id;
+			}
+		} else {
+			if (currentLabStocks.length === 0) {
+				isNewVariant = true;
+			} else if (!isNewVariant && !selectedStockRowId) {
+				selectedStockRowId = currentLabStocks[0].id;
+			}
 		}
 	});
 
@@ -140,19 +177,17 @@
 		eventTypeOptions.find((o) => o.value === stockEventType)?.label ?? 'Pilih Tipe'
 	);
 
-	function openStockModal(item: {
-		id: string;
-		name: string;
-		totalQty: number;
-		minStock: number;
-		baseUnit: string;
-	}) {
+	function openStockModal(item: any) {
 		stockItem = item;
 		stockEventType = 'RECEIVE';
 		stockQty = 0;
 		stockNotes = '';
 		stockExpiryDate = '';
-		if (!isKepalaLab && laboratoriumList.length === 0) {
+		stockBrand = '';
+		stockVariant = '';
+		selectedStockRowId = '';
+		isNewVariant = false;
+		if (!isRestrictedLabUser && laboratoriumList.length === 0) {
 			fetch('/api/admin/laboratorium')
 				.then((r) => r.json())
 				.then((labs) => (laboratoriumList = labs));
@@ -162,19 +197,50 @@
 
 	async function submitStockChange() {
 		if (!stockItem || stockQty == null) return;
-		const labId = isKepalaLab ? userLabId : stockLaboratoriumId;
+		const labId = isRestrictedLabUser ? userLabId : stockLaboratoriumId;
 		if (!labId) {
 			toast.destructive('Gagal', { description: 'Pilih laboratorium terlebih dahulu.' });
 			return;
 		}
 
-		// Client-side validation
-		if (stockEventType === 'ISSUE' && stockItem.totalQty - stockQty < 0) {
-			toast.destructive('Stok Tidak Mencukupi', {
-				description: `Stok saat ini hanya ${stockItem.totalQty} ${stockItem.baseUnit}.`
-			});
-			return;
+		let brand = '';
+		let variant = '';
+
+		if (stockEventType === 'RECEIVE') {
+			if (isNewVariant) {
+				brand = stockBrand.trim();
+				variant = stockVariant.trim();
+				if (!brand || !variant) {
+					toast.destructive('Gagal', { description: 'Merk dan Varian baru harus diisi.' });
+					return;
+				}
+			} else {
+				const matched = currentLabStocks.find((s) => s.id === selectedStockRowId);
+				if (!matched) {
+					toast.destructive('Gagal', { description: 'Pilih varian stok terlebih dahulu.' });
+					return;
+				}
+				brand = matched.brand;
+				variant = matched.variant;
+			}
+		} else {
+			const matched = currentLabStocks.find((s) => s.id === selectedStockRowId);
+			if (!matched) {
+				toast.destructive('Gagal', { description: 'Pilih varian stok terlebih dahulu.' });
+				return;
+			}
+			brand = matched.brand;
+			variant = matched.variant;
+
+			if (stockEventType === 'ISSUE' && matched.qty - stockQty < 0) {
+				toast.destructive('Stok Tidak Mencukupi', {
+					description: `Stok untuk varian "${matched.brand} (${matched.variant})" hanya tersisa ${matched.qty} ${stockItem.baseUnit}.`
+				});
+				return;
+			}
 		}
+
+		// Client-side validation
 		if (stockEventType === 'ISSUE' && stockItem.totalQty - stockQty < stockItem.minStock) {
 			toast.destructive('Di Bawah Minimum', {
 				description: `Hasil stok (${stockItem.totalQty - stockQty}) akan di bawah minimum (${stockItem.minStock}).`
@@ -199,7 +265,9 @@
 					qty: stockQty,
 					notes: stockNotes || undefined,
 					laboratoriumId: labId,
-					expiryDate: stockEventType === 'RECEIVE' ? stockExpiryDate || undefined : undefined
+					expiryDate: stockEventType === 'RECEIVE' ? stockExpiryDate || undefined : undefined,
+					brand: brand || undefined,
+					variant: variant || undefined
 				})
 			});
 			if (!res.ok) {
@@ -600,7 +668,7 @@
 	// {stockItem ? description: `${stockItem.name} (Stok: ${stockItem.totalQty} ${stockItem.baseUnit})` : ''}
 >
 	<div class="space-y-4">
-		{#if isKepalaLab}
+		{#if isRestrictedLabUser}
 			<p class="text-sm text-gray-500">
 				Laboratorium: <strong>{data.user?.laboratorium?.name ?? '-'}</strong>
 			</p>
@@ -618,6 +686,75 @@
 						{/each}
 					</Select.Content>
 				</Select.Root>
+			</div>
+		{/if}
+
+		<div class="flex flex-col gap-2">
+			<Label for="stockRowSelect">Merk / Varian Stok</Label>
+			{#if currentLabStocks.length === 0 && stockEventType !== 'RECEIVE'}
+				<div class="text-sm text-red-500 bg-red-50 p-2 rounded border border-red-200">
+					Tidak ada varian/stok yang tersedia di laboratorium ini.
+				</div>
+			{:else}
+				<Select.Root
+					type="single"
+					value={isNewVariant ? 'new' : selectedStockRowId}
+					onValueChange={(val) => {
+						if (val === 'new') {
+							isNewVariant = true;
+							selectedStockRowId = '';
+						} else {
+							isNewVariant = false;
+							selectedStockRowId = val;
+						}
+					}}
+				>
+					<Select.Trigger class="w-full text-left">
+						{isNewVariant
+							? 'Tambah Merk/Varian Baru'
+							: (selectedStockRow
+									? `${selectedStockRow.brand} (${selectedStockRow.variant}) - Sisa: ${selectedStockRow.qty} ${stockItem?.baseUnit}`
+									: 'Pilih Merk/Varian...')}
+					</Select.Trigger>
+					<Select.Content>
+						{#each currentLabStocks as s}
+							<Select.Item
+								value={s.id}
+								label={`${s.brand} (${s.variant}) - Sisa: ${s.qty} ${stockItem?.baseUnit}`}
+							>
+								{s.brand} ({s.variant}) - Sisa: {s.qty} {stockItem?.baseUnit}
+							</Select.Item>
+						{/each}
+						{#if stockEventType === 'RECEIVE'}
+							<Select.Item value="new" label="Tambah Merk/Varian Baru">
+								+ Tambah Merk/Varian Baru
+							</Select.Item>
+						{/if}
+					</Select.Content>
+				</Select.Root>
+			{/if}
+		</div>
+
+		{#if isNewVariant && stockEventType === 'RECEIVE'}
+			<div class="grid grid-cols-2 gap-4">
+				<div class="flex flex-col gap-2">
+					<Label for="stockBrand">Merk / Brand (Contoh: OneMed)</Label>
+					<Input
+						type="text"
+						id="stockBrand"
+						bind:value={stockBrand}
+						placeholder="Masukkan merk..."
+					/>
+				</div>
+				<div class="flex flex-col gap-2">
+					<Label for="stockVariant">Varian / Ukuran (Contoh: 500ml)</Label>
+					<Input
+						type="text"
+						id="stockVariant"
+						bind:value={stockVariant}
+						placeholder="Masukkan varian..."
+					/>
+				</div>
 			</div>
 		{/if}
 

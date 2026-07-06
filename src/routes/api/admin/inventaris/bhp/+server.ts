@@ -39,7 +39,14 @@ export const GET: RequestHandler = async ({ url }) => {
 			totalQty,
 			minStock: i.minStock,
 			status,
-			baseUnit: i.baseUnit
+			baseUnit: i.baseUnit,
+			stocks: i.stocks.map((s) => ({
+				id: s.id,
+				brand: s.brand,
+				variant: s.variant,
+				qty: s.qty,
+				laboratoriumId: s.laboratoriumId
+			}))
 		};
 	});
 

@@ -39,10 +39,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(400, 'Invalid JSON body');
 	}
 
-	const { itemId, eventType, qty, notes, laboratoriumId, warehouseId: reqWarehouseId, expiryDate } = body;
+	const { itemId, eventType, qty, notes, laboratoriumId, warehouseId: reqWarehouseId, expiryDate, brand, variant } = body;
 
 	const parsedExpiryDate = expiryDate && !isNaN(new Date(expiryDate).getTime())
-		? new Date(expiryDate)
+		? new Date(expiryDate).toISOString().slice(0, 10)
 		: null;
 
 	if (!itemId || !eventType || qty == null || !laboratoriumId) {
@@ -76,7 +76,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const [existingStock] = await db
 		.select()
 		.from(stock)
-		.where(and(eq(stock.itemId, itemId), eq(stock.warehouseId, wid)))
+		.where(
+			and(
+				eq(stock.itemId, itemId),
+				eq(stock.laboratoriumId, laboratoriumId),
+				brand ? eq(stock.brand, brand) : sql`(${stock.brand} IS NULL OR ${stock.brand} = '')`,
+				variant ? eq(stock.variant, variant) : sql`(${stock.variant} IS NULL OR ${stock.variant} = '')`
+			)
+		)
 		.limit(1);
 
 	const currentQty = existingStock?.qty ?? 0;
@@ -116,16 +123,30 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				id: stockId,
 				itemId,
 				warehouseId: wid,
-				qty: newQty
+				qty: newQty,
+				laboratoriumId,
+				brand: brand || '',
+				variant: variant || ''
 			});
 		}
+
+		await tx.insert(movement).values({
+			id: movementId,
+			itemId,
+			eventType,
+			qty: movementQty,
+			unit: targetItem.baseUnit,
+			laboratoriumId,
+			notes: notes ?? null,
+			picId: locals.user!.id
+		});
 
 		if (eventType === 'RECEIVE') {
 			await tx.insert(stockBatch).values({
 				stockId,
 				qty,
 				initialQty: qty,
-				expiryDate: parsedExpiryDate,
+				expiryDate: parsedExpiryDate as any,
 				movementId
 			});
 		} else if (eventType === 'ISSUE') {
@@ -145,17 +166,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				await deductFefo(tx, stockId, Math.abs(delta));
 			}
 		}
-
-		await tx.insert(movement).values({
-			id: movementId,
-			itemId,
-			eventType,
-			qty: movementQty,
-			unit: targetItem.baseUnit,
-			laboratoriumId,
-			notes: notes ?? null,
-			picId: locals.user!.id
-		});
 	});
 
 	return json({
