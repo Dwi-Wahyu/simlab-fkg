@@ -54,6 +54,9 @@ export const actions: Actions = {
 		const initialStock = parseInt((formData.get('initialStock') as string) || '0');
 		const condition = (formData.get('condition') as string) || 'baik';
 		const expiryDateRaw = formData.get('expiryDate') as string;
+		const parsedExpiryDate = expiryDateRaw && !isNaN(new Date(expiryDateRaw).getTime())
+			? new Date(expiryDateRaw)
+			: null;
 
 		if (!name || !baseUnit || !labId) {
 			return fail(400, {
@@ -172,7 +175,7 @@ export const actions: Actions = {
 						stockId: stockRowId,
 						qty: initialStock,
 						initialQty: initialStock,
-						expiryDate: expiryDateRaw ? new Date(expiryDateRaw) : null,
+						expiryDate: parsedExpiryDate,
 						movementId
 						// receivedAt: omitted — defaultNow() handles "Tanggal Masuk" automatically
 					});

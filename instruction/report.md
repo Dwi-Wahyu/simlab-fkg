@@ -90,3 +90,12 @@ This report documents the implementation of the batch/lot model for tracked BHP 
   * Modified the main BHP API list query to order results by `desc(fields.createdAt)` inside `findMany`.
   * Modified the individual equipment entries API list query to order entries by `desc(equipment.createdAt)` instead of `equipment.createdAt`.
   * This guarantees that newly created items/entries appear at the top of their respective listing tables.
+
+### 8. Expiry Date Robust Validation (500 Error Fix)
+* **Files:**
+  * `src/routes/api/admin/inventaris/bhp/stock/+server.ts`
+  * `src/routes/admin/inventaris/bhp/tambah/+page.server.ts`
+* **Changes:**
+  * Implemented robust date validation: `const parsedExpiryDate = expiryDate && !isNaN(new Date(expiryDate).getTime()) ? new Date(expiryDate) : null;`.
+  * This prevents the server from attempting to parse empty strings `""` or malformed inputs into `Invalid Date` objects and sending them to the MySQL database, which was resulting in prepared statement insertion crashes (500 errors).
+  * Now, all invalid or missing dates default cleanly to `null` database values.

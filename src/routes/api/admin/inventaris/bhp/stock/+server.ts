@@ -41,6 +41,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const { itemId, eventType, qty, notes, laboratoriumId, warehouseId: reqWarehouseId, expiryDate } = body;
 
+	const parsedExpiryDate = expiryDate && !isNaN(new Date(expiryDate).getTime())
+		? new Date(expiryDate)
+		: null;
+
 	if (!itemId || !eventType || qty == null || !laboratoriumId) {
 		throw error(400, 'itemId, eventType, qty, laboratoriumId required');
 	}
@@ -121,7 +125,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				stockId,
 				qty,
 				initialQty: qty,
-				expiryDate: expiryDate ? new Date(expiryDate) : null,
+				expiryDate: parsedExpiryDate,
 				movementId
 			});
 		} else if (eventType === 'ISSUE') {
