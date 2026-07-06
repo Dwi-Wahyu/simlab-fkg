@@ -97,7 +97,7 @@ export const auth = betterAuth({
 export const LABORATORIUM_SEEDS = [
 	{ name: 'Preparasi (lt 2)', slug: 'preparasi' },
 	{ name: 'Terpadu (lt 4)', slug: 'terpadu' },
-	{ name: 'Frontier Dental Lab Research (lt 4)', slug: 'frontier-dental-lab-research' }
+	{ name: 'Frontier Dental Lab Research (lt 4)', slug: 'frontier_dental_lab_research' }
 ];
 
 async function main() {
