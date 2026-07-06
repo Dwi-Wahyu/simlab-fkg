@@ -206,6 +206,58 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			});
 		}
 
+		case 'laboran': {
+			const labId = locals.user.laboratorium?.id;
+			if (!labId) throw error(400, 'Laboratorium tidak ditemukan untuk user ini');
+
+			const [totalEquip] = await db
+				.select({ value: count() })
+				.from(equipment)
+				.where(eq(equipment.laboratoriumId, labId));
+			const [baik] = await db
+				.select({ value: count() })
+				.from(equipment)
+				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'BAIK')));
+			const [rusak] = await db
+				.select({ value: count() })
+				.from(equipment)
+				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'RUSAK')));
+			const [inUse] = await db
+				.select({ value: count() })
+				.from(equipment)
+				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.status, 'IN_USE')));
+			const [maint] = await db
+				.select({ value: count() })
+				.from(equipment)
+				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.status, 'MAINTENANCE')));
+
+			const latestReport = await db.query.inventoryReport.findFirst({
+				where: (r, { eq }) => eq(r.laboratoriumId, labId),
+				orderBy: [desc(inventoryReport.createdAt)]
+			});
+
+			return json({
+				role: 'laboran',
+				data: {
+					laboratoriumName: locals.user.laboratorium?.name ?? '-',
+					inventorySummary: {
+						totalEquipment: Number(totalEquip.value),
+						baik: Number(baik.value),
+						rusak: Number(rusak.value),
+						inUse: Number(inUse.value),
+						maintenance: Number(maint.value)
+					},
+					latestInventoryReport: latestReport
+						? {
+								id: latestReport.id,
+								status: latestReport.status,
+								createdAt: latestReport.createdAt
+							}
+						: null
+				}
+			});
+		}
+
 		case 'instruktur': {
 			const userId = locals.user.id;
 

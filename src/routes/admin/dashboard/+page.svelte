@@ -7,6 +7,7 @@
 	import PenelitiDashboard from '$lib/components/dashboard/PenelitiDashboard.svelte';
 	import TeknisiDashboard from '$lib/components/dashboard/TeknisiDashboard.svelte';
 	import SpmiDashboard from '$lib/components/dashboard/SpmiDashboard.svelte';
+	import LaboranDashboard from '$lib/components/dashboard/LaboranDashboard.svelte';
 
 	// Skeleton components
 	import SuperadminSkeleton from '$lib/components/dashboard/skeletons/SuperadminSkeleton.svelte';
@@ -16,6 +17,7 @@
 	import PenelitiSkeleton from '$lib/components/dashboard/skeletons/PenelitiSkeleton.svelte';
 	import TeknisiSkeleton from '$lib/components/dashboard/skeletons/TeknisiSkeleton.svelte';
 	import SpmiSkeleton from '$lib/components/dashboard/skeletons/SpmiSkeleton.svelte';
+	import LaboranSkeleton from '$lib/components/dashboard/skeletons/LaboranSkeleton.svelte';
 
 	let { data } = $props();
 	const role = $derived(data.role);
@@ -27,7 +29,8 @@
 		instruktur: 'DPJP / Dosen',
 		peneliti: 'Mahasiswa',
 		teknisi: 'Teknisi',
-		spmi: 'SPMI'
+		spmi: 'SPMI',
+		laboran: 'Laboran'
 	};
 </script>
 
@@ -52,6 +55,8 @@
 			<TeknisiSkeleton />
 		{:else if role === 'spmi'}
 			<SpmiSkeleton />
+		{:else if role === 'laboran'}
+			<LaboranSkeleton />
 		{/if}
 	{:then dashboardData}
 		<!-- Dashboard aktual sesuai role -->
@@ -69,6 +74,8 @@
 			<TeknisiDashboard data={dashboardData.data} />
 		{:else if dashboardData.role === 'spmi'}
 			<SpmiDashboard data={dashboardData.data} />
+		{:else if dashboardData.role === 'laboran'}
+			<LaboranDashboard data={dashboardData.data} />
 		{/if}
 	{:catch err}
 		<div class="rounded-md border border-destructive p-4 text-sm text-destructive">

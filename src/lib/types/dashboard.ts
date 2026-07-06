@@ -7,7 +7,8 @@ export type DashboardRole =
   | 'instruktur'
   | 'peneliti'
   | 'teknisi'
-  | 'spmi';
+  | 'spmi'
+  | 'laboran';
 
 // --- Superadmin ---
 export interface SuperadminDashboardData {
@@ -170,6 +171,23 @@ export interface SpmiDashboardData {
   };
 }
 
+// --- Laboran ---
+export interface LaboranDashboardData {
+  laboratoriumName: string;
+  inventorySummary: {
+    totalEquipment: number;
+    baik: number;
+    rusak: number;
+    inUse: number;
+    maintenance: number;
+  };
+  latestInventoryReport: {
+    id: string;
+    status: string;
+    createdAt: Date;
+  } | null;
+}
+
 // Union type untuk semua dashboard
 export type DashboardData =
   | { role: 'superadmin'; data: SuperadminDashboardData }
@@ -178,4 +196,5 @@ export type DashboardData =
   | { role: 'instruktur'; data: InstrukturDashboardData }
   | { role: 'peneliti'; data: PenelitiDashboardData }
   | { role: 'teknisi'; data: TeknisiDashboardData }
-  | { role: 'spmi'; data: SpmiDashboardData };
+  | { role: 'spmi'; data: SpmiDashboardData }
+  | { role: 'laboran'; data: LaboranDashboardData };

@@ -228,7 +228,7 @@
 				</form>
 
 				<!-- Developer Mode Toggle -->
-				<div class="mt-8 flex justify-center">
+				<!-- <div class="mt-8 flex justify-center">
 					<button
 						type="button"
 						onclick={() => (isDevModeOpen = true)}
@@ -237,7 +237,7 @@
 						<Terminal size={14} />
 						Developer Mode
 					</button>
-				</div>
+				</div> -->
 
 				<!-- Developer Mode Dialog -->
 				<Dialog.Root bind:open={isDevModeOpen}>
