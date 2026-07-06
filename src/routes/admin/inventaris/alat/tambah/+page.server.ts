@@ -46,6 +46,7 @@ export const actions: Actions = {
 		const storageLocation = formData.get('storageLocation') as string;
 		const description = formData.get('description') as string;
 		const qrCodeFile = formData.get('qrCode') as File;
+		const createdAt = formData.get('createdAt') as string;
 
 		// ASSET specific fields
 		const serialNumber = formData.get('serialNumber') as string;
@@ -94,6 +95,8 @@ export const actions: Actions = {
 			isNewItem = false;
 		}
 
+		const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date();
+
 		try {
 			await db.transaction(async (tx) => {
 				if (isNewItem) {
@@ -127,7 +130,8 @@ export const actions: Actions = {
 					laboratoriumId: labId,
 					condition: condition || 'BAIK',
 					status: status || 'READY',
-					storageLocation: storageLocation || null
+					storageLocation: storageLocation || null,
+					createdAt: parsedCreatedAt
 				});
 
 				// Create Movement Entry for Asset
@@ -140,7 +144,7 @@ export const actions: Actions = {
 					laboratoriumId: labId,
 					notes: 'Pendaftaran alat baru',
 					picId: session.id,
-					createdAt: new Date()
+					createdAt: parsedCreatedAt
 				});
 			});
 

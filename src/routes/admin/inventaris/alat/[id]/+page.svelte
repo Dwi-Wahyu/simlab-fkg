@@ -4,30 +4,33 @@
 		AlertCircle,
 		AlertTriangle,
 		CheckCircle,
+		ChevronDown,
+		ChevronLeft,
+		ChevronRight,
+		ChevronsLeft,
+		ChevronsRight,
+		ChevronUp,
 		Database,
+		Edit,
 		Package,
 		Plus,
 		Search,
 		ShieldCheck,
 		Trash2,
-		XCircle,
-		ChevronLeft,
-		ChevronRight,
-		ChevronsLeft,
-		ChevronsRight,
-		ChevronDown,
-		ChevronUp
+		XCircle
 	} from '@lucide/svelte';
+	import { untrack } from 'svelte';
+	import Skeleton from '@/components/ui/skeleton/skeleton.svelte';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page as pageStore } from '$app/state';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import * as Table from '$lib/components/ui/table';
 	import * as Select from '$lib/components/ui/select';
-	import { goto } from '$app/navigation';
-	import { page as pageStore } from '$app/state';
-	import { untrack } from 'svelte';
+	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
-	import Skeleton from '@/components/ui/skeleton/skeleton.svelte';
+	import { toast } from '$lib/components/toast';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 
 	let { data } = $props();
 
@@ -46,6 +49,13 @@
 	let searchQuery = $state(pageStore.url.searchParams.get('search') || '');
 	let debounceTimer: any;
 	let expandedItems = $state<Record<string, boolean>>({});
+	let isDeleteConfirmOpen = $state(false);
+	let equipmentIdToDelete = $state('');
+
+	function openDeleteDialog(id: string) {
+		equipmentIdToDelete = id;
+		isDeleteConfirmOpen = true;
+	}
 
 	function updateUrl(params: Record<string, string | number | undefined>) {
 		const url = new URL(pageStore.url);
@@ -159,16 +169,16 @@
 						<Table.Row class="md:table-row">
 							<Table.Head class="px-6 py-4">Serial Number</Table.Head>
 							<Table.Head>Merk</Table.Head>
-							<Table.Head>Gudang</Table.Head>
-							<Table.Head>Kondisi</Table.Head>
-							<Table.Head>Status</Table.Head>
+							<Table.Head>Lokasi</Table.Head>
+							<Table.Head>Tanggal Ditambahkan</Table.Head>
+							<Table.Head class="text-right">Aksi</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body class="block md:table-row-group">
 						{#if res.equipments.length === 0}
 							<Table.Row class="flex flex-col md:table-row">
 								<Table.Cell
-									colspan={7}
+									colspan={5}
 									class="py-10 text-center text-muted-foreground md:table-cell"
 								>
 									Data tidak ditemukan.
@@ -188,19 +198,6 @@
 												<span class="font-bold text-slate-900 md:font-medium"
 													>{equipment.serialNumber}</span
 												>
-												<Badge
-													variant="outline"
-													class={cn(
-														'px-1.5 py-0.5 text-[9px] md:hidden',
-														equipment.status === 'READY'
-															? 'border-green-200 text-green-600'
-															: equipment.status === 'IN_USE'
-																? 'border-blue-200 text-blue-600'
-																: 'border-red-200 text-red-600'
-													)}
-												>
-													{equipment.status}
-												</Badge>
 											</div>
 										</div>
 										<Button
@@ -223,61 +220,63 @@
 										{equipment.brand}
 									</Table.Cell>
 
-									<!-- Gudang -->
+									<!-- Lokasi -->
 									<Table.Cell
 										class={cn(
 											expandedItems[equipment.id] ? 'flex' : 'hidden',
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Gudang</span>
-										<span class="text-sm text-slate-600">{equipment.warehouseName}</span>
+										<span class="text-xs font-semibold text-slate-400 md:hidden">Lokasi</span>
+										<span class="text-sm text-slate-600">{equipment.storageLocation || '-'}</span>
 									</Table.Cell>
 
-									<!-- Kondisi -->
+									<!-- Tanggal Ditambahkan -->
 									<Table.Cell
 										class={cn(
 											expandedItems[equipment.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:pl-2'
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Kondisi</span>
-										<Badge
-											variant={equipment.condition === 'BAIK'
-												? 'default'
-												: 'destructive'}
-											class={cn(
-												'w-fit',
-												equipment.condition === 'BAIK'
-													? 'bg-green-100 text-green-700 hover:bg-green-100'
-													: 'bg-red-100 text-red-700 hover:bg-red-100'
-											)}
-										>
-											{equipment.condition}
-										</Badge>
-									</Table.Cell>
-
-									<!-- Status (Desktop only) -->
-									<Table.Cell class="hidden md:table-cell md:border-b md:py-4 md:pl-2">
-										<Badge
-											variant="outline"
-											class={equipment.status === 'READY'
-												? 'border-green-200 text-green-600'
-												: equipment.status === 'IN_USE'
-													? 'border-blue-200 text-blue-600'
-													: 'border-red-200 text-red-600'}
-										>
-											{equipment.status}
-										</Badge>
+										<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Ditambahkan</span>
+										<span class="text-sm text-slate-600">
+											{equipment.createdAt
+												? new Date(equipment.createdAt).toLocaleDateString('id-ID', {
+														day: 'numeric',
+														month: 'long',
+														year: 'numeric'
+													})
+												: '-'}
+										</span>
 									</Table.Cell>
 
 									<!-- Aksi -->
-									<!-- <Table.Cell
+									<Table.Cell
 										class={cn(
 											expandedItems[equipment.id] ? 'flex' : 'hidden',
-											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 md:text-right'
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
 										)}
-									></Table.Cell> -->
+									>
+										<span class="text-xs font-semibold text-slate-400 md:hidden">Aksi</span>
+										<div class="flex items-center gap-2 md:justify-end">
+											<Button
+												variant="outline"
+												size="icon"
+												class="h-8 w-8"
+												href="/admin/inventaris/alat/{res.equipment.id}/edit?equipmentId={equipment.id}"
+											>
+												<Edit class="h-4 w-4" />
+											</Button>
+											<Button
+												variant="outline"
+												size="icon"
+												class="h-8 w-8 text-destructive"
+												onclick={() => openDeleteDialog(equipment.id)}
+											>
+												<Trash2 class="h-4 w-4" />
+											</Button>
+										</div>
+									</Table.Cell>
 								</Table.Row>
 							{/each}
 						{/if}
@@ -342,3 +341,26 @@
 		{error.message}
 	{/await}
 </div>
+
+<ConfirmationDialog
+	bind:open={isDeleteConfirmOpen}
+	title="Hapus Alat?"
+	description="Tindakan ini tidak dapat dibatalkan. Menghapus spesifik alat ini akan menghapusnya dari data inventaris."
+	onAction={() => {
+		const formData = new FormData();
+		formData.append('id', equipmentIdToDelete);
+
+		fetch('?/delete', {
+			method: 'POST',
+			body: formData
+		}).then(async (res) => {
+			isDeleteConfirmOpen = false;
+			if (res.ok) {
+				toast.success('Berhasil', { description: 'Alat berhasil dihapus.' });
+				await invalidateAll();
+			} else {
+				toast.destructive('Gagal', { description: 'Gagal menghapus alat. Alat mungkin sudah digunakan di modul lain.' });
+			}
+		});
+	}}
+/>

@@ -41,6 +41,7 @@
 	<div class="fixed top-0 left-0 z-[100] h-[3px] w-full bg-transparent">
 		<div
 			class="h-full bg-primary transition-[width] duration-300 ease-out"
+			class:pulse={!fading}
 			class:opacity-transition={fading}
 			style="width: {width}%; opacity: {fading ? 0 : 1}"
 		></div>
@@ -50,5 +51,12 @@
 <style>
 	.opacity-transition {
 		transition: opacity 200ms ease-out;
+	}
+	.pulse {
+		animation: pulse 1.5s infinite ease-in-out;
+	}
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.5; }
 	}
 </style>

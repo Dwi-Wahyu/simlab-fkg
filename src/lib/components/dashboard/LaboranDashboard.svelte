@@ -1,17 +1,37 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import type { LaboranDashboardData } from '$lib/types/dashboard';
 
 	let { data }: { data: LaboranDashboardData } = $props();
 
 	const inventoryItems = $derived([
-		{ label: 'Total Alat', value: data.inventorySummary.totalEquipment, color: '' },
-		{ label: 'Kondisi Baik', value: data.inventorySummary.baik, color: 'text-green-600' },
-		{ label: 'Kondisi Rusak', value: data.inventorySummary.rusak, color: 'text-red-600' },
-		{ label: 'Sedang Dipakai', value: data.inventorySummary.inUse, color: 'text-blue-600' },
-		{ label: 'Pemeliharaan', value: data.inventorySummary.maintenance, color: 'text-orange-600' }
+		{
+			label: 'Total Alat',
+			value: data.inventorySummary.totalEquipment,
+			color: ''
+		},
+		{
+			label: 'Kondisi Baik',
+			value: data.inventorySummary.baik,
+			color: 'text-green-600'
+		},
+		{
+			label: 'Kondisi Rusak',
+			value: data.inventorySummary.rusak,
+			color: 'text-red-600'
+		},
+		{
+			label: 'Sedang Dipakai',
+			value: data.inventorySummary.inUse,
+			color: 'text-blue-600'
+		},
+		{
+			label: 'Pemeliharaan',
+			value: data.inventorySummary.maintenance,
+			color: 'text-orange-600'
+		}
 	]);
 </script>
 
@@ -51,9 +71,12 @@
 							</Badge>
 						</div>
 						<p class="text-xs text-muted-foreground">
-							Dibuat pada: {new Date(data.latestInventoryReport.createdAt).toLocaleDateString('id-ID', {
-								dateStyle: 'long'
-							})}
+							Dibuat pada: {new Date(data.latestInventoryReport.createdAt).toLocaleDateString(
+								'id-ID',
+								{
+									dateStyle: 'long'
+								}
+							)}
 						</p>
 					</div>
 				{:else}
@@ -66,13 +89,16 @@
 			<Card.Header>
 				<Card.Title>Menu Cepat</Card.Title>
 			</Card.Header>
-			<Card.Content class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-				<Button href="/admin/inventaris" variant="outline" class="justify-start">
-					Kelola Alat & Bahan
+			<Card.Content class="flex flex-col gap-2">
+				<Button href="/admin/inventaris/alat" variant="outline" class="justify-start">
+					Kelola Alat
 				</Button>
-				<Button href="/admin/laporan" variant="outline" class="justify-start">
+				<Button href="/admin/inventaris/bhp" variant="outline" class="justify-start">
+					Stokis Bahan Habis Pakai
+				</Button>
+				<!-- <Button href="/admin/laporan" variant="outline" class="justify-start">
 					Laporan Inventaris
-				</Button>
+				</Button> -->
 			</Card.Content>
 		</Card.Root>
 	</div>

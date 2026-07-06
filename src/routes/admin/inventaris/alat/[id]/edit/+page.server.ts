@@ -8,7 +8,7 @@ import { db } from '$lib/server/db';
 import { item, equipment, equipmentCategory, laboratorium } from '$lib/server/db/schema';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ locals, params }) => {
+export const load: PageServerLoad = async ({ locals, params, url }) => {
 	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const { id } = params;
@@ -18,7 +18,15 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		throw redirect(302, `${base}/admin/inventaris/alat`);
 	}
 
-	const [firstEquipment] = await db.select().from(equipment).where(eq(equipment.itemId, id)).limit(1);
+	const equipmentId = url.searchParams.get('equipmentId');
+	let selectedEquipment = null;
+	if (equipmentId) {
+		const [foundEqp] = await db.select().from(equipment).where(eq(equipment.id, equipmentId)).limit(1);
+		selectedEquipment = foundEqp;
+	} else {
+		const [firstEqp] = await db.select().from(equipment).where(eq(equipment.itemId, id)).limit(1);
+		selectedEquipment = firstEqp;
+	}
 
 	const categories = await db.query.equipmentCategory.findMany();
 	const labs = await db.query.laboratorium.findMany();
@@ -26,7 +34,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	return {
 		user: locals.user,
 		item: existingItem,
-		equipment: firstEquipment || null,
+		equipment: selectedEquipment || null,
 		categories,
 		labs
 	};
@@ -48,6 +56,7 @@ export const actions: Actions = {
 		const removeCurrentQr = formData.get('removeCurrentQr') === 'true';
 
 		// Equipment instance fields
+		const equipmentId = formData.get('equipmentId') as string;
 		const serialNumber = formData.get('serialNumber') as string;
 		const brand = formData.get('brand') as string;
 		const variant = formData.get('variant') as string;
@@ -55,6 +64,7 @@ export const actions: Actions = {
 		const labId = formData.get('laboratoriumId') as string;
 		const condition = formData.get('condition') as any;
 		const status = formData.get('status') as any;
+		const createdAt = formData.get('createdAt') as string;
 
 		if (!name || !baseUnit || !labId) {
 			return fail(400, {
@@ -108,6 +118,8 @@ export const actions: Actions = {
 			await writeFile(join(uploadDir, fileName), Buffer.from(arrayBuffer));
 		}
 
+		const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date();
+
 		try {
 			await db.transaction(async (tx) => {
 				await tx.update(item)
@@ -121,7 +133,10 @@ export const actions: Actions = {
 					})
 					.where(eq(item.id, id));
 
-				const [existingEquipment] = await tx.select().from(equipment).where(eq(equipment.itemId, id)).limit(1);
+				const [existingEquipment] = equipmentId
+					? await tx.select().from(equipment).where(eq(equipment.id, equipmentId)).limit(1)
+					: await tx.select().from(equipment).where(eq(equipment.itemId, id)).limit(1);
+
 				if (existingEquipment) {
 					await tx.update(equipment)
 						.set({
@@ -131,7 +146,8 @@ export const actions: Actions = {
 							storageLocation: storageLocation || null,
 							laboratoriumId: labId,
 							condition: condition || 'BAIK',
-							status: status || 'READY'
+							status: status || 'READY',
+							createdAt: parsedCreatedAt
 						})
 						.where(eq(equipment.id, existingEquipment.id));
 				} else {
@@ -144,7 +160,8 @@ export const actions: Actions = {
 						storageLocation: storageLocation || null,
 						laboratoriumId: labId,
 						condition: condition || 'BAIK',
-						status: status || 'READY'
+						status: status || 'READY',
+						createdAt: parsedCreatedAt
 					});
 				}
 			});

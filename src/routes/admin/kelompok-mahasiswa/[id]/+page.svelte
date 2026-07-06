@@ -18,6 +18,24 @@
 	let filterBatch = $state('');
 	let showAllStudents = $state(false);
 
+	let allStudents = $state<any[]>([]);
+	let loadingAllStudents = $state(false);
+
+	$effect(() => {
+		if (showAllStudents && allStudents.length === 0 && !loadingAllStudents) {
+			loadingAllStudents = true;
+			data.allStudentsPromise
+				.then((students) => {
+					allStudents = students;
+					loadingAllStudents = false;
+				})
+				.catch((err) => {
+					console.error(err);
+					loadingAllStudents = false;
+				});
+		}
+	});
+
 	// Compute list of current member user IDs
 	const memberUserIds = $derived(new Set(data.members.map((m: any) => m.userId)));
 
@@ -25,7 +43,7 @@
 	const availableStudents = $derived.by(() => {
 		// Base list: either all students system-wide or only students in this class
 		let baseList = showAllStudents
-			? data.allStudents
+			? allStudents
 			: data.classMembers.map((cm: any) => cm.user).filter(Boolean);
 
 		// Filter out those who are already members
@@ -62,10 +80,11 @@
 	});
 
 	function handleActionSubmit(actionName: string) {
-		return async ({ result }: any) => {
+		return async ({ result, update }: any) => {
 			if (result.type === 'success' || result.type === 'redirect' || result.data?.success) {
 				const msg = result.data?.message || 'Aksi berhasil dilakukan';
 				toast.success('Berhasil', { description: msg });
+				await update();
 			} else if (result.type === 'failure') {
 				const errMsg = result.data?.message || 'Terjadi kesalahan.';
 				toast.destructive('Gagal', { description: errMsg });
@@ -162,7 +181,16 @@
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
-							{#if availableStudents.length === 0}
+							{#if showAllStudents && loadingAllStudents}
+								<Table.Row>
+									<Table.Cell colspan={2} class="h-24 text-center text-xs text-slate-500">
+										<div class="flex items-center justify-center gap-2">
+											<div class="h-4 w-4 animate-spin rounded-full border-2 border-[#2D5A43] border-t-transparent"></div>
+											Memuat data mahasiswa...
+										</div>
+									</Table.Cell>
+								</Table.Row>
+							{:else if availableStudents.length === 0}
 								<Table.Row>
 									<Table.Cell colspan={2} class="h-24 text-center text-xs text-slate-500">
 										Tidak ada mahasiswa tersedia.

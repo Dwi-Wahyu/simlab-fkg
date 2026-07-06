@@ -10,6 +10,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as SearchableSelect from '$lib/components/ui/searchable-select';
 	import * as Table from '$lib/components/ui/table';
+	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -106,8 +107,7 @@
 			notificationTitle = 'Berhasil';
 			notificationDescription = 'Seri praktikum telah dihapus.';
 			showNotification = true;
-			// Refresh data could be done better with invalidateAll or just let SvelteKit handle the form action
-			window.location.reload();
+			await invalidateAll();
 		});
 	}}
 />
@@ -219,13 +219,14 @@
 			method="POST"
 			action="?/create"
 			use:enhance={() => {
-				return async ({ result }) => {
+				return async ({ result, update }) => {
 					if (result.type === 'success') {
 						isDialogOpen = false;
 						notificationType = 'success';
 						notificationTitle = 'Berhasil';
 						notificationDescription = 'Seri praktikum baru ditambahkan.';
 						showNotification = true;
+						await update();
 					}
 				};
 			}}
@@ -304,13 +305,14 @@
 			method="POST"
 			action="?/update"
 			use:enhance={() => {
-				return async ({ result }) => {
+				return async ({ result, update }) => {
 					if (result.type === 'success') {
 						isEditDialogOpen = false;
 						notificationType = 'success';
 						notificationTitle = 'Berhasil';
 						notificationDescription = 'Seri praktikum diperbarui.';
 						showNotification = true;
+						await update();
 					}
 				};
 			}}

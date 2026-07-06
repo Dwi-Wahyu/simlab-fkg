@@ -48,13 +48,15 @@ export const GET: RequestHandler = async ({ url, params }) => {
 				warehouseName: warehouse.name,
 				warehouseLocation: warehouse.location,
 				itemName: item.name,
-				itemCategory: item.equipmentType
+				itemCategory: item.equipmentType,
+				storageLocation: equipment.storageLocation,
+				createdAt: equipment.createdAt
 			})
 			.from(equipment)
 			.innerJoin(item, eq(equipment.itemId, item.id))
 			.leftJoin(warehouse, eq(equipment.warehouseId, warehouse.id))
 			.where(whereClause)
-			.orderBy(equipment.serialNumber)
+			.orderBy(equipment.createdAt)
 			.limit(limit)
 			.offset(offset);
 

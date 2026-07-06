@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { eq, and, ne } from 'drizzle-orm';
+import { eq, and, ne, like, count } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { base } from '$app/paths';
 import { db } from '$lib/server/db';
@@ -15,31 +15,66 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const classIdParam = url.searchParams.get('classId') || undefined;
+	const page = parseInt(url.searchParams.get('page') || '1');
+	const limit = parseInt(url.searchParams.get('limit') || '10');
+	const search = url.searchParams.get('search') || '';
 
 	const classes = await db.query.practicumClass.findMany({
 		orderBy: (pc, { desc }) => [desc(pc.createdAt)]
 	});
 
-	const whereClause = classIdParam ? eq(kelompokMahasiswa.classId, classIdParam) : undefined;
+	const fetchGroups = async () => {
+		const offset = (page - 1) * limit;
 
-	const groups = await db.query.kelompokMahasiswa.findMany({
-		where: whereClause,
-		with: {
-			class: true,
-			members: {
-				with: {
-					user: true
+		let conditions = [];
+		if (classIdParam) {
+			conditions.push(eq(kelompokMahasiswa.classId, classIdParam));
+		}
+		if (search) {
+			conditions.push(like(kelompokMahasiswa.name, `%${search}%`));
+		}
+
+		const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+		const [totalCountResult] = await db
+			.select({ value: count() })
+			.from(kelompokMahasiswa)
+			.where(whereClause);
+		const totalItems = Number(totalCountResult?.value || 0);
+
+		const items = await db.query.kelompokMahasiswa.findMany({
+			where: whereClause,
+			with: {
+				class: true,
+				members: {
+					with: {
+						user: true
+					}
 				}
+			},
+			orderBy: (km, { desc }) => [desc(km.createdAt)],
+			limit,
+			offset
+		});
+
+		const totalPages = Math.ceil(totalItems / limit) || 1;
+
+		return {
+			items,
+			pagination: {
+				currentPage: page,
+				limit,
+				totalItems,
+				totalPages
 			}
-		},
-		orderBy: (km, { desc }) => [desc(km.createdAt)]
-	});
+		};
+	};
 
 	return {
 		user: locals.user,
-		groups,
 		classes,
-		selectedClassId: classIdParam || ''
+		selectedClassId: classIdParam || '',
+		groupsPromise: fetchGroups()
 	};
 };
 

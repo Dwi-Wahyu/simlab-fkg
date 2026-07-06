@@ -50,17 +50,19 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const batches = batchesResult.map((b) => b.batch).sort();
 
 	// 4. Optionally load all student users (role = 'peneliti') for system-wide assignment
-	const allStudents = await db.query.user.findMany({
-		where: eq(user.role, 'peneliti'),
-		orderBy: (u, { asc }) => [asc(u.name)]
-	});
+	const fetchAllStudents = async () => {
+		return await db.query.user.findMany({
+			where: eq(user.role, 'peneliti'),
+			orderBy: (u, { asc }) => [asc(u.name)]
+		});
+	};
 
 	return {
 		user: locals.user,
 		kelompok,
 		members,
 		classMembers,
-		allStudents,
+		allStudentsPromise: fetchAllStudents(),
 		batches
 	};
 };

@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = ({ fetch, url, params }) => {
+export const load: PageLoad = ({ fetch, url, params, data }) => {
 	const { id } = params;
 
 	const page = url.searchParams.get('page') || '1';
@@ -15,6 +15,7 @@ export const load: PageLoad = ({ fetch, url, params }) => {
 	};
 
 	return {
+		...data,
 		alatPromise: fetchData()
 	};
 };

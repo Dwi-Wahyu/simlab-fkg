@@ -22,6 +22,7 @@
 	let variant = $state('');
 	let storageLocation = $state('');
 	let description = $state('');
+	let createdAt = $state(new Date().toISOString().slice(0, 16));
 
 	// State untuk binding Select (Svelte 5 bind:value)
 	let selectedCategory = $state(''); // Kategori alat (equipmentCategory)
@@ -406,6 +407,18 @@
 						id="storageLocation"
 						bind:value={storageLocation}
 						placeholder="Contoh: Lemari A1"
+					/>
+				</div>
+
+				<!-- Tanggal Ditambahkan -->
+				<div class="flex flex-col gap-2">
+					<Label for="createdAt">Tanggal Ditambahkan</Label>
+					<Input
+						type="datetime-local"
+						name="createdAt"
+						id="createdAt"
+						bind:value={createdAt}
+						required
 					/>
 				</div>
 

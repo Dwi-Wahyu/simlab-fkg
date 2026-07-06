@@ -30,6 +30,11 @@
 	let selectedLab = $state(eqp.laboratoriumId || '');
 	let selectedCondition = $state(eqp.condition || 'BAIK');
 	let selectedStatus = $state(eqp.status || 'READY');
+	let createdAt = $state(
+		eqp.createdAt
+			? new Date(eqp.createdAt).toISOString().slice(0, 16)
+			: new Date().toISOString().slice(0, 16)
+	);
 
 	$effect(() => {
 		selectedCategory = item.categoryId || '';
@@ -38,6 +43,9 @@
 		selectedLab = eqp.laboratoriumId || '';
 		selectedCondition = eqp.condition || 'BAIK';
 		selectedStatus = eqp.status || 'READY';
+		createdAt = eqp.createdAt
+			? new Date(eqp.createdAt).toISOString().slice(0, 16)
+			: new Date().toISOString().slice(0, 16);
 	});
 
 	let qrCodePreview = $state<string | null>(item.qrCodePath);
@@ -189,6 +197,7 @@
 				class="grid grid-cols-1 gap-6 md:grid-cols-2"
 			>
 				<input type="hidden" name="removeCurrentQr" value={removeCurrentQr} />
+				<input type="hidden" name="equipmentId" value={eqp.id || ''} />
 
 				<!-- Nama Item -->
 				<div class="flex flex-col gap-2 md:col-span-2">
@@ -310,6 +319,18 @@
 						id="storageLocation"
 						value={eqp.storageLocation || ''}
 						placeholder="Contoh: Lemari A1"
+					/>
+				</div>
+
+				<!-- Tanggal Ditambahkan -->
+				<div class="flex flex-col gap-2">
+					<Label for="createdAt">Tanggal Ditambahkan</Label>
+					<Input
+						type="datetime-local"
+						name="createdAt"
+						id="createdAt"
+						bind:value={createdAt}
+						required
 					/>
 				</div>
 
