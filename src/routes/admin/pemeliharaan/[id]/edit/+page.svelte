@@ -159,7 +159,11 @@
 				class="space-y-6"
 			>
 				<input type="hidden" name="equipmentId" value={formData.equipmentId} />
-				<input type="hidden" name="existingNota" value={fileName ? data.maintenance.notaFileName || '' : ''} />
+				<input
+					type="hidden"
+					name="existingNota"
+					value={fileName ? data.maintenance.notaFileName || '' : ''}
+				/>
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 					<!-- Equipment (Read-only display) -->
 					<div class="space-y-2">
@@ -363,10 +367,7 @@
 					<Button variant="outline" href="/admin/pemeliharaan" class="h-11 rounded-xl px-6"
 						>Batal</Button
 					>
-					<Button
-						type="submit"
-						class="h-11 gap-2 rounded-xl bg-slate-900 px-8 text-white shadow-sm hover:bg-slate-800"
-					>
+					<Button type="submit" class="h-11 gap-2 rounded-xl px-8 text-white">
 						<Save size={18} />
 						Simpan Perubahan
 					</Button>

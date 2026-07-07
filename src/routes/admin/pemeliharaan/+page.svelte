@@ -5,17 +5,20 @@
 		AlertTriangle,
 		Box,
 		Calendar,
+		CheckCircle2,
 		ChevronDown,
 		ChevronRight,
 		ChevronUp,
 		DollarSign,
 		Edit,
+		FileText,
 		FileUp,
 		Filter,
 		Plus,
 		Trash2,
 		TrendingUp,
-		Wrench
+		Wrench,
+		XCircle
 	} from '@lucide/svelte';
 	import Input from '@/components/ui/input/input.svelte';
 	import { enhance } from '$app/forms';
@@ -25,8 +28,12 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { toast } from '$lib/components/toast';
 
 	let { data } = $props();
 
@@ -146,6 +153,20 @@
 
 	function getItemApproval(itemId: string) {
 		return data.approvals.find((a: any) => a.referenceId === itemId);
+	}
+
+	// Inline approval dialog state
+	let isApproveDialogOpen = $state(false);
+	let selectedApproval = $state<any>(null);
+	let approveActionType = $state<'approve' | 'reject'>('approve');
+	let approveNote = $state('');
+	let isApproveSubmitting = $state(false);
+
+	function openApproveDialog(approval: any, type: 'approve' | 'reject') {
+		selectedApproval = approval;
+		approveActionType = type;
+		approveNote = '';
+		isApproveDialogOpen = true;
 	}
 </script>
 
@@ -359,6 +380,18 @@
 												: 'hidden'} justify-end border-b-0 bg-slate-50/50 p-4 pr-6 md:table-cell md:border-b md:bg-transparent md:p-4 md:pr-6 md:text-right"
 										>
 											<div class="flex w-full justify-end gap-1 md:w-auto">
+												{#if getItemApproval(item.id)?.status === 'PENDING' && ['superadmin', 'kepalaLab'].includes(data.userRole)}
+													<Button
+														size="sm"
+														variant="outline"
+														class="h-8 gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+														onclick={() => openApproveDialog(getItemApproval(item.id), 'approve')}
+														title="Setujui pemeliharaan"
+													>
+														<CheckCircle2 size={14} />
+														<span class="hidden sm:inline">Setujui</span>
+													</Button>
+												{/if}
 												<Button
 													size="icon"
 													variant="ghost"
@@ -730,3 +763,95 @@
 	onAction={handleDelete}
 	onCancel={handleCancelDelete}
 />
+
+<!-- Dialog Persetujuan Inline -->
+<Dialog.Root bind:open={isApproveDialogOpen}>
+	<Dialog.Content class="sm:max-w-[450px]">
+		<form
+			method="POST"
+			action="/admin/pemeliharaan/approval?/review"
+			use:enhance={() => {
+				isApproveSubmitting = true;
+				return async ({ result }) => {
+					isApproveSubmitting = false;
+					if (result.type === 'success') {
+						isApproveDialogOpen = false;
+						toast.success('Persetujuan diproses', {
+							description:
+								approveActionType === 'approve'
+									? 'Pemeliharaan berhasil disetujui.'
+									: 'Pemeliharaan ditolak.'
+						});
+						await invalidateAll();
+					} else if (result.type === 'failure') {
+						toast.destructive('Gagal memproses', {
+							description: (result.data?.message as string) || 'Terjadi kesalahan.'
+						});
+					}
+				};
+			}}
+		>
+			<Dialog.Header>
+				<Dialog.Title class="text-lg font-bold text-slate-900">
+					{approveActionType === 'approve' ? 'Setujui Pemeliharaan' : 'Tolak Pemeliharaan'}
+				</Dialog.Title>
+				<Dialog.Description class="text-sm">
+					Tindakan ini akan memverifikasi hasil pemeliharaan untuk alat: <br />
+					<strong>{selectedApproval?.maintenance?.equipment?.item?.name || 'Tanpa Nama'}</strong>
+				</Dialog.Description>
+			</Dialog.Header>
+
+			<input type="hidden" name="approvalId" value={selectedApproval?.id} />
+			<input type="hidden" name="action" value={approveActionType} />
+
+			<div class="space-y-4 py-4">
+				{#if approveActionType === 'reject' && !selectedApproval?.maintenance?.notaFileName}
+					<div
+						class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
+					>
+						<AlertTriangle class="mt-0.5 size-4 shrink-0 text-amber-600" />
+						<p>Perhatian: Pemeliharaan ini tidak memiliki nota terlampir.</p>
+					</div>
+				{/if}
+				<div class="space-y-1.5">
+					<Label for="approve-note"
+						>Catatan / Komentar {approveActionType === 'reject' ? '*' : '(Opsional)'}</Label
+					>
+					<Textarea
+						id="approve-note"
+						name="note"
+						placeholder={approveActionType === 'reject'
+							? 'Berikan alasan penolakan...'
+							: 'Komentar tambahan...'}
+						required={approveActionType === 'reject'}
+						class="h-20 resize-none text-xs"
+					/>
+				</div>
+			</div>
+
+			<Dialog.Footer>
+				<Button
+					type="button"
+					variant="outline"
+					disabled={isApproveSubmitting}
+					onclick={() => (isApproveDialogOpen = false)}
+				>
+					Batal
+				</Button>
+				<Button
+					type="submit"
+					disabled={isApproveSubmitting}
+					class={approveActionType === 'approve'
+						? 'bg-[#2D5A43] text-white hover:bg-[#234735]'
+						: 'bg-red-600 text-white hover:bg-red-700'}
+				>
+					{isApproveSubmitting
+						? 'Memproses...'
+						: approveActionType === 'approve'
+							? 'Setujui'
+							: 'Tolak'}
+				</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>

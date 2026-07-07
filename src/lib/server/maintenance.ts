@@ -11,7 +11,6 @@ export async function submitMaintenanceForApproval(maintenanceId: string, userId
 	});
 
 	if (!maint) return;
-	if (maint.maintenanceType === 'KALIBRASI') return;
 	if (maint.status !== 'COMPLETED') return;
 
 	// Check if pending approval already exists

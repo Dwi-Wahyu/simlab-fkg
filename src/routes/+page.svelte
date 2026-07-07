@@ -201,14 +201,6 @@
 						</a>
 					</div>
 
-					{#if form?.message}
-						<div
-							class="animate-in rounded-xl bg-red-50 p-4 text-center fade-in slide-in-from-top-2"
-						>
-							<p class="text-sm font-bold text-red-600">{form.message}</p>
-						</div>
-					{/if}
-
 					<!-- Submit CTA -->
 					<div class="pt-2">
 						<button

@@ -77,6 +77,9 @@ export const actions: Actions = {
 			const rawCompletionDate = formData.get('completionDate')?.toString();
 			const rawTechnicianId = formData.get('technicianId')?.toString();
 			const rawCost = formData.get('cost')?.toString();
+			const rawStatus = formData.get('status')?.toString();
+
+			console.log('[pemeliharaan/create] incoming status:', rawStatus, '| completionDate:', rawCompletionDate);
 
 			let finalTechnicianId = rawTechnicianId && rawTechnicianId !== '' ? rawTechnicianId : null;
 			if (locals.user.role === 'teknisi') {

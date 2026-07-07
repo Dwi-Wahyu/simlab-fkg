@@ -128,7 +128,6 @@ async function main() {
 		const email = `kepalalab.${lab.slug}@unhas.ac.id`;
 		const usernameSlug = `kepalalab.${lab.slug}`
 			.replace(/[^a-zA-Z0-9_.]/g, '_')
-			.substring(0, 30)
 			.replace(/[^a-zA-Z0-9]+$/, '');
 
 		let existingUser = await db.query.user.findFirst({
@@ -158,7 +157,12 @@ async function main() {
 				.update(authSchema.account)
 				.set({ password: hashedPwd })
 				.where(eq(authSchema.account.userId, userId));
-			console.log(`  -> User kepalaLab sudah ada, password direset: ${email}`);
+			// Also sync username in case it was previously truncated
+			await db
+				.update(authSchema.user)
+				.set({ username: usernameSlug } as any)
+				.where(eq(authSchema.user.id, userId));
+			console.log(`  -> User kepalaLab sudah ada, password & username direset: ${email}`);
 		}
 
 		await db

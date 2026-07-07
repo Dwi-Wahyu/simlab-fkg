@@ -293,6 +293,8 @@
 								{/each}
 							</Select.Content>
 						</Select.Root>
+						<!-- Explicit hidden input to guarantee status value is submitted in multipart/form-data -->
+						<input type="hidden" name="status" value={formData.status} />
 					</div>
 
 					<!-- Tanggal Selesai -->

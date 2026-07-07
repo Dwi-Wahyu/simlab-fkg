@@ -88,7 +88,7 @@ export const auth = betterAuth({
 			}
 		}),
 		username({
-			maxUsernameLength: 40
+			maxUsernameLength: 60
 		}),
 		apiKey(),
 		organization({
