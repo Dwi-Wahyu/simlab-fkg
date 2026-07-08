@@ -49,22 +49,22 @@
 			path: `/admin/akademik`,
 			icon: GraduationCap,
 			isDropdown: true,
-			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin'],
+			role: ['superadmin', 'koordinator', 'admin'],
 			children: [
 				{
 					name: 'Jadwal & Reservasi',
 					path: `/admin/jadwal-praktikum`,
-					role: ['superadmin', 'koordinator', 'kepalaLab']
+					role: ['superadmin', 'koordinator']
 				},
 				{
 					name: 'Kalender Jadwal',
 					path: `/admin/kalender-jadwal`,
-					role: ['superadmin', 'koordinator', 'kepalaLab']
+					role: ['superadmin', 'koordinator']
 				},
 				{
 					name: 'Praktikum',
 					path: `/admin/master/seri`,
-					role: ['superadmin', 'koordinator', 'kepalaLab']
+					role: ['superadmin', 'koordinator']
 				},
 				{
 					name: 'Penilaian',
@@ -74,22 +74,22 @@
 				{
 					name: 'Rekapitulasi per DPJP',
 					path: `/admin/rekapitulasi`,
-					role: ['superadmin', 'koordinator', 'kepalaLab']
+					role: ['superadmin', 'koordinator']
 				},
 				{
 					name: 'Modul & Materi',
 					path: `/admin/master/modul`,
-					role: ['superadmin', 'koordinator', 'kepalaLab']
+					role: ['superadmin', 'koordinator']
 				},
 				{
 					name: 'Logbook Digital',
 					path: `/admin/logbook`,
-					role: ['superadmin', 'koordinator', 'kepalaLab']
+					role: ['superadmin', 'koordinator']
 				},
 				{
 					name: 'Daftar Mahasiswa',
 					path: `/admin/users/mahasiswa`,
-					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin']
+					role: ['superadmin', 'koordinator', 'admin']
 				},
 				{
 					name: 'Kelompok Mahasiswa',

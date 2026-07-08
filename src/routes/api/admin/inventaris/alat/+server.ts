@@ -1,32 +1,60 @@
-import { json } from '@sveltejs/kit';
-import { count, desc, eq, sql } from 'drizzle-orm';
+import { error, json } from '@sveltejs/kit';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { equipment, item, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+	if (!locals.user) {
+		throw error(401, 'Unauthorized');
+	}
+
+	const user = locals.user;
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '10');
 	const search = url.searchParams.get('search') || '';
 	const offset = (page - 1) * limit;
 
+	// Enforce laboratory filtering based on user role
+	const isRestrictedRole = user.role === 'kepalaLab' || user.role === 'laboran';
+	const queryLabId = url.searchParams.get('laboratoriumId');
+	const targetLabId = isRestrictedRole
+		? (user.laboratorium?.id || 'none')
+		: (queryLabId && queryLabId !== '' && queryLabId !== 'all' ? queryLabId : null);
+
 	// Summary data
-	const [totalResult] = await db.select({ value: count() }).from(equipment);
+	const [totalResult] = await db
+		.select({ value: count() })
+		.from(equipment)
+		.where(targetLabId ? eq(equipment.laboratoriumId, targetLabId) : undefined);
+
 	const [baikResult] = await db
 		.select({ value: count() })
 		.from(equipment)
-		.where(eq(equipment.condition, 'BAIK'));
+		.where(
+			targetLabId
+				? and(eq(equipment.condition, 'BAIK'), eq(equipment.laboratoriumId, targetLabId))
+				: eq(equipment.condition, 'BAIK')
+		);
+
 	const [rusakResult] = await db
 		.select({ value: count() })
 		.from(equipment)
-		.where(eq(equipment.condition, 'RUSAK'));
-	const [readyResult] = await db
-		.select({ value: count() })
-		.from(equipment)
-		.where(eq(equipment.status, 'READY'));
+		.where(
+			targetLabId
+				? and(eq(equipment.condition, 'RUSAK'), eq(equipment.laboratoriumId, targetLabId))
+				: eq(equipment.condition, 'RUSAK')
+		);
 
-	// Per-item aggregated counts
-	const whereClause = search ? sql`${item.name} LIKE ${'%' + search + '%'}` : undefined;
+	// Per-item aggregated counts filter
+	const conditions = [];
+	if (targetLabId) {
+		conditions.push(eq(equipment.laboratoriumId, targetLabId));
+	}
+	if (search) {
+		conditions.push(sql`${item.name} LIKE ${'%' + search + '%'}`);
+	}
+	const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
 	const itemStats = await db
 		.select({
@@ -77,9 +105,9 @@ export const GET: RequestHandler = async ({ url }) => {
 				color: 'text-red-600',
 				icon: 'XCircle'
 			}
-			// { label: 'Ready', value: readyResult.value, color: 'text-emerald-600', icon: 'ShieldCheck' }
 		],
 		items: itemStats,
 		pagination: { totalItems, totalPages, currentPage: page, limit }
 	});
 };
+

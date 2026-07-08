@@ -42,16 +42,34 @@
 		laboratories.find((l) => l.id === selectedExportLabId)?.name ?? 'Pilih Laboratorium'
 	);
 
+	let selectedLabId = $state(pageStore.url.searchParams.get('laboratoriumId') || 'all');
+	const selectedLabName = $derived(
+		laboratories.find((l) => l.id === selectedLabId)?.name ?? 'Semua Laboratorium'
+	);
+
 	onMount(async () => {
-		if (data.user?.role === 'superadmin') {
-			const res = await fetch('/api/admin/laboratorium');
-			if (res.ok) {
-				laboratories = await res.json();
-				if (laboratories.length > 0) {
-					selectedExportLabId = laboratories[0].id;
-				}
+		const res = await fetch('/api/admin/laboratorium');
+		if (res.ok) {
+			laboratories = await res.json();
+			if (data.user?.role === 'superadmin' && laboratories.length > 0) {
+				selectedExportLabId = laboratories[0].id;
 			}
 		}
+	});
+
+	function handleLabChange(newLabId: string | undefined) {
+		if (newLabId === undefined) return;
+		selectedLabId = newLabId;
+		updateUrl({ laboratoriumId: newLabId === 'all' ? '' : newLabId, page: 1 });
+	}
+
+	$effect(() => {
+		const urlLab = pageStore.url.searchParams.get('laboratoriumId') || 'all';
+		untrack(() => {
+			if (selectedLabId !== urlLab) {
+				selectedLabId = urlLab;
+			}
+		});
 	});
 
 	// Map icon strings to components
@@ -191,7 +209,24 @@
 					oninput={handleSearch}
 				/>
 			</div>
-			<div class="flex items-center gap-2">
+			<div class="flex flex-wrap items-center gap-2">
+				{#if !['kepalaLab', 'laboran'].includes(data.user?.role)}
+					<Select.Root
+						type="single"
+						value={selectedLabId}
+						onValueChange={handleLabChange}
+					>
+						<Select.Trigger class="h-10 w-[200px] bg-white">
+							{selectedLabName}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="all" label="Semua Laboratorium">Semua Laboratorium</Select.Item>
+							{#each laboratories as lab}
+								<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				{/if}
 				<Select.Root
 					type="single"
 					value={res.pagination.limit.toString()}
