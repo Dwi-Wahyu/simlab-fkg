@@ -6,9 +6,13 @@ export const load: PageLoad = ({ fetch, url, params, data }) => {
 	const page = url.searchParams.get('page') || '1';
 	const limit = url.searchParams.get('limit') || '10';
 	const search = url.searchParams.get('search') || '';
+	const laboratoriumId = url.searchParams.get('laboratoriumId') || '';
 
 	const fetchData = async () => {
 		const query = new URLSearchParams({ page, limit, search });
+		if (laboratoriumId) {
+			query.set('laboratoriumId', laboratoriumId);
+		}
 		const res = await fetch(`/api/admin/inventaris/alat/${id}/entry?${query.toString()}`);
 		if (!res.ok) throw new Error('Gagal memuat data alat');
 		return await res.json();

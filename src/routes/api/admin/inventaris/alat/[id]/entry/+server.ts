@@ -4,20 +4,35 @@ import { db } from '$lib/server/db';
 import { equipment, item, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url, params }) => {
+export const GET: RequestHandler = async ({ url, params, locals }) => {
+	if (!locals.user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const user = locals.user;
 	const { id } = params;
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '10');
 	const search = url.searchParams.get('search') || '';
 	const offset = (page - 1) * limit;
 
+	// Enforce laboratory filtering based on user role
+	const isRestrictedRole = user.role === 'kepalaLab' || user.role === 'laboran';
+	const queryLabId = url.searchParams.get('laboratoriumId');
+	const targetLabId = isRestrictedRole
+		? (user.laboratorium?.id || 'none')
+		: (queryLabId && queryLabId !== '' && queryLabId !== 'all' ? queryLabId : null);
+
 	try {
 		// Prepare where clause for items
-
-		const baseCondition = eq(equipment.itemId, id);
-		const whereClause = search
-			? and(baseCondition, like(equipment.serialNumber, `%${search}%`))
-			: baseCondition;
+		const conditions = [eq(equipment.itemId, id)];
+		if (targetLabId) {
+			conditions.push(eq(equipment.laboratoriumId, targetLabId));
+		}
+		if (search) {
+			conditions.push(like(equipment.serialNumber, `%${search}%`));
+		}
+		const whereClause = and(...conditions);
 
 		const equipmentData = await db.select().from(item).where(eq(item.id, id));
 
@@ -50,7 +65,8 @@ export const GET: RequestHandler = async ({ url, params }) => {
 				itemName: item.name,
 				itemCategory: item.equipmentType,
 				storageLocation: equipment.storageLocation,
-				createdAt: equipment.createdAt
+				createdAt: equipment.createdAt,
+				laboratoriumId: equipment.laboratoriumId
 			})
 			.from(equipment)
 			.innerJoin(item, eq(equipment.itemId, item.id))

@@ -155,7 +155,7 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				{#if data.user?.role !== 'teknisi'}
+				{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 					<Button href="/admin/inventaris/alat/tambah">
 						<Plus /> Tambah Alat
 					</Button>
@@ -261,7 +261,7 @@
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Aksi</span>
 										<div class="flex items-center gap-2 md:justify-end">
-											{#if data.user?.role !== 'teknisi'}
+											{#if (data.user?.role === 'kepalaLab' || data.user?.role === 'laboran') && data.user?.laboratorium?.id === equipment.laboratoriumId}
 												<Button
 													variant="outline"
 													size="icon"

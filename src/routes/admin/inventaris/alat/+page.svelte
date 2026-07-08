@@ -216,7 +216,7 @@
 						value={selectedLabId}
 						onValueChange={handleLabChange}
 					>
-						<Select.Trigger class="h-10 w-[200px] bg-white">
+						<Select.Trigger class="h-10 w-fit bg-white">
 							{selectedLabName}
 						</Select.Trigger>
 						<Select.Content>
@@ -269,7 +269,7 @@
 					</Button>
 				{/if}
 
-				{#if data.user?.role !== 'teknisi'}
+				{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 					<Button href="/admin/inventaris/alat/tambah">
 						<Plus /> Tambah Alat
 					</Button>
@@ -372,7 +372,7 @@
 										<Button href="/admin/inventaris/alat/{item.id}" size="sm" variant="outline">
 											<Eye /> Detail
 										</Button>
-										{#if data.user?.role !== 'teknisi'}
+										{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 											<Button
 												size="sm"
 												variant="outline"
