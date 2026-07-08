@@ -10,13 +10,18 @@ export const GET: RequestHandler = async ({ url }) => {
 	const search = url.searchParams.get('search') || '';
 	const offset = (page - 1) * limit;
 
+	const queryCategoryId = url.searchParams.get('categoryId');
+
 	const items = await db.query.item.findMany({
 		where: (fields, { eq, and, sql }) => {
-			const baseWhere = eq(fields.type, 'CONSUMABLE');
-			if (search) {
-				return and(baseWhere, sql`${fields.name} LIKE ${'%' + search + '%'}`);
+			const conditions = [eq(fields.type, 'CONSUMABLE')];
+			if (queryCategoryId) {
+				conditions.push(eq(fields.categoryId, queryCategoryId));
 			}
-			return baseWhere;
+			if (search) {
+				conditions.push(sql`${fields.name} LIKE ${'%' + search + '%'}`);
+			}
+			return and(...conditions);
 		},
 		orderBy: (fields, { desc }) => [desc(fields.createdAt)],
 		with: {

@@ -47,9 +47,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		);
 
 	// Per-item aggregated counts filter
+	const queryCategoryId = url.searchParams.get('categoryId');
 	const conditions = [];
 	if (targetLabId) {
 		conditions.push(eq(equipment.laboratoriumId, targetLabId));
+	}
+	if (queryCategoryId) {
+		conditions.push(eq(item.categoryId, queryCategoryId));
 	}
 	if (search) {
 		conditions.push(sql`${item.name} LIKE ${'%' + search + '%'}`);

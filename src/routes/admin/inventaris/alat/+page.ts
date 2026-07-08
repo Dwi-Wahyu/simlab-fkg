@@ -5,11 +5,15 @@ export const load: PageLoad = ({ fetch, url }) => {
 	const limit = url.searchParams.get('limit') || '10';
 	const search = url.searchParams.get('search') || '';
 	const laboratoriumId = url.searchParams.get('laboratoriumId') || '';
+	const categoryId = url.searchParams.get('categoryId') || '';
 
 	const fetchData = async () => {
 		const query = new URLSearchParams({ page, limit, search });
 		if (laboratoriumId) {
 			query.set('laboratoriumId', laboratoriumId);
+		}
+		if (categoryId) {
+			query.set('categoryId', categoryId);
 		}
 		const res = await fetch(`/api/admin/inventaris/alat?${query.toString()}`);
 		if (!res.ok) throw new Error('Gagal memuat data alat');

@@ -1,40 +1,40 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
-	import { Badge } from '$lib/components/ui/badge';
-	import Modal from '$lib/components/Modal.svelte';
-	import * as Select from '$lib/components/ui/select';
-	import { Label } from '$lib/components/ui/label';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import { toast } from '$lib/components/toast';
 	import {
-		Database,
-		ShieldCheck,
 		AlertCircle,
-		Trash2,
-		Search,
-		Plus,
-		MoreHorizontal,
-		FileEdit,
-		Eye,
-		XCircle,
+		ArrowUpDown,
+		ChevronDown,
 		ChevronLeft,
 		ChevronRight,
 		ChevronsLeft,
 		ChevronsRight,
-		ChevronDown,
 		ChevronUp,
-		ArrowUpDown,
-		Download
+		Database,
+		Download,
+		Eye,
+		FileEdit,
+		MoreHorizontal,
+		Plus,
+		Search,
+		ShieldCheck,
+		Trash2,
+		XCircle
 	} from '@lucide/svelte';
-	import { Input } from '$lib/components/ui/input';
-	import { Button } from '$lib/components/ui/button';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { onMount, untrack } from 'svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page as pageStore } from '$app/state';
-	import { untrack } from 'svelte';
+	import Modal from '$lib/components/Modal.svelte';
+	import { toast } from '$lib/components/toast';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as SearchableSelect from '$lib/components/ui/searchable-select';
+	import * as Select from '$lib/components/ui/select';
+	import * as Table from '$lib/components/ui/table';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { cn } from '$lib/utils';
-	import { onMount } from 'svelte';
 
 	let { data } = $props();
 
@@ -44,14 +44,25 @@
 		laboratories.find((l) => l.id === selectedExportLabId)?.name ?? 'Pilih Laboratorium'
 	);
 
+	let categories = $state<any[]>([]);
+	let selectedCategoryId = $state(pageStore.url.searchParams.get('categoryId') || 'all');
+	const selectedCategoryName = $derived(
+		categories.find((c) => c.id === selectedCategoryId)?.name ?? 'Semua Kategori'
+	);
+
 	onMount(async () => {
+		const promises = [fetch('/api/admin/equipment-category')];
 		if (data.user?.role === 'superadmin') {
-			const res = await fetch('/api/admin/laboratorium');
-			if (res.ok) {
-				laboratories = await res.json();
-				if (laboratories.length > 0) {
-					selectedExportLabId = laboratories[0].id;
-				}
+			promises.push(fetch('/api/admin/laboratorium'));
+		}
+		const [catRes, labRes] = await Promise.all(promises);
+		if (catRes.ok) {
+			categories = await catRes.json();
+		}
+		if (labRes && labRes.ok) {
+			laboratories = await labRes.json();
+			if (laboratories.length > 0) {
+				selectedExportLabId = laboratories[0].id;
 			}
 		}
 	});
@@ -98,12 +109,25 @@
 	// Sync searchQuery with URL if it changes externally
 	$effect(() => {
 		const urlSearch = pageStore.url.searchParams.get('search') || '';
+		const urlCat = pageStore.url.searchParams.get('categoryId') || 'all';
 		untrack(() => {
 			if (searchQuery !== urlSearch) {
 				searchQuery = urlSearch;
 			}
+			if (selectedCategoryId !== urlCat) {
+				selectedCategoryId = urlCat;
+			}
 		});
 	});
+
+	function handleCategoryChange(newCategoryId: string | undefined) {
+		if (newCategoryId === undefined) return;
+		selectedCategoryId = newCategoryId;
+		updateUrl({
+			categoryId: newCategoryId === 'all' ? '' : newCategoryId,
+			page: 1
+		});
+	}
 
 	// ─── Ubah Stok Modal ───
 	let showStockModal = $state(false);
@@ -149,14 +173,15 @@
 	const currentLabStocks = $derived(
 		stockItem?.stocks?.filter((s) => s.laboratoriumId === activeLabId) ?? []
 	);
-	const selectedStockRow = $derived(
-		currentLabStocks.find((s) => s.id === selectedStockRowId)
-	);
+	const selectedStockRow = $derived(currentLabStocks.find((s) => s.id === selectedStockRowId));
 
 	$effect(() => {
 		if (stockEventType !== 'RECEIVE') {
 			isNewVariant = false;
-			if (currentLabStocks.length > 0 && !currentLabStocks.some((s) => s.id === selectedStockRowId)) {
+			if (
+				currentLabStocks.length > 0 &&
+				!currentLabStocks.some((s) => s.id === selectedStockRowId)
+			) {
 				selectedStockRowId = currentLabStocks[0].id;
 			}
 		} else {
@@ -199,7 +224,9 @@
 		if (!stockItem || stockQty == null) return;
 		const labId = isRestrictedLabUser ? userLabId : stockLaboratoriumId;
 		if (!labId) {
-			toast.destructive('Gagal', { description: 'Pilih laboratorium terlebih dahulu.' });
+			toast.destructive('Gagal', {
+				description: 'Pilih laboratorium terlebih dahulu.'
+			});
 			return;
 		}
 
@@ -211,13 +238,17 @@
 				brand = stockBrand.trim();
 				variant = stockVariant.trim();
 				if (!brand || !variant) {
-					toast.destructive('Gagal', { description: 'Merk dan Varian baru harus diisi.' });
+					toast.destructive('Gagal', {
+						description: 'Merk dan Varian baru harus diisi.'
+					});
 					return;
 				}
 			} else {
 				const matched = currentLabStocks.find((s) => s.id === selectedStockRowId);
 				if (!matched) {
-					toast.destructive('Gagal', { description: 'Pilih varian stok terlebih dahulu.' });
+					toast.destructive('Gagal', {
+						description: 'Pilih varian stok terlebih dahulu.'
+					});
 					return;
 				}
 				brand = matched.brand;
@@ -226,7 +257,9 @@
 		} else {
 			const matched = currentLabStocks.find((s) => s.id === selectedStockRowId);
 			if (!matched) {
-				toast.destructive('Gagal', { description: 'Pilih varian stok terlebih dahulu.' });
+				toast.destructive('Gagal', {
+					description: 'Pilih varian stok terlebih dahulu.'
+				});
 				return;
 			}
 			brand = matched.brand;
@@ -372,7 +405,27 @@
 					oninput={handleSearch}
 				/>
 			</div>
-			<div class="flex items-center gap-2">
+			<div class="flex flex-wrap items-center gap-2">
+				<SearchableSelect.Root
+					type="single"
+					value={selectedCategoryId}
+					onValueChange={handleCategoryChange}
+				>
+					<SearchableSelect.Trigger class="h-10 w-fit min-w-[200px] bg-white">
+						{selectedCategoryName}
+					</SearchableSelect.Trigger>
+					<SearchableSelect.Content>
+						<SearchableSelect.Item value="all" label="Semua Kategori"
+							>Semua Kategori</SearchableSelect.Item
+						>
+						{#each categories as cat}
+							<SearchableSelect.Item value={cat.id} label={cat.name}
+								>{cat.name}</SearchableSelect.Item
+							>
+						{/each}
+					</SearchableSelect.Content>
+				</SearchableSelect.Root>
+
 				<Select.Root
 					type="single"
 					value={res.pagination.limit.toString()}
@@ -391,7 +444,7 @@
 				{#if data.user?.role === 'superadmin'}
 					<div class="flex items-center gap-2">
 						<Select.Root type="single" bind:value={selectedExportLabId}>
-							<Select.Trigger class="w-[200px] h-10 bg-white">
+							<Select.Trigger class="h-10 w-40 bg-white">
 								{exportLabName}
 							</Select.Trigger>
 							<Select.Content>
@@ -400,18 +453,23 @@
 								{/each}
 							</Select.Content>
 						</Select.Root>
-						<Button href="/admin/laporan/inventaris/export?labId={selectedExportLabId}" variant="outline" class="gap-2" disabled={!selectedExportLabId}>
-							<Download class="size-4" /> Export XLSX
+						<Button
+							href="/admin/laporan/inventaris/export?labId={selectedExportLabId}"
+							variant="outline"
+							class="gap-2"
+							disabled={!selectedExportLabId}
+						>
+							<Download class="size-4" /> Export
 						</Button>
 					</div>
 				{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 					<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
-						<Download class="size-4" /> Export XLSX
+						<Download class="size-4" /> Export
 					</Button>
 				{/if}
 
 				<Button href="/admin/inventaris/bhp/tambah">
-					<Plus /> Tambah Bahan
+					<Plus /> Tambah BHP
 				</Button>
 			</div>
 		</div>
@@ -692,7 +750,7 @@
 		<div class="flex flex-col gap-2">
 			<Label for="stockRowSelect">Merk / Varian Stok</Label>
 			{#if currentLabStocks.length === 0 && stockEventType !== 'RECEIVE'}
-				<div class="text-sm text-red-500 bg-red-50 p-2 rounded border border-red-200">
+				<div class="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-500">
 					Tidak ada varian/stok yang tersedia di laboratorium ini.
 				</div>
 			{:else}
@@ -712,9 +770,9 @@
 					<Select.Trigger class="w-full text-left">
 						{isNewVariant
 							? 'Tambah Merk/Varian Baru'
-							: (selectedStockRow
-									? `${selectedStockRow.brand} (${selectedStockRow.variant}) - Sisa: ${selectedStockRow.qty} ${stockItem?.baseUnit}`
-									: 'Pilih Merk/Varian...')}
+							: selectedStockRow
+								? `${selectedStockRow.brand} (${selectedStockRow.variant}) - Sisa: ${selectedStockRow.qty} ${stockItem?.baseUnit}`
+								: 'Pilih Merk/Varian...'}
 					</Select.Trigger>
 					<Select.Content>
 						{#each currentLabStocks as s}
@@ -722,7 +780,8 @@
 								value={s.id}
 								label={`${s.brand} (${s.variant}) - Sisa: ${s.qty} ${stockItem?.baseUnit}`}
 							>
-								{s.brand} ({s.variant}) - Sisa: {s.qty} {stockItem?.baseUnit}
+								{s.brand} ({s.variant}) - Sisa: {s.qty}
+								{stockItem?.baseUnit}
 							</Select.Item>
 						{/each}
 						{#if stockEventType === 'RECEIVE'}

@@ -6,12 +6,16 @@
 		ChevronsLeft,
 		ChevronsRight,
 		ChevronUp,
-		Search
+		Search,
+		Trash2
 	} from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import Skeleton from '@/components/ui/skeleton/skeleton.svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page as pageStore } from '$app/state';
+	import { enhance } from '$app/forms';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import { toast } from '$lib/components/toast';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -24,6 +28,11 @@
 	let searchQuery = $state(pageStore.url.searchParams.get('search') || '');
 	let debounceTimer: any;
 	let expandedItems = $state<Record<string, boolean>>({});
+
+	let showDeleteModal = $state(false);
+	let selectedBatchId = $state<string | null>(null);
+	let deleteLoading = $state(false);
+	let deleteForm = $state<HTMLFormElement>();
 
 	function updateUrl(params: Record<string, string | number | undefined>) {
 		const url = new URL(pageStore.url);
@@ -64,9 +73,7 @@
 
 	function expiryStatus(expiryDate: string | null) {
 		if (!expiryDate) return { label: 'Tidak Kedaluwarsa', variant: 'secondary' as const };
-		const days = Math.ceil(
-			(new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-		);
+		const days = Math.ceil((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 		if (days < 0) return { label: 'Kedaluwarsa', variant: 'destructive' as const };
 		if (days <= 3) return { label: `${days} hari lagi`, variant: 'destructive' as const };
 		if (days <= 14) return { label: `${days} hari lagi`, variant: 'default' as const };
@@ -112,7 +119,7 @@
 			<div class="relative w-full max-w-sm">
 				<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
 				<Input
-					placeholder="Cari berdasarkan lab..."
+					placeholder="Cari merk/varian..."
 					class="pl-10"
 					bind:value={searchQuery}
 					oninput={handleSearch}
@@ -148,7 +155,8 @@
 							<Table.Head>Tanggal Masuk</Table.Head>
 							<Table.Head>Tanggal Kedaluwarsa</Table.Head>
 							<Table.Head>Status</Table.Head>
-							<Table.Head>Lab/Gudang</Table.Head>
+							<Table.Head>Lab</Table.Head>
+							<Table.Head class="pr-6 text-right">Aksi</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body class="block md:table-row-group">
@@ -203,7 +211,8 @@
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Sisa Jumlah</span>
 										<span class="text-sm text-slate-600">
-											{batch.qty} / {batch.initialQty} {res.item.baseUnit}
+											{batch.qty} / {batch.initialQty}
+											{res.item.baseUnit}
 										</span>
 									</Table.Cell>
 
@@ -214,7 +223,8 @@
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Masuk</span>
+										<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Masuk</span
+										>
 										<span class="text-sm text-slate-600">
 											{batch.receivedAt
 												? new Date(batch.receivedAt).toLocaleDateString('id-ID', {
@@ -233,7 +243,9 @@
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Kedaluwarsa</span>
+										<span class="text-xs font-semibold text-slate-400 md:hidden"
+											>Tanggal Kedaluwarsa</span
+										>
 										<span class="text-sm text-slate-600">
 											{batch.expiryDate
 												? new Date(batch.expiryDate).toLocaleDateString('id-ID', {
@@ -271,6 +283,29 @@
 										<span class="text-sm text-slate-600">
 											{batch.laboratoriumName || batch.warehouseName || '-'}
 										</span>
+									</Table.Cell>
+
+									<!-- Aksi -->
+									<Table.Cell
+										class={cn(
+											expandedItems[batch.id] ? 'flex' : 'hidden',
+											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:text-right'
+										)}
+									>
+										{#if data.user?.role === 'superadmin' || (['kepalaLab', 'laboran'].includes(data.user?.role ?? '') && data.user?.laboratorium?.id === batch.laboratoriumId)}
+											<Button
+												variant="destructive"
+												size="sm"
+												class="h-8 gap-1"
+												onclick={() => {
+													selectedBatchId = batch.id;
+													showDeleteModal = true;
+												}}
+											>
+												<Trash2 class="size-4" />
+												<span class="hidden md:inline">Hapus</span>
+											</Button>
+										{/if}
 									</Table.Cell>
 								</Table.Row>
 							{/each}
@@ -336,3 +371,38 @@
 		</div>
 	{/await}
 </div>
+
+<form
+	method="POST"
+	action="?/deleteBatch"
+	use:enhance={() => {
+		deleteLoading = true;
+		return async ({ result }) => {
+			deleteLoading = false;
+			showDeleteModal = false;
+			selectedBatchId = null;
+			if (result.type === 'success') {
+				toast.success('Berhasil', { description: 'Batch berhasil dihapus' });
+				await invalidateAll();
+			} else {
+				toast.error('Gagal', { description: result.data?.message || 'Terjadi kesalahan' });
+			}
+		};
+	}}
+	bind:this={deleteForm}
+>
+	<input type="hidden" name="batchId" value={selectedBatchId || ''} />
+</form>
+
+<ConfirmationDialog
+	bind:open={showDeleteModal}
+	type="error"
+	title="Hapus Batch Stok?"
+	description="Tindakan ini tidak dapat dibatalkan. Batch stok ini akan dihapus secara permanen dan total stok akan disesuaikan."
+	actionLabel="Hapus Batch"
+	cancelLabel="Batal"
+	loading={deleteLoading}
+	onAction={() => {
+		deleteForm?.requestSubmit();
+	}}
+/>

@@ -30,6 +30,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Input } from '$lib/components/ui/input';
+	import * as SearchableSelect from '$lib/components/ui/searchable-select';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
@@ -47,13 +48,25 @@
 		laboratories.find((l) => l.id === selectedLabId)?.name ?? 'Semua Laboratorium'
 	);
 
+	let categories = $state<any[]>([]);
+	let selectedCategoryId = $state(pageStore.url.searchParams.get('categoryId') || 'all');
+	const selectedCategoryName = $derived(
+		categories.find((c) => c.id === selectedCategoryId)?.name ?? 'Semua Kategori'
+	);
+
 	onMount(async () => {
-		const res = await fetch('/api/admin/laboratorium');
+		const [res, catRes] = await Promise.all([
+			fetch('/api/admin/laboratorium'),
+			fetch('/api/admin/equipment-category')
+		]);
 		if (res.ok) {
 			laboratories = await res.json();
 			if (data.user?.role === 'superadmin' && laboratories.length > 0) {
 				selectedExportLabId = laboratories[0].id;
 			}
+		}
+		if (catRes.ok) {
+			categories = await catRes.json();
 		}
 	});
 
@@ -63,11 +76,24 @@
 		updateUrl({ laboratoriumId: newLabId === 'all' ? '' : newLabId, page: 1 });
 	}
 
+	function handleCategoryChange(newCategoryId: string | undefined) {
+		if (newCategoryId === undefined) return;
+		selectedCategoryId = newCategoryId;
+		updateUrl({
+			categoryId: newCategoryId === 'all' ? '' : newCategoryId,
+			page: 1
+		});
+	}
+
 	$effect(() => {
 		const urlLab = pageStore.url.searchParams.get('laboratoriumId') || 'all';
+		const urlCat = pageStore.url.searchParams.get('categoryId') || 'all';
 		untrack(() => {
 			if (selectedLabId !== urlLab) {
 				selectedLabId = urlLab;
+			}
+			if (selectedCategoryId !== urlCat) {
+				selectedCategoryId = urlCat;
 			}
 		});
 	});
@@ -210,12 +236,27 @@
 				/>
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
+				<SearchableSelect.Root
+					type="single"
+					value={selectedCategoryId}
+					onValueChange={handleCategoryChange}
+				>
+					<SearchableSelect.Trigger class="h-10 w-fit min-w-[200px] bg-white">
+						{selectedCategoryName}
+					</SearchableSelect.Trigger>
+					<SearchableSelect.Content>
+						<SearchableSelect.Item value="all" label="Semua Kategori"
+							>Semua Kategori</SearchableSelect.Item
+						>
+						{#each categories as cat}
+							<SearchableSelect.Item value={cat.id} label={cat.name}
+								>{cat.name}</SearchableSelect.Item
+							>
+						{/each}
+					</SearchableSelect.Content>
+				</SearchableSelect.Root>
 				{#if !['kepalaLab', 'laboran'].includes(data.user?.role)}
-					<Select.Root
-						type="single"
-						value={selectedLabId}
-						onValueChange={handleLabChange}
-					>
+					<Select.Root type="single" value={selectedLabId} onValueChange={handleLabChange}>
 						<Select.Trigger class="h-10 w-fit bg-white">
 							{selectedLabName}
 						</Select.Trigger>
@@ -245,7 +286,7 @@
 				{#if data.user?.role === 'superadmin'}
 					<div class="flex items-center gap-2">
 						<Select.Root type="single" bind:value={selectedExportLabId}>
-							<Select.Trigger class="h-10 w-[200px] bg-white">
+							<Select.Trigger class="h-10 w-40 bg-white">
 								{exportLabName}
 							</Select.Trigger>
 							<Select.Content>
@@ -260,12 +301,12 @@
 							class="gap-2"
 							disabled={!selectedExportLabId}
 						>
-							<Download class="size-4" /> Export XLSX
+							<Download class="size-4" /> Export
 						</Button>
 					</div>
 				{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 					<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
-						<Download class="size-4" /> Export XLSX
+						<Download class="size-4" /> Export
 					</Button>
 				{/if}
 

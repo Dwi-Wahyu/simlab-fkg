@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
-import { and, count, eq, like, sql, desc } from 'drizzle-orm';
+import { and, count, desc, eq, like, or, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { stockBatch, stock, item, warehouse, laboratorium } from '$lib/server/db/schema';
+import { item, laboratorium, stock, stockBatch, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, params }) => {
@@ -19,7 +19,14 @@ export const GET: RequestHandler = async ({ url, params }) => {
 
 		const baseCondition = eq(stock.itemId, id);
 		const whereClause = search
-			? and(baseCondition, like(laboratorium.name, `%${search}%`))
+			? and(
+					baseCondition,
+					or(
+						like(laboratorium.name, `%${search}%`),
+						like(stock.brand, `%${search}%`),
+						like(stock.variant, `%${search}%`)
+					)
+				)
 			: baseCondition;
 
 		const [totalItemsResult] = await db
@@ -40,6 +47,7 @@ export const GET: RequestHandler = async ({ url, params }) => {
 				expiryDate: stockBatch.expiryDate,
 				receivedAt: stockBatch.receivedAt, // "Tanggal Masuk"
 				laboratoriumName: laboratorium.name,
+				laboratoriumId: stock.laboratoriumId,
 				warehouseName: warehouse.name,
 				brand: stock.brand,
 				variant: stock.variant
