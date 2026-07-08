@@ -33,7 +33,7 @@
 	let selectedLab = $state(
 		isRestrictedLabUser && data.user?.laboratorium?.id
 			? data.user.laboratorium.id
-			: (eqp.laboratoriumId || '')
+			: eqp.laboratoriumId || ''
 	);
 	let selectedCondition = $state(eqp.condition || 'BAIK');
 	let selectedStatus = $state(eqp.status || 'READY');
@@ -225,7 +225,7 @@
 
 				<!-- Kategori Keluarga Alat (equipmentCategory) -->
 				<div class="flex flex-col gap-2">
-					<Label for="categoryId">Kategori Keluarga Alat (Opsional)</Label>
+					<Label for="categoryId">Kategori Alat (Opsional)</Label>
 					<Select.Root type="single" bind:value={selectedCategory}>
 						<Select.Trigger class="w-full text-left">
 							{categoryTrigger}

@@ -116,8 +116,8 @@
 
 	{#await data.alatPromise}
 		<!-- Skeleton Summary Cards -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-			{#each Array(4) as _}
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{#each Array(3) as _}
 				<Card.Root>
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
 						<div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
@@ -165,7 +165,7 @@
 		</div>
 	{:then res}
 		<!-- Summary Cards -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{#each res.summary as card}
 				<Card.Root>
 					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">

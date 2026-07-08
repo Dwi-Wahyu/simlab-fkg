@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { count, eq, sql, desc } from 'drizzle-orm';
+import { count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { equipment, item, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
@@ -59,7 +59,12 @@ export const GET: RequestHandler = async ({ url }) => {
 
 	return json({
 		summary: [
-			{ label: 'Total Alat', value: totalResult.value, color: 'text-blue-600', icon: 'Package' },
+			{
+				label: 'Total Alat',
+				value: totalResult.value,
+				color: 'text-blue-600',
+				icon: 'Package'
+			},
 			{
 				label: 'Kondisi Baik',
 				value: baikResult.value,
@@ -71,8 +76,8 @@ export const GET: RequestHandler = async ({ url }) => {
 				value: rusakResult.value,
 				color: 'text-red-600',
 				icon: 'XCircle'
-			},
-			{ label: 'Ready', value: readyResult.value, color: 'text-emerald-600', icon: 'ShieldCheck' }
+			}
+			// { label: 'Ready', value: readyResult.value, color: 'text-emerald-600', icon: 'ShieldCheck' }
 		],
 		items: itemStats,
 		pagination: { totalItems, totalPages, currentPage: page, limit }
