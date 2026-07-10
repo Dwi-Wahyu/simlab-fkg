@@ -315,6 +315,14 @@
 			stockLoading = false;
 		}
 	}
+
+	function isNewItem(createdAt: string | Date | null | undefined): boolean {
+		if (!createdAt) return false;
+		const createdDate = new Date(createdAt);
+		const now = new Date();
+		const diffTime = now.getTime() - createdDate.getTime();
+		return diffTime > 0 && diffTime <= 24 * 60 * 60 * 1000;
+	}
 </script>
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
@@ -520,6 +528,9 @@
 										<div class="flex flex-col">
 											<div class="flex items-center gap-2">
 												<span class="font-bold text-slate-900 md:font-medium">{item.name}</span>
+												{#if isNewItem(item.createdAt)}
+													<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
+												{/if}
 												<Badge
 													variant={item.status === 'AMAN'
 														? 'default'

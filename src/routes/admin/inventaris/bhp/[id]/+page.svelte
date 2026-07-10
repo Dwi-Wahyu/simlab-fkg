@@ -82,6 +82,14 @@
 		});
 	});
 
+	function isNewItem(createdAt: string | Date | null | undefined): boolean {
+		if (!createdAt) return false;
+		const createdDate = new Date(createdAt);
+		const now = new Date();
+		const diffTime = now.getTime() - createdDate.getTime();
+		return diffTime > 0 && diffTime <= 24 * 60 * 60 * 1000;
+	}
+
 	function expiryStatus(expiryDate: string | null) {
 		if (!expiryDate) return { label: 'Tidak Kedaluwarsa', variant: 'secondary' as const };
 		const days = Math.ceil((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -201,13 +209,18 @@
 										class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
 									>
 										<div class="flex flex-col">
-											<span class="font-bold text-slate-900 md:font-medium">
-												{#if batch.brand || batch.variant}
-													{batch.brand || '-'} {batch.variant ? `(${batch.variant})` : ''}
-												{:else}
-													-
+											<div class="flex items-center gap-2">
+												<span class="font-bold text-slate-900 md:font-medium">
+													{#if batch.brand || batch.variant}
+														{batch.brand || '-'} {batch.variant ? `(${batch.variant})` : ''}
+													{:else}
+														-
+													{/if}
+												</span>
+												{#if isNewItem(batch.createdAt)}
+													<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
 												{/if}
-											</span>
+											</div>
 										</div>
 										<Button
 											variant="ghost"

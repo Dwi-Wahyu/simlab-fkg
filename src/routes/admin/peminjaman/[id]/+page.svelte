@@ -1,31 +1,31 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Label } from '$lib/components/ui/label';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import * as Select from '$lib/components/ui/select';
-	import { Separator } from '$lib/components/ui/separator';
 	import {
+		AlertCircle,
 		ArrowLeft,
 		Calendar,
-		Clock,
-		User,
-		Package,
-		FileText,
 		Camera,
 		CheckCircle2,
-		XCircle,
-		AlertCircle,
-		MessageSquare,
-		Edit,
 		ChevronLeft,
-		Trash2
+		Clock,
+		Edit,
+		FileText,
+		MessageSquare,
+		Package,
+		Trash2,
+		User,
+		XCircle
 	} from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { goto, invalidateAll } from '$app/navigation';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
+	import { Separator } from '$lib/components/ui/separator';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { cn } from '$lib/utils';
 
 	let { data } = $props();
@@ -92,16 +92,36 @@
 		}).format(new Date(date));
 	};
 
+	function mapRole(role: string | null | undefined): string {
+		if (!role) return '';
+		const lower = role.toLowerCase();
+		if (lower === 'instruktur') return 'Dosen';
+		if (lower === 'peneliti') return 'Mahasiswa';
+		return role.charAt(0).toUpperCase() + role.slice(1);
+	}
+
 	const getStatusBadge = (status: string) => {
 		switch (status) {
 			case 'APPROVED':
-				return { label: 'Disetujui', class: 'bg-green-100 text-green-700 border-green-200' };
+				return {
+					label: 'Disetujui',
+					class: 'bg-green-100 text-green-700 border-green-200'
+				};
 			case 'DIPINJAM':
-				return { label: 'Sedang Dipinjam', class: 'bg-blue-100 text-blue-700 border-blue-200' };
+				return {
+					label: 'Sedang Dipinjam',
+					class: 'bg-blue-100 text-blue-700 border-blue-200'
+				};
 			case 'RETURNED':
-				return { label: 'Dikembalikan', class: 'bg-slate-100 text-slate-700 border-slate-200' };
+				return {
+					label: 'Dikembalikan',
+					class: 'bg-slate-100 text-slate-700 border-slate-200'
+				};
 			case 'REJECTED':
-				return { label: 'Ditolak', class: 'bg-red-100 text-red-700 border-red-200' };
+				return {
+					label: 'Ditolak',
+					class: 'bg-red-100 text-red-700 border-red-200'
+				};
 			default:
 				return { label: status, class: '' };
 		}
@@ -321,19 +341,16 @@
 									} else {
 										notificationType = 'error';
 										notificationTitle = 'Gagal';
-										notificationDescription = (result as any).data?.message || 'Terjadi kesalahan saat menghapus peminjaman.';
+										notificationDescription =
+											(result as any).data?.message ||
+											'Terjadi kesalahan saat menghapus peminjaman.';
 										showNotification = true;
 									}
 								};
 							}}
 						>
-							<Button
-								type="button"
-								variant="destructive"
-								class="gap-2 rounded-xl bg-red-600 hover:bg-red-700"
-								onclick={() => (showDeleteDialog = true)}
-							>
-								<Trash2 class="size-4" />
+							<Button type="button" variant="destructive" onclick={() => (showDeleteDialog = true)}>
+								<Trash2 />
 								Hapus Peminjaman
 							</Button>
 						</form>
@@ -408,7 +425,7 @@
 									{data.lending.requestedByUser?.name}
 								</p>
 								<p class="text-[10px] tracking-tight text-slate-500 uppercase">
-									{data.lending.requestedByUser?.role}
+									{mapRole(data.lending.requestedByUser?.role)}
 								</p>
 							</div>
 						</div>
@@ -478,7 +495,7 @@
 									</Badge>
 								</div>
 							</div>
-							
+
 							{#if data.lending.nomorSurat || data.lending.surat}
 								<div class="grid gap-4 sm:grid-cols-2">
 									{#if data.lending.nomorSurat}
@@ -487,15 +504,15 @@
 											<p class="text-sm font-medium text-slate-900">{data.lending.nomorSurat}</p>
 										</div>
 									{/if}
-									
+
 									{#if data.lending.surat}
 										<div class="space-y-1">
 											<Label>Surat Pengajuan</Label>
 											<div class="mt-1">
-												<Button 
-													variant="outline" 
-													size="sm" 
-													href="/uploads/letter/{data.lending.surat}" 
+												<Button
+													variant="outline"
+													size="sm"
+													href="/uploads/letter/{data.lending.surat}"
 													target="_blank"
 													class="gap-2"
 												>

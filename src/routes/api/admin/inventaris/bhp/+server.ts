@@ -41,6 +41,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		return {
 			id: i.id,
 			name: i.name,
+			createdAt: i.createdAt,
 			totalQty,
 			minStock: i.minStock,
 			status,

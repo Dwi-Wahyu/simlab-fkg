@@ -32,6 +32,14 @@
 		});
 	};
 
+	function mapRole(role: string | null | undefined): string {
+		if (!role) return '';
+		const lower = role.toLowerCase();
+		if (lower === 'instruktur') return 'Dosen';
+		if (lower === 'peneliti') return 'Mahasiswa';
+		return role.charAt(0).toUpperCase() + role.slice(1);
+	}
+
 	// --- ADMIN STATE & LOGIC ---
 	let activeTab = $state('semua');
 	let search = $state('');
@@ -669,7 +677,7 @@
 										</Badge>
 									</div>
 									<div class="mt-0.5 text-xs text-muted-foreground uppercase">
-										{lending.requestedByUser?.role}
+										{mapRole(lending.requestedByUser?.role)}
 									</div>
 								</div>
 								<Button

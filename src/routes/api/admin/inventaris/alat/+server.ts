@@ -65,6 +65,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			id: item.id,
 			name: item.name,
 			equipmentType: item.equipmentType,
+			createdAt: item.createdAt,
 			total: count(),
 			baik: count(sql`CASE WHEN ${equipment.condition} = 'BAIK' THEN 1 END`),
 			rusak: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK' THEN 1 END`),

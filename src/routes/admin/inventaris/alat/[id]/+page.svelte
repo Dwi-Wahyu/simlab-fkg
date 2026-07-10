@@ -93,6 +93,14 @@
 			}
 		});
 	});
+
+	function isNewItem(createdAt: string | Date | null | undefined): boolean {
+		if (!createdAt) return false;
+		const createdDate = new Date(createdAt);
+		const now = new Date();
+		const diffTime = now.getTime() - createdDate.getTime();
+		return diffTime > 0 && diffTime <= 24 * 60 * 60 * 1000;
+	}
 </script>
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
@@ -200,6 +208,9 @@
 												<span class="font-bold text-slate-900 md:font-medium"
 													>{equipment.serialNumber}</span
 												>
+												{#if isNewItem(equipment.createdAt)}
+													<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
+												{/if}
 											</div>
 										</div>
 										<Button
@@ -219,7 +230,12 @@
 
 									<!-- Merk (Hidden on mobile as it's in the first cell) -->
 									<Table.Cell class="hidden md:table-cell md:border-b md:py-4 md:pl-2">
-										{equipment.brand}
+										<div class="flex items-center gap-2">
+											<span>{equipment.brand || '-'}</span>
+											{#if isNewItem(equipment.createdAt)}
+												<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
+											{/if}
+										</div>
 									</Table.Cell>
 
 									<!-- Lokasi -->

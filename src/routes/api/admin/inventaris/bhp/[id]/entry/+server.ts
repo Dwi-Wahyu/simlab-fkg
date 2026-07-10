@@ -47,6 +47,7 @@ export const GET: RequestHandler = async ({ url, params }) => {
 				initialQty: stockBatch.initialQty,
 				expiryDate: stockBatch.expiryDate,
 				receivedAt: stockBatch.receivedAt, // "Tanggal Masuk"
+				createdAt: stockBatch.createdAt,
 				laboratoriumName: laboratorium.name,
 				laboratoriumId: stock.laboratoriumId,
 				warehouseName: warehouse.name,

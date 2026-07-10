@@ -85,6 +85,14 @@
 		return `Menampilkan ${start} - ${end} ${label}`;
 	};
 
+	function mapRole(role: string | null | undefined): string {
+		if (!role) return '';
+		const lower = role.toLowerCase();
+		if (lower === 'instruktur') return 'Dosen';
+		if (lower === 'peneliti') return 'Mahasiswa';
+		return role.charAt(0).toUpperCase() + role.slice(1);
+	}
+
 	const labTriggerContent = $derived(
 		data.labs.find((l) => l.id === labId)?.name ?? 'Pilih laboratorium'
 	);
@@ -266,7 +274,7 @@
 									<label for={requester.id} class="flex-1 cursor-pointer">
 										<div class="font-medium">{requester.name}</div>
 										<div class="text-[10px] text-muted-foreground uppercase">
-											{requester.role} - {requester.username}
+											{mapRole(requester.role)} - {requester.username}
 										</div>
 									</label>
 								</div>
