@@ -101,7 +101,7 @@
 		}
 	};
 
-	const badge = $derived(getStatusBadge(data.lending.status));
+	const badge = $derived(getStatusBadge(data.lending.status ?? ''));
 </script>
 
 <div class="flex flex-col gap-6 p-6">
@@ -286,19 +286,19 @@
 					{/each}
 				</div>
 			</Card.Content>
-			<Card.Footer>
+			<Card.Footer class="flex flex-wrap gap-3">
 				{#if !isReturnMode}
 					<Button
 						href="/admin/peminjaman/{data.lending.id}/edit"
 						variant="outline"
-						class="w-full gap-2 rounded-xl"
+						class="gap-2 rounded-xl"
 					>
 						Edit Data
 					</Button>
 					{#if ['APPROVED', 'DIPINJAM'].includes(data.lending.status as string)}
 						<Button
 							onclick={startReturnMode}
-							class="w-full gap-2 rounded-xl bg-blue-600 hover:bg-blue-700"
+							class="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700"
 						>
 							Pengembalian Alat
 						</Button>
@@ -307,10 +307,11 @@
 					<form
 						method="POST"
 						action="?/returnItems"
+						enctype="multipart/form-data"
 						use:enhance={({ formData }) => {
 							const items = Object.entries(returnData).map(([id, d]) => ({
 								lendingItemId: id,
-								equipmentId: data.lending.items.find((i: any) => i.id === id).equipmentId,
+								equipmentId: data.lending.items.find((i: any) => i.id === id)?.equipmentId,
 								status: d.status,
 								notes: d.notes,
 								hasEvidence: !!d.evidence
@@ -433,13 +434,44 @@
 
 						<Separator class="md:hidden" />
 
-						<div class="space-y-1 pt-4 sm:col-span-2 sm:border-t sm:border-slate-50">
-							<Label>Keperluan</Label>
-							<div class="mt-1 flex items-center gap-2">
-								<Badge variant="secondary" class="text-[10px] uppercase">
-									{data.lending.purpose.replace('_', ' ')}
-								</Badge>
+						<div class="space-y-4 pt-4 sm:col-span-2 sm:border-t sm:border-slate-50">
+							<div class="space-y-1">
+								<Label>Keperluan</Label>
+								<div class="mt-1 flex items-center gap-2">
+									<Badge variant="secondary" class="text-[10px] uppercase">
+										{data.lending.purpose.replace('_', ' ')}
+									</Badge>
+								</div>
 							</div>
+							
+							{#if data.lending.nomorSurat || data.lending.surat}
+								<div class="grid gap-4 sm:grid-cols-2">
+									{#if data.lending.nomorSurat}
+										<div class="space-y-1">
+											<Label>Nomor Surat</Label>
+											<p class="text-sm font-medium text-slate-900">{data.lending.nomorSurat}</p>
+										</div>
+									{/if}
+									
+									{#if data.lending.surat}
+										<div class="space-y-1">
+											<Label>Surat Pengajuan</Label>
+											<div class="mt-1">
+												<Button 
+													variant="outline" 
+													size="sm" 
+													href="/uploads/letter/{data.lending.surat}" 
+													target="_blank"
+													class="gap-2"
+												>
+													<FileText class="size-4" />
+													Lihat Surat
+												</Button>
+											</div>
+										</div>
+									{/if}
+								</div>
+							{/if}
 						</div>
 					</div>
 				</Card.Content>
@@ -477,7 +509,7 @@
 	onAction={() => {
 		showNotification = false;
 		if (notificationType === 'success') {
-			goto(`/admin/peminjaman`);
+			goto(`/admin/peminjaman`, { invalidateAll: true });
 		}
 	}}
 />

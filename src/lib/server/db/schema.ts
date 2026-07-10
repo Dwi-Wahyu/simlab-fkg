@@ -381,6 +381,9 @@ export const lending = mysqlTable('lending', {
 		'PENGABDIAN_MASYARAKAT'
 	]).notNull(),
 
+	surat: text('surat'),
+	nomorSurat: varchar('nomor_surat', { length: 255 }),
+
 	status: mysqlEnum('status', ['DRAFT', 'APPROVED', 'REJECTED', 'DIPINJAM', 'RETURNED']).default(
 		'DRAFT'
 	),

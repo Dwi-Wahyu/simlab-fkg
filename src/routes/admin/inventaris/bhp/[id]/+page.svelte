@@ -7,7 +7,9 @@
 		ChevronsRight,
 		ChevronUp,
 		Search,
-		Trash2
+		Trash2,
+		ArrowDownWideNarrow,
+		ArrowUpNarrowWide
 	} from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import Skeleton from '@/components/ui/skeleton/skeleton.svelte';
@@ -26,6 +28,7 @@
 	let { data } = $props();
 
 	let searchQuery = $state(pageStore.url.searchParams.get('search') || '');
+	let sortExp = $state(pageStore.url.searchParams.get('sortExp') || 'asc');
 	let debounceTimer: any;
 	let expandedItems = $state<Record<string, boolean>>({});
 
@@ -61,12 +64,20 @@
 		updateUrl({ limit: newLimit, page: 1 });
 	}
 
+	function toggleSort() {
+		updateUrl({ sortExp: sortExp === 'asc' ? 'desc' : 'asc', page: 1 });
+	}
+
 	// Sync searchQuery with URL if it changes externally
 	$effect(() => {
 		const urlSearch = pageStore.url.searchParams.get('search') || '';
+		const urlSort = pageStore.url.searchParams.get('sortExp') || 'asc';
 		untrack(() => {
 			if (searchQuery !== urlSearch) {
 				searchQuery = urlSearch;
+			}
+			if (sortExp !== urlSort) {
+				sortExp = urlSort;
 			}
 		});
 	});
@@ -153,7 +164,18 @@
 							<Table.Head class="px-6 py-4">Merk/Varian</Table.Head>
 							<Table.Head>Sisa Jumlah</Table.Head>
 							<Table.Head>Tanggal Masuk</Table.Head>
-							<Table.Head>Tanggal Kedaluwarsa</Table.Head>
+							<Table.Head>
+								<div class="flex items-center gap-2">
+									Tanggal Kedaluwarsa
+									<Button variant="ghost" size="icon" class="h-6 w-6" onclick={toggleSort}>
+										{#if sortExp === 'asc'}
+											<ArrowDownWideNarrow class="h-4 w-4" />
+										{:else}
+											<ArrowUpNarrowWide class="h-4 w-4" />
+										{/if}
+									</Button>
+								</div>
+							</Table.Head>
 							<Table.Head>Status</Table.Head>
 							<Table.Head>Lab</Table.Head>
 							<Table.Head class="pr-6 text-right">Aksi</Table.Head>
@@ -246,6 +268,15 @@
 										<span class="text-xs font-semibold text-slate-400 md:hidden"
 											>Tanggal Kedaluwarsa</span
 										>
+										<div class="flex items-center justify-between md:hidden">
+											<Button variant="ghost" size="icon" class="h-6 w-6" onclick={toggleSort}>
+												{#if sortExp === 'asc'}
+													<ArrowDownWideNarrow class="h-4 w-4" />
+												{:else}
+													<ArrowUpNarrowWide class="h-4 w-4" />
+												{/if}
+											</Button>
+										</div>
 										<span class="text-sm text-slate-600">
 											{batch.expiryDate
 												? new Date(batch.expiryDate).toLocaleDateString('id-ID', {

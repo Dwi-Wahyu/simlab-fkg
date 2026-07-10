@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight, Minus, Plus } from '@lucide/svelte';
+	import { ChevronLeft, ChevronRight, Minus, Plus, Search } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { untrack } from 'svelte';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -19,6 +20,43 @@
 	let startDate = $state('');
 	let endDate = $state('');
 	let purpose = $state('PRAKTIKUM');
+	let nomorSurat = $state('');
+	let suratFile = $state<File | null>(null);
+
+	$effect(() => {
+		if (data.user?.role === 'kepalaLab' && data.user?.laboratorium?.id) {
+			labId = data.user.laboratorium.id;
+		}
+	});
+
+	let searchPeminjam = $state('');
+	let searchAlat = $state('');
+
+	$effect(() => {
+		searchPeminjam;
+		untrack(() => {
+			peminjamPage = 1;
+		});
+	});
+
+	$effect(() => {
+		searchAlat;
+		untrack(() => {
+			alatPage = 1;
+		});
+	});
+
+	const filteredPeminjam = $derived(
+		data.requesters.filter(
+			(r) =>
+				r.name.toLowerCase().includes(searchPeminjam.toLowerCase()) ||
+				r.username.toLowerCase().includes(searchPeminjam.toLowerCase())
+		)
+	);
+
+	const filteredAlat = $derived(
+		data.items.filter((i) => i.name.toLowerCase().includes(searchAlat.toLowerCase()))
+	);
 
 	// State untuk dialog notifikasi
 	let showNotification = $state(false);
@@ -34,10 +72,10 @@
 
 	// Paginated Lists
 	const paginatedPeminjam = $derived(
-		data.requesters.slice((peminjamPage - 1) * ITEMS_PER_PAGE, peminjamPage * ITEMS_PER_PAGE)
+		filteredPeminjam.slice((peminjamPage - 1) * ITEMS_PER_PAGE, peminjamPage * ITEMS_PER_PAGE)
 	);
 	const paginatedAlat = $derived(
-		data.items.slice((alatPage - 1) * ITEMS_PER_PAGE, alatPage * ITEMS_PER_PAGE)
+		filteredAlat.slice((alatPage - 1) * ITEMS_PER_PAGE, alatPage * ITEMS_PER_PAGE)
 	);
 
 	// Pagination Info Helpers
@@ -129,7 +167,7 @@
 	function handleNotificationAction() {
 		showNotification = false;
 		if (notificationType === 'success') {
-			goto(`/admin/peminjaman`);
+			goto(`/admin/peminjaman`, { invalidateAll: true });
 		}
 	}
 </script>
@@ -152,6 +190,7 @@
 	<form
 		method="POST"
 		action="?/create"
+		enctype="multipart/form-data"
 		use:enhance={({ cancel }) => {
 			if (selectedRequesters.length === 0) {
 				showErrorNotification('Pilih minimal satu peminjam');
@@ -200,6 +239,14 @@
 						<Card.Description>Mahasiswa & Dosen</Card.Description>
 					</Card.Header>
 					<Card.Content>
+						<div class="relative mb-4">
+							<Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+							<Input
+								placeholder="Cari peminjam..."
+								class="pl-10"
+								bind:value={searchPeminjam}
+							/>
+						</div>
 						<div class="grid content-start gap-2 overflow-y-auto p-1">
 							{#each paginatedPeminjam as requester (requester.id)}
 								<div
@@ -228,7 +275,7 @@
 					</Card.Content>
 					<Card.Footer class="flex items-center justify-between border-t pt-4">
 						<div class="text-[10px] text-muted-foreground">
-							{getPaginationInfo(data.requesters.length, peminjamPage, 'peminjam')}
+							{getPaginationInfo(filteredPeminjam.length, peminjamPage, 'peminjam')}
 						</div>
 						<div class="flex items-center gap-2">
 							<Button
@@ -246,7 +293,7 @@
 								variant="outline"
 								size="sm"
 								class="h-8 gap-1"
-								disabled={peminjamPage * ITEMS_PER_PAGE >= data.requesters.length}
+								disabled={peminjamPage * ITEMS_PER_PAGE >= filteredPeminjam.length}
 								onclick={() => (peminjamPage += 1)}
 							>
 								Selanjutnya
@@ -264,6 +311,14 @@
 					<Card.Description>Pilih alat dan tentukan jumlah per orang</Card.Description>
 				</Card.Header>
 				<Card.Content>
+					<div class="relative mb-4">
+						<Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+						<Input
+							placeholder="Cari alat..."
+							class="pl-10"
+							bind:value={searchAlat}
+						/>
+					</div>
 					<div class="grid content-start gap-4 overflow-y-auto p-1">
 						{#each paginatedAlat as item (item.id)}
 							{@const isSelected = selectedItems.some((i) => i.itemId === item.id)}
@@ -334,7 +389,7 @@
 				</Card.Content>
 				<Card.Footer class="flex items-center justify-between border-t pt-4">
 					<div class="text-[10px] text-muted-foreground">
-						{getPaginationInfo(data.items.length, alatPage, 'alat')}
+						{getPaginationInfo(filteredAlat.length, alatPage, 'alat')}
 					</div>
 					<div class="flex items-center gap-2">
 						<Button
@@ -352,7 +407,7 @@
 							variant="outline"
 							size="sm"
 							class="h-8 gap-1"
-							disabled={alatPage * ITEMS_PER_PAGE >= data.items.length}
+							disabled={alatPage * ITEMS_PER_PAGE >= filteredAlat.length}
 							onclick={() => (alatPage += 1)}
 						>
 							Selanjutnya
@@ -370,20 +425,24 @@
 			</Card.Header>
 			<Card.Content>
 				<div class="grid gap-6 md:grid-cols-3">
-					<div class="space-y-2">
-						<Label>Laboratorium <span class="text-red-500">*</span></Label>
-						<Select.Root type="single" bind:value={labId}>
-							<Select.Trigger class="w-full">
-								{labTriggerContent}
-							</Select.Trigger>
-							<Select.Content>
-								{#each data.labs as lab (lab.id)}
-									<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
+					{#if data.user?.role !== 'kepalaLab'}
+						<div class="space-y-2">
+							<Label>Laboratorium <span class="text-red-500">*</span></Label>
+							<Select.Root type="single" bind:value={labId}>
+								<Select.Trigger class="w-full">
+									{labTriggerContent}
+								</Select.Trigger>
+								<Select.Content>
+									{#each data.labs as lab (lab.id)}
+										<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							<input type="hidden" name="laboratoriumId" value={labId} />
+						</div>
+					{:else}
 						<input type="hidden" name="laboratoriumId" value={labId} />
-					</div>
+					{/if}
 
 					<div class="space-y-2">
 						<Label>Tanggal Mulai <span class="text-red-500">*</span></Label>
@@ -411,6 +470,33 @@
 							</Select.Content>
 						</Select.Root>
 						<input type="hidden" name="purpose" value={purpose} />
+					</div>
+
+					<div class="space-y-2">
+						<Label>Nomor Surat</Label>
+						<Input type="text" name="nomorSurat" bind:value={nomorSurat} placeholder="Opsional" />
+					</div>
+
+					<div class="space-y-2">
+						<Label>Surat (PDF/DOCX) &lt; 10MB</Label>
+						<Input 
+							type="file" 
+							name="surat" 
+							accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+							onchange={(e) => {
+								const target = e.target as HTMLInputElement;
+								if (target.files && target.files.length > 0) {
+									const file = target.files[0];
+									if (file.size > 10 * 1024 * 1024) {
+										showErrorNotification('Ukuran file maksimal 10MB');
+										target.value = '';
+										suratFile = null;
+									} else {
+										suratFile = file;
+									}
+								}
+							}}
+						/>
 					</div>
 				</div>
 			</Card.Content>

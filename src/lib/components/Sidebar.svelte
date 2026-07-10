@@ -112,7 +112,8 @@
 			icon: Clipboard,
 			isDropdown: false,
 			path: `/admin/penilaian`,
-			role: ['instruktur']
+			role: ['instruktur'],
+			children: []
 		},
 
 		{
@@ -212,7 +213,7 @@
 			path: `/admin/users`,
 			icon: UserCog,
 			isDropdown: true,
-			role: ['superadmin'],
+			role: ['superadmin', 'kepalaLab'],
 			children: [
 				{
 					name: 'PJ Mata Kuliah',
@@ -238,13 +239,16 @@
 					name: 'SPMI',
 					path: `/admin/users/spmi`,
 					role: ['superadmin']
-				},
-				{
-					name: 'Laboran',
-					path: `/admin/users/laboran`,
-					role: ['superadmin']
 				}
 			]
+		},
+		{
+			name: 'Manajemen Laboran',
+			icon: UserCog,
+			isDropdown: true,
+			path: `/admin/users/laboran`,
+			role: ['kepalaLab'],
+			children: []
 		},
 		{
 			name: 'Audit Log Sistem',
@@ -259,17 +263,17 @@
 			path: `/admin/pengaturan`,
 			icon: Settings,
 			isDropdown: true,
-			role: ['superadmin', 'kepalaLab'],
+			role: ['superadmin', 'koordinator'],
 			children: [
 				{
 					name: 'Blok Praktikum',
 					path: `/admin/master/blok`,
-					role: ['superadmin']
+					role: ['superadmin', 'koordinator']
 				},
 				{
 					name: 'Departemen',
 					path: `/admin/master/departemen`,
-					role: ['superadmin']
+					role: ['superadmin', 'koordinator']
 				}
 			]
 		}
@@ -288,7 +292,18 @@
 			.filter((menu) => !menu.isDropdown || menu.children.length > 0)
 	);
 
-	const sMenus = $derived(systemMenus.filter((menu) => hasRole(menu.role, user.role)));
+	const sMenus = $derived(
+		systemMenus
+			.filter((menu) => hasRole(menu.role, user.role))
+			.map((menu) => {
+				if (menu.isDropdown) {
+					const filteredChildren = menu.children.filter((child) => hasRole(child.role, user.role));
+					return { ...menu, children: filteredChildren };
+				}
+				return menu;
+			})
+			.filter((menu) => !menu.isDropdown || menu.children.length > 0)
+	);
 
 	function handleDropdownToggle(name: string) {
 		if (!sidebar.open) {

@@ -4,6 +4,8 @@ import { eq, and, inArray, sql } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user || !['kepalaLab', 'superadmin'].includes(locals.user.role)) {
@@ -21,12 +23,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 		}
 	});
 
+	const isKepalaLab = locals.user?.role === 'kepalaLab';
+	const userLabId = locals.user?.laboratorium?.id;
+
 	// 2. Fetch all items and their ready equipment count
-	const availableItems = await db.query.item.findMany({
+	let availableItems = await db.query.item.findMany({
 		where: eq(item.type, 'ASSET'),
 		with: {
 			equipments: {
-				where: eq(equipment.status, 'READY'),
+				where: and(
+					eq(equipment.status, 'READY'),
+					isKepalaLab && userLabId ? eq(equipment.laboratoriumId, userLabId) : sql`1=1`
+				),
 				columns: {
 					id: true,
 					serialNumber: true
@@ -34,6 +42,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 			}
 		}
 	});
+
+	if (isKepalaLab && userLabId) {
+		availableItems = availableItems.filter((i) => i.equipments.length > 0);
+	}
 
 	console.log(`Fetched ${availableItems.length} items total`);
 
@@ -55,13 +67,37 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const requesterIds = formData.getAll('requesterIds') as string[];
 		const itemDataRaw = formData.get('items') as string; // JSON string of { itemId: string, qty: number }[]
-		const labId = formData.get('laboratoriumId') as string;
+		let labId = formData.get('laboratoriumId') as string;
+		if (locals.user?.role === 'kepalaLab' && locals.user?.laboratorium?.id) {
+			labId = locals.user.laboratorium.id;
+		}
 		const startDate = formData.get('startDate') as string;
 		const endDate = formData.get('endDate') as string;
 		const purpose = formData.get('purpose') as any;
+		const nomorSurat = formData.get('nomorSurat') as string;
+		const surat = formData.get('surat') as File;
 
 		if (!requesterIds.length || !itemDataRaw || !labId || !startDate) {
 			return fail(400, { message: 'Data tidak lengkap' });
+		}
+
+		let suratPath = null;
+		if (surat && surat.size > 0) {
+			if (surat.size > 10 * 1024 * 1024) {
+				return fail(400, { message: 'Ukuran file surat maksimal 10MB' });
+			}
+			const ext = path.extname(surat.name) || (surat.type === 'application/pdf' ? '.pdf' : '.docx');
+			const fileName = `${uuidv4()}${ext}`;
+			const uploadDir = path.join(process.cwd(), 'static', 'uploads', 'letter');
+
+			if (!fs.existsSync(uploadDir)) {
+				fs.mkdirSync(uploadDir, { recursive: true });
+			}
+
+			const filePath = path.join(uploadDir, fileName);
+			const buffer = Buffer.from(await surat.arrayBuffer());
+			fs.writeFileSync(filePath, buffer);
+			suratPath = fileName;
 		}
 
 		const selectedItems = JSON.parse(itemDataRaw) as { itemId: string; qty: number }[];
@@ -80,15 +116,21 @@ export const actions: Actions = {
 						startDate: new Date(startDate),
 						endDate: endDate ? new Date(endDate) : null,
 						purpose: purpose || 'PRAKTIKUM',
+						nomorSurat: nomorSurat || null,
+						surat: suratPath,
 						status: 'APPROVED', // Usually approved immediately if created by staff/coordinator
 						unit: 'FKG UNHAS' // Default unit
 					});
 
 					// Assign equipment
 					for (const selected of selectedItems) {
-						// Find available equipment for this item
+						// Find available equipment for this item in the selected lab
 						const availableEquip = await tx.query.equipment.findMany({
-							where: and(eq(equipment.itemId, selected.itemId), eq(equipment.status, 'READY')),
+							where: and(
+								eq(equipment.itemId, selected.itemId),
+								eq(equipment.status, 'READY'),
+								eq(equipment.laboratoriumId, labId)
+							),
 							limit: selected.qty
 						});
 

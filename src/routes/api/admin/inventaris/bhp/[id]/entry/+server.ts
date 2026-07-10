@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { and, count, desc, eq, like, or, sql } from 'drizzle-orm';
+import { and, count, desc, asc, eq, like, or, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { item, laboratorium, stock, stockBatch, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
@@ -9,6 +9,7 @@ export const GET: RequestHandler = async ({ url, params }) => {
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '10');
 	const search = url.searchParams.get('search') || '';
+	const sortExp = url.searchParams.get('sortExp') || 'asc';
 	const offset = (page - 1) * limit;
 
 	try {
@@ -57,8 +58,10 @@ export const GET: RequestHandler = async ({ url, params }) => {
 			.leftJoin(laboratorium, eq(stock.laboratoriumId, laboratorium.id))
 			.leftJoin(warehouse, eq(stock.warehouseId, warehouse.id))
 			.where(whereClause)
-			// Longest expiry first; NULL (no expiry) sorts first, ahead of any dated batch
-			.orderBy(sql`${stockBatch.expiryDate} IS NULL DESC`, desc(stockBatch.expiryDate))
+			.orderBy(
+				sql`${stockBatch.expiryDate} IS NULL ASC`,
+				sortExp === 'desc' ? desc(stockBatch.expiryDate) : asc(stockBatch.expiryDate)
+			)
 			.limit(limit)
 			.offset(offset);
 

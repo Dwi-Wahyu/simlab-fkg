@@ -321,7 +321,7 @@
 	}
 </script>
 
-<div class="flex flex-col gap-6 p-4 md:p-8">
+<div class="flex flex-col gap-6 p-4 md:p-6">
 	<div class="flex flex-col gap-2">
 		<h1 class="text-2xl font-bold tracking-tight text-slate-900">Inventaris Bahan Habis Pakai</h1>
 		<p class="text-slate-500">Manajemen stok bahan dan konsumsi laboratorium.</p>
