@@ -1,10 +1,15 @@
-import { json } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { item, stock } from '$lib/server/db/schema';
 import { sql, eq, count, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+	const user = locals.user;
+	if (!user) {
+		throw error(401, 'Unauthorized');
+	}
+
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '10');
 	const search = url.searchParams.get('search') || '';
@@ -29,32 +34,42 @@ export const GET: RequestHandler = async ({ url }) => {
 		}
 	});
 
-	const processedItems = items.map((i) => {
-		const totalQty = i.stocks.reduce((acc, s) => acc + s.qty, 0);
-		let status = 'AMAN';
-		if (totalQty === 0) {
-			status = 'HABIS';
-		} else if (totalQty <= (i.minStock || 0)) {
-			status = 'RENDAH';
-		}
+	const targetLabId = ['kepalaLab', 'laboran'].includes(user.role)
+		? user.laboratorium?.id
+		: null;
 
-		return {
-			id: i.id,
-			name: i.name,
-			createdAt: i.createdAt,
-			totalQty,
-			minStock: i.minStock,
-			status,
-			baseUnit: i.baseUnit,
-			stocks: i.stocks.map((s) => ({
-				id: s.id,
-				brand: s.brand,
-				variant: s.variant,
-				qty: s.qty,
-				laboratoriumId: s.laboratoriumId
-			}))
-		};
-	});
+	const processedItems = items
+		.map((i) => {
+			const filteredStocks = targetLabId
+				? i.stocks.filter((s) => s.laboratoriumId === targetLabId)
+				: i.stocks;
+
+			const totalQty = filteredStocks.reduce((acc, s) => acc + s.qty, 0);
+			let status = 'AMAN';
+			if (totalQty === 0) {
+				status = 'HABIS';
+			} else if (totalQty <= (i.minStock || 0)) {
+				status = 'RENDAH';
+			}
+
+			return {
+				id: i.id,
+				name: i.name,
+				createdAt: i.createdAt,
+				totalQty,
+				minStock: i.minStock,
+				status,
+				baseUnit: i.baseUnit,
+				stocks: filteredStocks.map((s) => ({
+					id: s.id,
+					brand: s.brand,
+					variant: s.variant,
+					qty: s.qty,
+					laboratoriumId: s.laboratoriumId
+				}))
+			};
+		})
+		.filter((i) => !targetLabId || i.stocks.length > 0);
 
 	const totalItems = processedItems.length;
 	const totalPages = Math.ceil(totalItems / limit);
