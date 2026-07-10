@@ -111,7 +111,6 @@
 	};
 
 	let searchQuery = $state(pageStore.url.searchParams.get('search') || '');
-	let debounceTimer: any;
 	let expandedItems = $state<Record<string, boolean>>({});
 
 	function updateUrl(params: Record<string, string | number | undefined>) {
@@ -126,11 +125,8 @@
 		goto(url.toString(), { keepFocus: true, noScroll: true });
 	}
 
-	function handleSearch() {
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => {
-			updateUrl({ search: searchQuery, page: 1 });
-		}, 300);
+	function executeSearch() {
+		updateUrl({ search: searchQuery, page: 1 });
 	}
 
 	function handlePageChange(newPage: number) {
@@ -153,9 +149,45 @@
 </script>
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
-	<div class="flex flex-col gap-2">
-		<h1 class="text-2xl font-bold tracking-tight text-slate-900">Inventaris Alat</h1>
-		<p class="text-slate-500">Manajemen aset dan peralatan laboratorium.</p>
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex flex-col gap-2">
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Inventaris Alat</h1>
+			<p class="text-slate-500">Manajemen aset dan peralatan laboratorium.</p>
+		</div>
+		<div class="flex flex-wrap items-center gap-2">
+			{#if data.user?.role === 'superadmin'}
+				<div class="flex items-center gap-2">
+					<Select.Root type="single" bind:value={selectedExportLabId}>
+						<Select.Trigger class="h-10 w-40 bg-white">
+							{exportLabName}
+						</Select.Trigger>
+						<Select.Content>
+							{#each laboratories as lab}
+								<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+					<Button
+						href="/admin/laporan/inventaris/export?labId={selectedExportLabId}"
+						variant="outline"
+						class="gap-2"
+						disabled={!selectedExportLabId}
+					>
+						<Download class="size-4" /> Export
+					</Button>
+				</div>
+			{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
+				<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
+					<Download class="size-4" /> Export
+				</Button>
+			{/if}
+
+			{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
+				<Button href="/admin/inventaris/alat/tambah">
+					<Plus /> Tambah Alat
+				</Button>
+			{/if}
+		</div>
 	</div>
 
 	{#await data.alatPromise}
@@ -226,14 +258,23 @@
 
 		<!-- Table Controls -->
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-			<div class="relative w-full max-w-sm">
-				<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-				<Input
-					placeholder="Cari alat..."
-					class="pl-10"
-					bind:value={searchQuery}
-					oninput={handleSearch}
-				/>
+			<div class="flex w-full max-w-sm gap-2">
+				<div class="relative flex-1">
+					<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+					<Input
+						placeholder="Cari alat..."
+						class="pl-10"
+						bind:value={searchQuery}
+						onkeydown={(e) => {
+							if (e.key === 'Enter') {
+								executeSearch();
+							}
+						}}
+					/>
+				</div>
+				<Button onclick={executeSearch} variant="secondary" class="gap-1">
+					<Search class="size-4" /> Cari
+				</Button>
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
 				<SearchableSelect.Root
@@ -283,38 +324,7 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				{#if data.user?.role === 'superadmin'}
-					<div class="flex items-center gap-2">
-						<Select.Root type="single" bind:value={selectedExportLabId}>
-							<Select.Trigger class="h-10 w-40 bg-white">
-								{exportLabName}
-							</Select.Trigger>
-							<Select.Content>
-								{#each laboratories as lab}
-									<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-						<Button
-							href="/admin/laporan/inventaris/export?labId={selectedExportLabId}"
-							variant="outline"
-							class="gap-2"
-							disabled={!selectedExportLabId}
-						>
-							<Download class="size-4" /> Export
-						</Button>
-					</div>
-				{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
-					<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
-						<Download class="size-4" /> Export
-					</Button>
-				{/if}
 
-				{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
-					<Button href="/admin/inventaris/alat/tambah">
-						<Plus /> Tambah Alat
-					</Button>
-				{/if}
 			</div>
 		</div>
 

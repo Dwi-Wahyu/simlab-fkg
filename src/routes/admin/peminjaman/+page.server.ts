@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { lending } from '$lib/server/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -11,7 +11,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 		};
 	}
 
+	const currentUser = locals.user;
+	const isKepalaLab = currentUser?.role === 'kepalaLab';
+	const userLabId = currentUser?.laboratorium?.id;
+
+	const filter = isKepalaLab && userLabId ? eq(lending.laboratoriumId, userLabId) : undefined;
+
 	const lendings = await db.query.lending.findMany({
+		where: filter,
 		with: {
 			requestedByUser: true,
 			laboratorium: true,

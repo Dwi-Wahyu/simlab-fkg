@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Check, ChevronLeft, FileText, Upload } from '@lucide/svelte';
+	import { Check, ChevronLeft, FileText, Upload, Search } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
@@ -10,6 +11,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 
 	let { data, form } = $props();
 
@@ -26,9 +28,62 @@
 	// Notification Dialog States
 	let showSuccessDialog = $state(false);
 
-	const assetTriggerContent = $derived(
-		data.assets.find((a) => a.id === selectedAssetId)?.item?.name ?? 'Pilih Alat'
+	// Equipment Search Dialog State
+	let isEquipmentDialogOpen = $state(false);
+	let equipmentSearchQuery = $state('');
+	let debouncedEquipmentSearchQuery = $state('');
+	let isEquipmentSearching = $state(false);
+	let equipmentSearchTimeout = $state<NodeJS.Timeout | null>(null);
+	let equipmentCurrentPage = $state(1);
+	const EQUIPMENT_PAGE_SIZE = 10;
+
+	// Debounce effect
+	$effect(() => {
+		const query = equipmentSearchQuery;
+
+		untrack(() => {
+			isEquipmentSearching = true;
+			if (equipmentSearchTimeout) clearTimeout(equipmentSearchTimeout);
+
+			equipmentSearchTimeout = setTimeout(() => {
+				debouncedEquipmentSearchQuery = query;
+				equipmentCurrentPage = 1;
+				isEquipmentSearching = false;
+			}, 500);
+		});
+	});
+
+	const filteredEquipments = $derived(
+		data.assets.filter((eq: any) => {
+			const name = eq.item?.name?.toLowerCase() || '';
+			const sn = eq.serialNumber?.toLowerCase() || '';
+			const q = debouncedEquipmentSearchQuery.toLowerCase();
+			return name.includes(q) || sn.includes(q);
+		})
 	);
+
+	const paginatedEquipments = $derived(
+		filteredEquipments.slice(
+			(equipmentCurrentPage - 1) * EQUIPMENT_PAGE_SIZE,
+			equipmentCurrentPage * EQUIPMENT_PAGE_SIZE
+		)
+	);
+
+	const equipmentTotalPages = $derived(
+		Math.ceil(filteredEquipments.length / EQUIPMENT_PAGE_SIZE) || 1
+	);
+
+	function selectEquipment(id: string) {
+		selectedAssetId = id;
+		isEquipmentDialogOpen = false;
+	}
+
+	const assetTriggerContent = $derived.by(() => {
+		const eq = data.assets.find((e) => e.id === selectedAssetId);
+		if (!eq) return 'Pilih Alat';
+		const name = eq.item?.name || 'Tanpa Nama';
+		return eq.serialNumber ? `${name} (${eq.serialNumber})` : name;
+	});
 
 	function handleFileChange(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -126,22 +181,17 @@
 						<Label for="equipmentId">
 							Alat <span class="text-red-500">*</span>
 						</Label>
-						<Select.Root type="single" bind:value={selectedAssetId}>
-							<Select.Trigger class="w-full text-left">
-								{assetTriggerContent}
-							</Select.Trigger>
-							<Select.Content>
-								{#each data.assets as asset (asset.id)}
-									<Select.Item
-										value={asset.id}
-										label={asset.item?.name + ' (SN: ' + (asset.serialNumber || '-') + ')'}
-									>
-										{asset.item?.name} (SN: {asset.serialNumber || '-'})
-									</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
 						<input type="hidden" name="equipmentId" value={selectedAssetId} required />
+						<Button
+							type="button"
+							variant="outline"
+							class="h-11 w-full justify-start rounded-xl border-slate-200 font-normal shadow-none hover:bg-slate-50 {selectedAssetId
+								? 'text-slate-900'
+								: 'text-slate-500'}"
+							onclick={() => (isEquipmentDialogOpen = true)}
+						>
+							{assetTriggerContent}
+						</Button>
 					</div>
 
 					<div class="space-y-2">
@@ -273,3 +323,82 @@
 	description="Data kalibrasi alat telah berhasil disimpan ke riwayat pemeliharaan."
 	onAction={handleDialogAction}
 />
+
+<!-- Equipment Search Dialog -->
+<Dialog.Root bind:open={isEquipmentDialogOpen}>
+	<Dialog.Content class="sm:max-w-[500px]">
+		<Dialog.Header>
+			<Dialog.Title>Pilih Alat</Dialog.Title>
+			<Dialog.Description>Cari dan pilih alat yang akan dikalibrasi.</Dialog.Description>
+		</Dialog.Header>
+		<div class="flex flex-col gap-4 py-4">
+			<div class="relative">
+				<Search class="absolute top-3 left-3 h-4 w-4 text-slate-400" />
+				<Input
+					type="text"
+					placeholder="Cari nama atau serial number..."
+					class="h-10 rounded-xl pl-9"
+					bind:value={equipmentSearchQuery}
+				/>
+			</div>
+
+			<div class="flex h-[300px] flex-col gap-2 overflow-y-auto pr-2">
+				{#if isEquipmentSearching}
+					<!-- Mock Skeleton -->
+					{#each Array(5) as _}
+						<div
+							class="flex h-16 w-full animate-pulse flex-col justify-center rounded-lg border border-slate-100 bg-slate-50 p-3 px-4"
+						>
+							<div class="h-4 w-2/3 rounded bg-slate-200"></div>
+							<div class="mt-2 h-3 w-1/3 rounded bg-slate-200"></div>
+						</div>
+					{/each}
+				{:else if paginatedEquipments.length === 0}
+					<div class="flex h-full items-center justify-center text-sm text-slate-500">
+						Tidak ada alat ditemukan.
+					</div>
+				{:else}
+					{#each paginatedEquipments as eq (eq.id)}
+						<button
+							type="button"
+							class="flex flex-col items-start justify-center rounded-lg border border-slate-200 p-3 px-4 text-left transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+							onclick={() => selectEquipment(eq.id)}
+						>
+							<span class="font-medium text-slate-900">{eq.item?.name || 'Tanpa Nama'}</span>
+							{#if eq.serialNumber}
+								<span class="mt-0.5 text-xs text-slate-500">SN: {eq.serialNumber}</span>
+							{/if}
+						</button>
+					{/each}
+				{/if}
+			</div>
+
+			<!-- Pagination -->
+			<div class="flex items-center justify-between border-t pt-4">
+				<span class="text-xs font-medium text-slate-500">
+					Halaman {equipmentCurrentPage} dari {equipmentTotalPages || 1}
+				</span>
+				<div class="flex gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						class="h-8 rounded-lg"
+						disabled={equipmentCurrentPage <= 1 || isEquipmentSearching}
+						onclick={() => equipmentCurrentPage--}
+					>
+						Sebelumnya
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						class="h-8 rounded-lg"
+						disabled={equipmentCurrentPage >= equipmentTotalPages || isEquipmentSearching}
+						onclick={() => equipmentCurrentPage++}
+					>
+						Selanjutnya
+					</Button>
+				</div>
+			</div>
+		</div>
+	</Dialog.Content>
+</Dialog.Root>

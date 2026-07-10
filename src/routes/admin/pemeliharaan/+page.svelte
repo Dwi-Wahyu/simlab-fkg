@@ -98,10 +98,30 @@
 	// State untuk dialog konfirmasi hapus
 	let showDeleteDialog = $state(false);
 	let deleteForm: HTMLFormElement | null = $state(null);
+	let deleteTitle = $state('Hapus Pemeliharaan');
+	let deleteDescription = $state(
+		'Apakah Anda yakin ingin menghapus data pemeliharaan ini? Tindakan ini akan menghapus riwayat dari sistem dan tidak dapat dikembalikan.'
+	);
 
 	// Handler untuk membuka dialog hapus
-	function confirmDelete(formElement: HTMLFormElement) {
+	function confirmDelete(
+		formElement: HTMLFormElement,
+		type: 'pemeliharaan' | 'kalibrasi' | 'biaya' = 'pemeliharaan'
+	) {
 		deleteForm = formElement;
+		if (type === 'pemeliharaan') {
+			deleteTitle = 'Hapus Pemeliharaan';
+			deleteDescription =
+				'Apakah Anda yakin ingin menghapus data pemeliharaan ini? Tindakan ini akan menghapus riwayat dari sistem dan tidak dapat dikembalikan.';
+		} else if (type === 'kalibrasi') {
+			deleteTitle = 'Hapus Kalibrasi';
+			deleteDescription =
+				'Apakah Anda yakin ingin menghapus data kalibrasi ini? Tindakan ini akan menghapus riwayat dari sistem dan tidak dapat dikembalikan.';
+		} else if (type === 'biaya') {
+			deleteTitle = 'Hapus Analisis Biaya';
+			deleteDescription =
+				'Apakah Anda yakin ingin menghapus data analisis biaya ini? Tindakan ini akan menghapus riwayat dari sistem dan tidak dapat dikembalikan.';
+		}
 		showDeleteDialog = true;
 	}
 
@@ -213,7 +233,7 @@
 
 	<!-- Tabs Area -->
 	<Tabs.Root bind:value={activeTab} onValueChange={handleTabChange} class="w-full space-y-4">
-		<Tabs.List variant="default" class=" w-full">
+		<Tabs.List variant="line" class=" w-full">
 			<Tabs.Trigger value="pemeliharaan" class="h-10 cursor-pointer">Pemeliharaan</Tabs.Trigger>
 			<Tabs.Trigger value="kalibrasi" class="h-10 cursor-pointer">Kalibrasi</Tabs.Trigger>
 			<Tabs.Trigger value="biaya" class="h-10 cursor-pointer">Analisis Biaya</Tabs.Trigger>
@@ -415,7 +435,7 @@
 														size="icon"
 														variant="ghost"
 														type="button"
-														onclick={(e) => confirmDelete(e.currentTarget.form!)}
+														onclick={(e) => confirmDelete((e.currentTarget as HTMLButtonElement).form!, 'pemeliharaan')}
 														class="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
 													>
 														<Trash2 size={16} />
@@ -562,6 +582,27 @@
 												>
 													<Edit size={16} />
 												</Button>
+												<form
+													method="POST"
+													action="?/delete"
+													use:enhance={() => {
+														return async ({ result, update }) => {
+															if (result.type === 'success') await invalidateAll();
+															await update();
+														};
+													}}
+												>
+													<input type="hidden" name="id" value={cal.id} />
+													<Button
+														size="icon"
+														variant="ghost"
+														type="button"
+														onclick={(e) => confirmDelete((e.currentTarget as HTMLButtonElement).form!, 'kalibrasi')}
+														class="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
+													>
+														<Trash2 size={16} />
+													</Button>
+												</form>
 											</div>
 										</Table.Cell>
 									</Table.Row>
@@ -718,6 +759,27 @@
 												>
 													<ChevronRight size={16} />
 												</Button>
+												<form
+													method="POST"
+													action="?/deleteCost"
+													use:enhance={() => {
+														return async ({ result, update }) => {
+															if (result.type === 'success') await invalidateAll();
+															await update();
+														};
+													}}
+												>
+													<input type="hidden" name="id" value={cost.id} />
+													<Button
+														size="icon"
+														variant="ghost"
+														type="button"
+														onclick={(e) => confirmDelete((e.currentTarget as HTMLButtonElement).form!, 'biaya')}
+														class="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
+													>
+														<Trash2 size={16} />
+													</Button>
+												</form>
 											</div>
 										</Table.Cell>
 									</Table.Row>
@@ -756,8 +818,8 @@
 <ConfirmationDialog
 	bind:open={showDeleteDialog}
 	type="error"
-	title="Hapus Pemeliharaan"
-	description="Apakah Anda yakin ingin menghapus data pemeliharaan ini? Tindakan ini akan menghapus riwayat dari sistem dan tidak dapat dikembalikan."
+	title={deleteTitle}
+	description={deleteDescription}
 	cancelLabel="Batal"
 	actionLabel="Ya, Hapus"
 	onAction={handleDelete}

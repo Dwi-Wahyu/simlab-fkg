@@ -1,25 +1,25 @@
 <script lang="ts">
+	import {
+		ArrowLeft,
+		Building2,
+		Calendar,
+		Check,
+		Clock,
+		FileCheck,
+		FileText,
+		Upload,
+		Wallet
+	} from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import {
-		ArrowLeft,
-		Upload,
-		Calendar,
-		Building2,
-		Wallet,
-		FileCheck,
-		Clock,
-		FileText,
-		Check
-	} from '@lucide/svelte';
-	import { toast } from 'svelte-sonner';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
-	import { goto } from '$app/navigation';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 
 	let { data, form } = $props();
 
@@ -100,8 +100,8 @@
 		</div>
 	</div>
 
-	<Card.Root>
-		<Card.Content class="p-8">
+	<Card.Root mobileAware={true}>
+		<Card.Content>
 			<form
 				method="POST"
 				enctype="multipart/form-data"

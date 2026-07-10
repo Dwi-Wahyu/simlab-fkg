@@ -245,16 +245,15 @@
 						<div class="w-full sm:w-48">
 							<Select.Root type="single" bind:value={studentActiveTab}>
 								<Select.Trigger class="w-full">
-									<Select.Value placeholder="Pilih Status" /> Semua Status
+									<Select.Value placeholder="Pilih Status" />
 								</Select.Trigger>
 								<Select.Content>
 									<Select.Item value="semua" label="Semua Status">Semua Status</Select.Item>
-									<Select.Item value="dipinjam" label="Sedang Dipinjam">Sedang Dipinjam</Select.Item
-									>
+									<Select.Item value="dipinjam" label="Sedang Dipinjam">Sedang Dipinjam</Select.Item>
 									<Select.Item value="menunggu" label="Menunggu / Disetujui"
 										>Menunggu / Disetujui</Select.Item
 									>
-									<Select.Item value="selesai" label="Selesai">Selesai / Ditolak</Select.Item>
+									<Select.Item value="selesai" label="Selesai / Ditolak">Selesai / Ditolak</Select.Item>
 								</Select.Content>
 							</Select.Root>
 						</div>
@@ -625,8 +624,8 @@
 					<Select.Content>
 						<Select.Item value="semua" label="Semua Status">Semua Status</Select.Item>
 						<Select.Item value="dipinjam" label="Sedang Dipinjam">Sedang Dipinjam</Select.Item>
-						<Select.Item value="menunggu" label="Menunggu">Menunggu</Select.Item>
-						<Select.Item value="selesai" label="Selesai">Selesai</Select.Item>
+						<Select.Item value="menunggu" label="Disetujui">Disetujui</Select.Item>
+						<Select.Item value="selesai" label="Dikembalikan / Ditolak">Dikembalikan / Ditolak</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>

@@ -193,7 +193,7 @@
 		</div>
 	</div>
 
-	<Card.Root>
+	<Card.Root mobileAware={true}>
 		<Card.Content>
 			<form
 				method="POST"

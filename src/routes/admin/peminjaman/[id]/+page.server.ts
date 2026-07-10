@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { lending, lendingItem, equipment, item } from '$lib/server/db/schema';
+import { lending, lendingItem, equipment, item, approval } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,7 +9,8 @@ import path from 'path';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { id } = params;
-	if (!locals.user) throw redirect(302, `/login`);
+	const currentUser = locals.user;
+	if (!currentUser) throw redirect(302, `/login`);
 
 	const lendingData = await db.query.lending.findFirst({
 		where: eq(lending.id, id),
@@ -34,6 +35,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	if (!lendingData) {
 		throw error(404, 'Data peminjaman tidak ditemukan');
+	}
+
+	// Filter for kepalaLab
+	if (currentUser.role === 'kepalaLab' && lendingData.laboratoriumId !== currentUser.laboratorium?.id) {
+		throw error(403, 'Anda tidak memiliki izin untuk melihat peminjaman ini');
 	}
 
 	// Calculate lateness
@@ -117,5 +123,48 @@ export const actions: Actions = {
 			console.error('Error during return process:', err);
 			return fail(500, { message: err.message || 'Gagal memproses pengembalian' });
 		}
+	},
+	deleteLending: async ({ params, locals }) => {
+		const { id } = params;
+		const currentUser = locals.user;
+		if (!currentUser) throw redirect(302, `/login`);
+
+		try {
+			const lendingData = await db.query.lending.findFirst({
+				where: eq(lending.id, id)
+			});
+
+			if (!lendingData) {
+				return fail(404, { message: 'Data peminjaman tidak ditemukan' });
+			}
+
+			// Filter for kepalaLab
+			if (currentUser.role === 'kepalaLab' && lendingData.laboratoriumId !== currentUser.laboratorium?.id) {
+				return fail(403, { message: 'Anda tidak memiliki izin untuk menghapus peminjaman ini' });
+			}
+
+			// Constraint: only if status is RETURNED
+			if (lendingData.status !== 'RETURNED') {
+				return fail(400, { message: 'Peminjaman hanya dapat dihapus jika status sudah dikembalikan' });
+			}
+
+			await db.transaction(async (tx) => {
+				// Delete related approval
+				await tx.delete(approval).where(
+					and(
+						eq(approval.referenceType, 'LENDING'),
+						eq(approval.referenceId, id)
+					)
+				);
+
+				// Delete the lending (lendingItem will cascade delete automatically)
+				await tx.delete(lending).where(eq(lending.id, id));
+			});
+		} catch (err: any) {
+			console.error('Error deleting lending:', err);
+			return fail(500, { message: err.message || 'Kesalahan server internal saat menghapus data' });
+		}
+
+		throw redirect(303, '/admin/peminjaman');
 	}
 };

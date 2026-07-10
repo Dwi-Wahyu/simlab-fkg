@@ -19,11 +19,13 @@
 		AlertCircle,
 		MessageSquare,
 		Edit,
-		ChevronLeft
+		ChevronLeft,
+		Trash2
 	} from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { goto, invalidateAll } from '$app/navigation';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 	import { cn } from '$lib/utils';
 
 	let { data } = $props();
@@ -63,6 +65,10 @@
 	let notificationType = $state<'success' | 'error'>('success');
 	let notificationTitle = $state('');
 	let notificationDescription = $state('');
+
+	// Delete Confirmation State
+	let showDeleteDialog = $state(false);
+	let deleteForm: HTMLFormElement | null = $state(null);
 
 	const statusOptions = [
 		{ value: 'BAIK', label: 'Baik' },
@@ -303,6 +309,35 @@
 							Pengembalian Alat
 						</Button>
 					{/if}
+					{#if data.lending.status === 'RETURNED'}
+						<form
+							bind:this={deleteForm}
+							method="POST"
+							action="?/deleteLending"
+							use:enhance={() => {
+								return async ({ result, update }) => {
+									if (result.type === 'redirect') {
+										await update();
+									} else {
+										notificationType = 'error';
+										notificationTitle = 'Gagal';
+										notificationDescription = (result as any).data?.message || 'Terjadi kesalahan saat menghapus peminjaman.';
+										showNotification = true;
+									}
+								};
+							}}
+						>
+							<Button
+								type="button"
+								variant="destructive"
+								class="gap-2 rounded-xl bg-red-600 hover:bg-red-700"
+								onclick={() => (showDeleteDialog = true)}
+							>
+								<Trash2 class="size-4" />
+								Hapus Peminjaman
+							</Button>
+						</form>
+					{/if}
 				{:else}
 					<form
 						method="POST"
@@ -512,4 +547,18 @@
 			goto(`/admin/peminjaman`, { invalidateAll: true });
 		}
 	}}
+/>
+
+<ConfirmationDialog
+	bind:open={showDeleteDialog}
+	type="error"
+	title="Hapus Peminjaman"
+	description="Apakah Anda yakin ingin menghapus data peminjaman ini? Tindakan ini akan menghapus semua riwayat peminjaman ini dari sistem secara permanen."
+	cancelLabel="Batal"
+	actionLabel="Ya, Hapus"
+	onAction={() => {
+		showDeleteDialog = false;
+		if (deleteForm) deleteForm.requestSubmit();
+	}}
+	onCancel={() => (showDeleteDialog = false)}
 />

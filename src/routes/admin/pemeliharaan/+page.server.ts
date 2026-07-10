@@ -181,5 +181,31 @@ export const actions: Actions = {
 		}
 
 		return { success: true, message: 'Data berhasil dihapus' };
+	},
+	deleteCost: async ({ request }) => {
+		const formData = await request.formData();
+		const id = formData.get('id')?.toString();
+
+		if (!id) {
+			return fail(400, { message: 'ID tidak ditemukan' });
+		}
+
+		try {
+			// Cek apakah data ada sebelum dihapus
+			const existing = await db.query.maintenanceCost.findFirst({
+				where: eq(maintenanceCost.id, id)
+			});
+
+			if (!existing) {
+				return fail(404, { message: 'Data biaya tidak ditemukan' });
+			}
+
+			await db.delete(maintenanceCost).where(eq(maintenanceCost.id, id));
+		} catch (err) {
+			console.error('Error deleting cost analysis:', err);
+			return fail(500, { message: 'Kesalahan server internal saat menghapus data' });
+		}
+
+		return { success: true, message: 'Data berhasil dihapus' };
 	}
 };
