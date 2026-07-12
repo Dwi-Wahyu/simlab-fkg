@@ -457,15 +457,12 @@ export const inventoryReport = mysqlTable('inventory_report', {
 
 export const auditChecklist = mysqlTable('audit_checklist', {
 	id: varchar('id', { length: 36 }).primaryKey(),
-	laboratoriumId: varchar('laboratorium_id', { length: 36 }).references(() => laboratorium.id),
-	auditorId: varchar('auditor_id', { length: 36 }).references(() => user.id), // Role SPMI
-
-	title: varchar('title', { length: 255 }), // Misal: "Audit Kepatuhan Sterilisasi Q1"
-	score: int('score'),
-	findings: text('findings'), // Temuan audit
-	recommendations: text('recommendations'),
-
-	createdAt: timestamp('created_at').defaultNow()
+	nama: varchar('nama', { length: 255 }).notNull(),
+	institusi: varchar('institusi', { length: 255 }).notNull(),
+	tanggal: date('tanggal').notNull(),
+	deskripsi: text('deskripsi'),
+	sertifikat: varchar('sertifikat', { length: 255 }),
+	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 export const wasteLog = mysqlTable('waste_log', {
@@ -1458,16 +1455,7 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 	})
 }));
 
-export const auditChecklistRelations = relations(auditChecklist, ({ one }) => ({
-	laboratorium: one(laboratorium, {
-		fields: [auditChecklist.laboratoriumId],
-		references: [laboratorium.id]
-	}),
-	auditor: one(user, {
-		fields: [auditChecklist.auditorId],
-		references: [user.id]
-	})
-}));
+
 
 export const inventoryReportRelations = relations(inventoryReport, ({ one }) => ({
 	laboratorium: one(laboratorium, {

@@ -37,6 +37,26 @@
 	let deleteLoading = $state(false);
 	let deleteForm = $state<HTMLFormElement>();
 
+	let isDeleteItemConfirmOpen = $state(false);
+	let isDeletingItem = $state(false);
+
+	function handleDeleteItem() {
+		isDeletingItem = true;
+		fetch('?/deleteItem', {
+			method: 'POST',
+			body: new FormData()
+		}).then(async (res) => {
+			isDeletingItem = false;
+			isDeleteItemConfirmOpen = false;
+			if (res.ok) {
+				toast.success('Berhasil', { description: 'BHP berhasil dihapus.' });
+				goto('/admin/inventaris/bhp');
+			} else {
+				toast.destructive('Gagal', { description: 'Gagal menghapus BHP. Item ini mungkin masih memiliki data stok aktif.' });
+			}
+		});
+	}
+
 	function updateUrl(params: Record<string, string | number | undefined>) {
 		const url = new URL(pageStore.url);
 		Object.entries(params).forEach(([key, value]) => {
@@ -123,14 +143,21 @@
 			</div>
 		</div>
 	{:then res}
-		<div class="flex items-center gap-4">
-			<Button href="/admin/inventaris/bhp" variant="outline" class="hidden md:flex" size="icon">
-				<ChevronLeft class="size-5" />
-			</Button>
-			<div>
-				<h1 class="text-2xl font-bold text-slate-900">{res.item.name ?? '...'}</h1>
-				<p class="text-sm text-slate-500">{res.item.id}</p>
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+			<div class="flex items-center gap-4">
+				<Button href="/admin/inventaris/bhp" variant="outline" class="hidden md:flex" size="icon">
+					<ChevronLeft class="size-5" />
+				</Button>
+				<div>
+					<h1 class="text-2xl font-bold text-slate-900">{res.item.name ?? '...'}</h1>
+					<p class="text-sm text-slate-500">{res.item.id}</p>
+				</div>
 			</div>
+			{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
+				<Button variant="destructive" class="gap-2" onclick={() => (isDeleteItemConfirmOpen = true)}>
+					<Trash2 class="size-4" /> Hapus Item
+				</Button>
+			{/if}
 		</div>
 
 		<!-- Table Controls -->
@@ -449,4 +476,15 @@
 	onAction={() => {
 		deleteForm?.requestSubmit();
 	}}
+/>
+
+<ConfirmationDialog
+	bind:open={isDeleteItemConfirmOpen}
+	type="error"
+	title="Hapus Item BHP?"
+	description="Tindakan ini tidak dapat dibatalkan. Menghapus item ini akan menghapusnya dari data inventaris secara permanen."
+	actionLabel="Hapus Item"
+	cancelLabel="Batal"
+	loading={isDeletingItem}
+	onAction={handleDeleteItem}
 />

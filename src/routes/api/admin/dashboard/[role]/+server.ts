@@ -436,8 +436,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 			const checklists = await db.query.auditChecklist.findMany({
 				orderBy: [desc(auditChecklist.createdAt)],
-				limit: 5,
-				with: { laboratorium: { columns: { name: true } } }
+				limit: 5
 			});
 
 			const incidents = await db.query.safetyIncident.findMany({
@@ -469,8 +468,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					})),
 					auditChecklists: checklists.map((c) => ({
 						id: c.id,
-						laboratoriumName: c.laboratorium?.name ?? '-',
-						completionRate: c.score ?? 0,
+						laboratoriumName: `${c.nama} (${c.institusi})`,
+						completionRate: 100,
 						createdAt: c.createdAt ?? new Date()
 					})),
 					safetyIncidents: incidents.map((i) => ({
