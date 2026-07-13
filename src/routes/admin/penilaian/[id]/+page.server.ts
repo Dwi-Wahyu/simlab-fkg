@@ -41,7 +41,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
 	// Verify authorization: instructor, koordinator of matching lab, or superadmin
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === instructorId);
-	const isKoordinator = locals.user.role === 'koordinator' && (!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
+	const isKoordinator =
+		locals.user.role === 'koordinator' &&
+		(!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
 	const isAuthorized = isInstructor || locals.user.role === 'superadmin' || isKoordinator;
 	if (!isAuthorized) {
 		throw error(403, 'Forbidden: You are not authorized to view this schedule');
@@ -49,7 +51,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
 	const classId = schedule.classId!;
 	const myInstructorRows = schedule.instructors.filter((i) => i.instructorId === instructorId);
-	const myGroupIds = [...new Set(myInstructorRows.map((i) => i.groupId).filter((g): g is string => !!g))];
+	const myGroupIds = [
+		...new Set(myInstructorRows.map((i) => i.groupId).filter((g): g is string => !!g))
+	];
 	const isScopedUser = !['superadmin', 'koordinator'].includes(locals.user.role);
 
 	const filterGroupId = url.searchParams.get('groupId') || undefined;
@@ -106,28 +110,33 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		})
 	);
 
-	const criteriaScores = assessments.length > 0
-		? await db.query.practicumAssessmentCriteriaScore.findMany({
-				where: inArray(
-					practicumAssessmentCriteriaScore.assessmentId,
-					assessments.map((a) => a.id)
-				)
-			})
-		: [];
+	const criteriaScores =
+		assessments.length > 0
+			? await db.query.practicumAssessmentCriteriaScore.findMany({
+					where: inArray(
+						practicumAssessmentCriteriaScore.assessmentId,
+						assessments.map((a) => a.id)
+					)
+				})
+			: [];
 
 	const groups = await db.query.kelompokMahasiswa.findMany({
 		where: eq(kelompokMahasiswa.classId, classId),
 		orderBy: (km, { asc }) => [asc(km.name)]
 	});
 
-	const groupMembersInfo = groups.length > 0
-		? await db.query.kelompokMahasiswaMember.findMany({
-				where: inArray(kelompokMahasiswaMember.kelompokId, groups.map((g) => g.id)),
-				with: {
-					kelompok: true
-				}
-			})
-		: [];
+	const groupMembersInfo =
+		groups.length > 0
+			? await db.query.kelompokMahasiswaMember.findMany({
+					where: inArray(
+						kelompokMahasiswaMember.kelompokId,
+						groups.map((g) => g.id)
+					),
+					with: {
+						kelompok: true
+					}
+				})
+			: [];
 
 	const studentKelompokMap: Record<string, string> = {};
 	for (const gm of groupMembersInfo) {

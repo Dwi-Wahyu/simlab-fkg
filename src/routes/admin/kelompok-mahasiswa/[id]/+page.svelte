@@ -185,7 +185,9 @@
 								<Table.Row>
 									<Table.Cell colspan={2} class="h-24 text-center text-xs text-slate-500">
 										<div class="flex items-center justify-center gap-2">
-											<div class="h-4 w-4 animate-spin rounded-full border-2 border-[#2D5A43] border-t-transparent"></div>
+											<div
+												class="h-4 w-4 animate-spin rounded-full border-2 border-[#2D5A43] border-t-transparent"
+											></div>
 											Memuat data mahasiswa...
 										</div>
 									</Table.Cell>

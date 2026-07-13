@@ -19,7 +19,15 @@ export async function saveAssessment(params: {
 	userRole: string;
 	userLaboratoriumId?: string | null;
 }): Promise<any> {
-	const { scheduleId, studentId, moduleId, formData, userId: instructorId, userRole, userLaboratoriumId } = params;
+	const {
+		scheduleId,
+		studentId,
+		moduleId,
+		formData,
+		userId: instructorId,
+		userRole,
+		userLaboratoriumId
+	} = params;
 
 	if (!moduleId) {
 		return fail(400, { message: 'Data tidak lengkap' });
@@ -27,7 +35,7 @@ export async function saveAssessment(params: {
 
 	// Verify schedule and authorization
 	const schedule = await db.query.practicumSchedule.findFirst({
-		where: eq(practicumSchedule.id, scheduleId),
+		where: and(eq(practicumSchedule.id, scheduleId), eq(practicumSchedule.isDeleted, false)),
 		with: { instructors: true }
 	});
 	if (!schedule) {
@@ -35,14 +43,16 @@ export async function saveAssessment(params: {
 	}
 
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === instructorId);
-	const isKoordinator = userRole === 'koordinator' && (!userLaboratoriumId || schedule.laboratoriumId === userLaboratoriumId);
+	const isKoordinator =
+		userRole === 'koordinator' &&
+		(!userLaboratoriumId || schedule.laboratoriumId === userLaboratoriumId);
 	const isAuthorized = isInstructor || userRole === 'superadmin' || isKoordinator;
 	if (!isAuthorized) {
 		return fail(403, { message: 'Anda tidak memiliki akses untuk menilai jadwal ini' });
 	}
 
 	const moduleObj = await db.query.practicumModule.findFirst({
-		where: eq(practicumModule.id, moduleId),
+		where: and(eq(practicumModule.id, moduleId), eq(practicumModule.isDeleted, false)),
 		with: {
 			criteria: {
 				orderBy: (c, { asc }) => [asc(c.sortOrder)]
@@ -66,7 +76,9 @@ export async function saveAssessment(params: {
 			}
 			const val = parseInt(valRaw as string);
 			if (isNaN(val) || val < 0 || val > crit.maxScore) {
-				return fail(400, { message: `Skor untuk "${crit.name}" harus antara 0 dan ${crit.maxScore}` });
+				return fail(400, {
+					message: `Skor untuk "${crit.name}" harus antara 0 dan ${crit.maxScore}`
+				});
 			}
 			criteriaInputs.push({ criteriaId: crit.id, score: val });
 			finalScore += val;
@@ -119,12 +131,14 @@ export async function saveAssessment(params: {
 			if (existing) {
 				// Rule: Only the first instructor who graded or coordinator/superadmin can update the grade
 				const isOriginalGradeInstructor = existing.instructorId === instructorId;
-				const isAuthorizedUpdater = isOriginalGradeInstructor || userRole === 'superadmin' || isKoordinator;
+				const isAuthorizedUpdater =
+					isOriginalGradeInstructor || userRole === 'superadmin' || isKoordinator;
 				if (!isAuthorizedUpdater) {
 					throw new Error('UNAUTHORIZED_UPDATE');
 				}
 
-				await tx.update(practicumAssessment)
+				await tx
+					.update(practicumAssessment)
 					.set({
 						score: finalScore,
 						notes,
@@ -156,7 +170,8 @@ export async function saveAssessment(params: {
 					});
 
 					if (existingCriteriaScore) {
-						await tx.update(practicumAssessmentCriteriaScore)
+						await tx
+							.update(practicumAssessmentCriteriaScore)
 							.set({
 								score: input.score,
 								updatedAt: new Date()
@@ -175,8 +190,9 @@ export async function saveAssessment(params: {
 		});
 	} catch (err: any) {
 		if (err.message === 'UNAUTHORIZED_UPDATE') {
-			return fail(403, { 
-				message: 'Anda tidak memiliki akses untuk mengubah nilai ini. Hanya DPJP yang memberikan nilai pertama kali yang dapat mengubahnya.' 
+			return fail(403, {
+				message:
+					'Anda tidak memiliki akses untuk mengubah nilai ini. Hanya DPJP yang memberikan nilai pertama kali yang dapat mengubahnya.'
 			});
 		}
 		console.error('Error saving assessment:', err);

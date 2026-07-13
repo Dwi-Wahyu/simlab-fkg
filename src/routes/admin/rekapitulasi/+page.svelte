@@ -48,9 +48,10 @@
 	}
 
 	const filteredStudents = $derived(
-		data.students.filter((s: any) =>
-			s.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			s.user.username.toLowerCase().includes(searchQuery.toLowerCase())
+		data.students.filter(
+			(s: any) =>
+				s.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				s.user.username.toLowerCase().includes(searchQuery.toLowerCase())
 		)
 	);
 
@@ -149,50 +150,55 @@
 	<!-- Selector Dropdowns -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-end">
 		<div class="flex-1">
-			<label for="instructor-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">DPJP</label>
+			<label
+				for="instructor-select"
+				class="mb-1 block text-xs font-semibold text-muted-foreground uppercase">DPJP</label
+			>
 			<SearchableSelect.Root
 				type="single"
-				bind:value={
-					// @ts-ignore - Svelte 5 bind:value getter/setter syntax
-					() => selectedInstructorId,
-					(v) => {
-						if (!v) return;
-						selectedInstructorId = v;
-						handleSwitch();
-					}
-				}
+				bind:value={selectedInstructorId}
+				onValueChange={(v) => {
+					if (!v) return;
+					selectedInstructorId = v;
+					handleSwitch();
+				}}
 			>
 				<SearchableSelect.Trigger class="w-full text-left">
 					{instructorTrigger}
 				</SearchableSelect.Trigger>
 				<SearchableSelect.Content searchPlaceholder="Cari DPJP...">
 					{#each data.instructorOptions as inst (inst.id)}
-						<SearchableSelect.Item value={inst.id} label={inst.name}>{inst.name}</SearchableSelect.Item>
+						<SearchableSelect.Item value={inst.id} label={inst.name}
+							>{inst.name}</SearchableSelect.Item
+						>
 					{/each}
 				</SearchableSelect.Content>
 			</SearchableSelect.Root>
 		</div>
 
 		<div class="flex-1">
-			<label for="series-select" class="block text-xs font-semibold text-muted-foreground uppercase mb-1">Seri Praktikum</label>
+			<label
+				for="series-select"
+				class="mb-1 block text-xs font-semibold text-muted-foreground uppercase"
+				>Seri Praktikum</label
+			>
 			<SearchableSelect.Root
 				type="single"
-				bind:value={
-					// @ts-ignore
-					() => selectedSeriesId,
-					(v) => {
-						if (!v) return;
-						selectedSeriesId = v;
-						handleSwitch();
-					}
-				}
+				bind:value={selectedSeriesId}
+				onValueChange={(v) => {
+					if (!v) return;
+					selectedSeriesId = v;
+					handleSwitch();
+				}}
 			>
 				<SearchableSelect.Trigger class="w-full text-left">
 					{seriesTrigger}
 				</SearchableSelect.Trigger>
 				<SearchableSelect.Content searchPlaceholder="Cari seri praktikum...">
 					{#each data.seriesOptions as series (series.id)}
-						<SearchableSelect.Item value={series.id} label={series.name}>{series.name}</SearchableSelect.Item>
+						<SearchableSelect.Item value={series.id} label={series.name}
+							>{series.name}</SearchableSelect.Item
+						>
 					{/each}
 				</SearchableSelect.Content>
 			</SearchableSelect.Root>
@@ -340,7 +346,10 @@
 							</Table.Row>
 						{:else}
 							<Table.Row>
-								<Table.Cell colspan={allColumns.length + 2} class="h-24 text-center text-muted-foreground">
+								<Table.Cell
+									colspan={allColumns.length + 2}
+									class="h-24 text-center text-muted-foreground"
+								>
 									{emptyStateMessage}
 								</Table.Cell>
 							</Table.Row>

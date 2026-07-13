@@ -139,7 +139,7 @@
 				<div class="grid grid-cols-3 gap-2">
 					<span class="text-sm font-medium text-muted-foreground">DPJP</span>
 					<div class="col-span-2 flex flex-col gap-1">
-						{#each [...new Map(currentSchedule.instructors.map((i: any) => [i.instructorId, i])).values()] as instr (instr.instructorId)}
+						{#each [...new Map(currentSchedule.instructors.map( (i: any) => [i.instructorId, i] )).values()] as instr (instr.instructorId)}
 							<span class="text-sm">• {instr.user.name}</span>
 						{/each}
 					</div>
@@ -278,7 +278,7 @@
 						>
 							<span class="mb-0.5 text-xs font-semibold text-slate-400 md:hidden">DPJP</span>
 							<div class="flex flex-wrap gap-2">
-								{#each [...new Map(schedule.instructors.map((i: any) => [i.instructorId, i])).values()] as instr (instr.instructorId)}
+								{#each [...new Map(schedule.instructors.map( (i: any) => [i.instructorId, i] )).values()] as instr (instr.instructorId)}
 									<div
 										class="flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5"
 									>

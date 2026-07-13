@@ -50,16 +50,18 @@
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
-	<Button variant="outline" href="/admin/pemeliharaan" class="w-fit mb-2">
-		<ChevronLeft class="size-4 mr-1" /> Kembali
+	<Button variant="outline" href="/admin/pemeliharaan" class="mb-2 w-fit">
+		<ChevronLeft class="mr-1 size-4" /> Kembali
 	</Button>
 
 	<div>
 		<h1 class="text-3xl font-bold tracking-tight text-slate-900">Persetujuan Pemeliharaan</h1>
-		<p class="text-slate-500">Daftar pemeliharaan selesai yang memerlukan verifikasi Kepala Lab / Superadmin.</p>
+		<p class="text-slate-500">
+			Daftar pemeliharaan selesai yang memerlukan verifikasi Kepala Lab / Superadmin.
+		</p>
 	</div>
 
-	<Card.Root class="border bg-white shadow-sm ring-1 ring-slate-100 overflow-hidden p-0">
+	<Card.Root class="overflow-hidden border bg-white p-0 shadow-sm ring-1 ring-slate-100">
 		<Card.Header class="border-b bg-slate-50/50 px-6 py-4">
 			<Card.Title class="text-lg font-semibold text-slate-900">Menunggu Persetujuan</Card.Title>
 		</Card.Header>
@@ -68,12 +70,21 @@
 				<Table.Root class="w-full min-w-[800px]">
 					<Table.Header class="bg-slate-50/50">
 						<Table.Row>
-							<Table.Head class="font-semibold text-slate-900 px-4 py-3">Peralatan</Table.Head>
-							<Table.Head class="font-semibold text-slate-900 px-4 py-3 text-center">Jenis</Table.Head>
-							<Table.Head class="font-semibold text-slate-900 px-4 py-3 text-center">Tanggal Selesai</Table.Head>
-							<Table.Head class="font-semibold text-slate-900 px-4 py-3 text-right">Biaya</Table.Head>
-							<Table.Head class="font-semibold text-slate-900 px-4 py-3 text-center">Nota / Bukti</Table.Head>
-							<Table.Head class="font-semibold text-slate-900 px-4 py-3 text-right">Aksi</Table.Head>
+							<Table.Head class="px-4 py-3 font-semibold text-slate-900">Peralatan</Table.Head>
+							<Table.Head class="px-4 py-3 text-center font-semibold text-slate-900"
+								>Jenis</Table.Head
+							>
+							<Table.Head class="px-4 py-3 text-center font-semibold text-slate-900"
+								>Tanggal Selesai</Table.Head
+							>
+							<Table.Head class="px-4 py-3 text-right font-semibold text-slate-900"
+								>Biaya</Table.Head
+							>
+							<Table.Head class="px-4 py-3 text-center font-semibold text-slate-900"
+								>Nota / Bukti</Table.Head
+							>
+							<Table.Head class="px-4 py-3 text-right font-semibold text-slate-900">Aksi</Table.Head
+							>
 						</Table.Row>
 					</Table.Header>
 
@@ -92,24 +103,28 @@
 									<Table.Cell class="px-4 py-3 font-medium text-slate-900">
 										<div class="flex flex-col">
 											<span class="font-semibold">{equip?.item?.name || 'Tanpa Nama'}</span>
-											<span class="text-xs text-slate-500 uppercase">S/N: {equip?.serialNumber || '-'}</span>
+											<span class="text-xs text-slate-500 uppercase"
+												>S/N: {equip?.serialNumber || '-'}</span
+											>
 										</div>
 									</Table.Cell>
 
 									<Table.Cell class="px-4 py-3 text-center">
-										<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-inset
+										<span
+											class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-inset
 											{maint?.maintenanceType === 'KOREKTIF'
 												? 'bg-amber-50 text-amber-800 ring-amber-600/20'
-												: 'bg-blue-50 text-blue-800 ring-blue-600/20'}">
+												: 'bg-blue-50 text-blue-800 ring-blue-600/20'}"
+										>
 											{maint?.maintenanceType || '-'}
 										</span>
 									</Table.Cell>
 
-									<Table.Cell class="px-4 py-3 text-center text-slate-600 text-sm">
+									<Table.Cell class="px-4 py-3 text-center text-sm text-slate-600">
 										{getFormatDate(maint?.completionDate)}
 									</Table.Cell>
 
-									<Table.Cell class="px-4 py-3 text-right font-semibold text-slate-900 text-sm">
+									<Table.Cell class="px-4 py-3 text-right text-sm font-semibold text-slate-900">
 										{getFormatCurrency(maint?.cost ?? 0)}
 									</Table.Cell>
 
@@ -123,7 +138,10 @@
 												<FileText class="size-3.5" /> Lihat Nota
 											</a>
 										{:else}
-											<span class="inline-flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-red-600/10" title="Tidak ada bukti pembayaran terlampir.">
+											<span
+												class="inline-flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-red-600/10"
+												title="Tidak ada bukti pembayaran terlampir."
+											>
 												<AlertTriangle class="size-3 text-red-500" /> Tanpa Nota
 											</span>
 										{/if}
@@ -134,14 +152,14 @@
 											<Button
 												size="sm"
 												variant="outline"
-												class="h-8 text-red-600 border-red-200 hover:bg-red-50/50 hover:text-red-700 gap-1.5"
+												class="h-8 gap-1.5 border-red-200 text-red-600 hover:bg-red-50/50 hover:text-red-700"
 												onclick={() => openReviewDialog(app, 'reject')}
 											>
 												<XCircle class="size-3.5" /> Tolak
 											</Button>
 											<Button
 												size="sm"
-												class="h-8 bg-[#2D5A43] text-white hover:bg-[#234735] gap-1.5"
+												class="h-8 gap-1.5 bg-[#2D5A43] text-white hover:bg-[#234735]"
 												onclick={() => openReviewDialog(app, 'approve')}
 											>
 												<CheckCircle2 class="size-3.5" /> Setujui
@@ -171,7 +189,10 @@
 					if (result.type === 'success') {
 						isDialogOpen = false;
 						toast.success('Persetujuan diproses', {
-							description: actionType === 'approve' ? 'Pemeliharaan berhasil disetujui.' : 'Pemeliharaan ditolak.'
+							description:
+								actionType === 'approve'
+									? 'Pemeliharaan berhasil disetujui.'
+									: 'Pemeliharaan ditolak.'
 						});
 						await invalidateAll();
 					} else if (result.type === 'failure') {
@@ -197,32 +218,44 @@
 
 			<div class="space-y-4 py-4">
 				{#if actionType === 'reject' && !selectedApproval?.maintenance?.notaFileName}
-					<div class="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-						<AlertTriangle class="size-4 shrink-0 text-amber-600 mt-0.5" />
+					<div
+						class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
+					>
+						<AlertTriangle class="mt-0.5 size-4 shrink-0 text-amber-600" />
 						<p>Perhatian: Pemeliharaan ini tidak memiliki nota terlampir.</p>
 					</div>
 				{/if}
 
 				<div class="space-y-1.5">
-					<Label for="note">Catatan / Komentar {actionType === 'reject' ? '*' : '(Opsional)'}</Label>
+					<Label for="note">Catatan / Komentar {actionType === 'reject' ? '*' : '(Opsional)'}</Label
+					>
 					<Textarea
 						id="note"
 						name="note"
-						placeholder={actionType === 'reject' ? 'Berikan alasan penolakan...' : 'Komentar tambahan...'}
+						placeholder={actionType === 'reject'
+							? 'Berikan alasan penolakan...'
+							: 'Komentar tambahan...'}
 						required={actionType === 'reject'}
-						class="resize-none h-20 text-xs"
+						class="h-20 resize-none text-xs"
 					/>
 				</div>
 			</div>
 
 			<Dialog.Footer>
-				<Button type="button" variant="outline" disabled={isSubmitting} onclick={() => (isDialogOpen = false)}>
+				<Button
+					type="button"
+					variant="outline"
+					disabled={isSubmitting}
+					onclick={() => (isDialogOpen = false)}
+				>
 					Batal
 				</Button>
 				<Button
 					type="submit"
 					disabled={isSubmitting}
-					class={actionType === 'approve' ? 'bg-[#2D5A43] text-white hover:bg-[#234735]' : 'bg-red-600 text-white hover:bg-red-700'}
+					class={actionType === 'approve'
+						? 'bg-[#2D5A43] text-white hover:bg-[#234735]'
+						: 'bg-red-600 text-white hover:bg-red-700'}
 				>
 					{isSubmitting ? 'Memproses...' : actionType === 'approve' ? 'Setujui' : 'Tolak'}
 				</Button>

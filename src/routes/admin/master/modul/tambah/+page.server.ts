@@ -27,7 +27,8 @@ export const actions: Actions = {
 		const description = formData.get('description') as string;
 		const blockId = formData.get('blockId') as string;
 		const componentRaw = formData.get('component') as string;
-		const component = (componentRaw === 'PREPARASI' || componentRaw === 'RESTORASI') ? componentRaw : null;
+		const component =
+			componentRaw === 'PREPARASI' || componentRaw === 'RESTORASI' ? componentRaw : null;
 		const scoringMode = (formData.get('scoringMode') as 'TOTAL' | 'RUBRIK') || 'TOTAL';
 
 		const criteriaNames = formData.getAll('criteriaName[]') as string[];

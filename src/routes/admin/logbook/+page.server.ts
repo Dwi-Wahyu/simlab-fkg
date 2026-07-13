@@ -1,5 +1,10 @@
 import { db } from '$lib/server/db';
-import { practicumLogbookTemplate, practicumModule, block, department } from '$lib/server/db/schema';
+import {
+	practicumLogbookTemplate,
+	practicumModule,
+	block,
+	department
+} from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -23,6 +28,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			updatedAt: practicumLogbookTemplate.updatedAt,
 			moduleId: practicumLogbookTemplate.moduleId,
 			moduleName: practicumModule.name,
+			moduleIsDeleted: practicumModule.isDeleted,
 			blockName: block.name,
 			departmentName: department.name
 		})
@@ -40,6 +46,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		})
 		.from(practicumModule)
 		.leftJoin(block, eq(practicumModule.blockId, block.id))
+		.where(eq(practicumModule.isDeleted, false))
 		.orderBy(practicumModule.name);
 
 	return { templates, modules };

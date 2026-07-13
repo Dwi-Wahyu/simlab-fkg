@@ -13,27 +13,27 @@ Use when building a table that shows each parent item (e.g., inventory item) wit
 
 ### 1. Single SQL query with conditional aggregates
 
-Use `count(sql\`CASE WHEN ... THEN 1 END\`)` inside a single `GROUP BY` query instead of fetching all children and aggregating in JS:
+Use `count(sql\`CASE WHEN ... THEN 1 END\`)`inside a single`GROUP BY` query instead of fetching all children and aggregating in JS:
 
 ```ts
 import { count, eq, sql } from 'drizzle-orm';
 
 const results = await db
-  .select({
-    id: item.id,
-    name: item.name,
-    total: count(),
-    baik: count(sql`CASE WHEN ${equipment.condition} = 'BAIK' THEN 1 END`),
-    rusakRingan: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_RINGAN' THEN 1 END`),
-    rusakBerat: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_BERAT' THEN 1 END`),
-    ready: count(sql`CASE WHEN ${equipment.status} = 'READY' THEN 1 END`)
-  })
-  .from(equipment)
-  .innerJoin(item, eq(equipment.itemId, item.id))
-  .groupBy(item.id)
-  .orderBy(item.name)
-  .limit(limit)
-  .offset(offset);
+	.select({
+		id: item.id,
+		name: item.name,
+		total: count(),
+		baik: count(sql`CASE WHEN ${equipment.condition} = 'BAIK' THEN 1 END`),
+		rusakRingan: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_RINGAN' THEN 1 END`),
+		rusakBerat: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK_BERAT' THEN 1 END`),
+		ready: count(sql`CASE WHEN ${equipment.status} = 'READY' THEN 1 END`)
+	})
+	.from(equipment)
+	.innerJoin(item, eq(equipment.itemId, item.id))
+	.groupBy(item.id)
+	.orderBy(item.name)
+	.limit(limit)
+	.offset(offset);
 ```
 
 ### 2. Pagination over distinct parents
@@ -42,10 +42,10 @@ Total count of distinct parents (not total child rows):
 
 ```ts
 const [totalResult] = await db
-  .select({ value: sql<number>`count(distinct ${item.id})` })
-  .from(equipment)
-  .innerJoin(item, eq(equipment.itemId, item.id))
-  .where(whereClause);
+	.select({ value: sql<number>`count(distinct ${item.id})` })
+	.from(equipment)
+	.innerJoin(item, eq(equipment.itemId, item.id))
+	.where(whereClause);
 ```
 
 ### 3. Search filtering
@@ -53,9 +53,7 @@ const [totalResult] = await db
 Pass search condition as optional `whereClause`:
 
 ```ts
-const whereClause = search
-  ? sql`${item.name} LIKE ${'%' + search + '%'}`
-  : undefined;
+const whereClause = search ? sql`${item.name} LIKE ${'%' + search + '%'}` : undefined;
 ```
 
 Include `whereClause` in **both** the aggregate query and the count(distinct) query so pagination stays consistent.

@@ -343,7 +343,7 @@
 							onchange={handleFileChange}
 						/>
 						{#if fileName}
-							<div class="flex w-full items-center justify-between px-4 z-20">
+							<div class="z-20 flex w-full items-center justify-between px-4">
 								<div class="flex items-center gap-3">
 									{#if filePreviewUrl}
 										<img

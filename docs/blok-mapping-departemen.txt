@@ -1,0 +1,17 @@
+### Pemetaan Blok ke Departemen FKG Unhas
+
+| No | Nama Blok (Mata Kuliah) | Departemen yang Bertanggung Jawab | Alasan Pemetaan |
+| :--- | :--- | :--- | :--- |
+| 1 | **Penyakit Jaringan Lunak** | **Departemen Ilmu Penyakit Mulut** | Blok ini secara langsung berkaitan dengan diagnosis dan perawatan penyakit pada jaringan lunak rongga mulut, yang merupakan fokus utama dari departemen ini . |
+| 2 | **Penyakit Jaringan Lunak 2** | **Departemen Ilmu Penyakit Mulut** | Merupakan kelanjutan dari blok sebelumnya, masih dalam ranah keilmuan yang sama. |
+| 3 | **Pencegahan dan Perawatan Gigi Anak** | **Departemen Ilmu Kedokteran Gigi Anak** | Blok ini secara spesifik membahas perawatan dan pencegahan masalah gigi pada anak-anak, yang menjadi fokus departemen ini . |
+| 4 | **Penyakit Periodontal** | **Departemen Periodonsia** | Nama blok ini identik dengan nama departemen yang menangani kesehatan jaringan pendukung gigi (periodonsium) . |
+| 5 | **Endodontik dan Terapi** | **Departemen Konservasi Gigi** | Endodontik adalah cabang ilmu yang mempelajari perawatan saluran akar gigi, yang merupakan salah satu fokus utama dari Departemen Konservasi Gigi . |
+| 6 | **Maloklusi** | **Departemen Ortodonti** | Maloklusi adalah istilah untuk gigi geligi yang tidak sejajar atau rahang yang tidak ideal, yang menjadi fokus perawatan oleh Departemen Ortodonti . |
+| 7 | **Bedah Oromaksilofasial** | **Departemen Bedah Mulut dan Maksilofasial** | Nama blok ini sangat sesuai dengan nama departemen yang menangani prosedur bedah di area mulut, rahang, dan wajah . |
+| 8 | **Gigi Tiruan Cekat** | **Departemen Prostodonsia** | Pembuatan gigi tiruan cekat (seperti mahkota dan jembatan) adalah salah satu spesialisasi utama dari Departemen Prostodonsia . |
+| 9 | **Anatomi dan Embriologi Gigi** | **Departemen Biologi Oral** | Ilmu ini mempelajari struktur dan perkembangan gigi serta jaringan sekitarnya, yang merupakan dasar dari ilmu Biologi Oral . |
+| 10 | **Ilmu Bahan dan Teknologi Ked. Gigi** | **Departemen Ilmu Bahan dan Teknologi** | Nama blok ini sama persis dengan nama departemen yang mengkaji berbagai material dan teknologi yang digunakan dalam praktik kedokteran gigi . |
+| 11 | **Bedah Minor** | **Departemen Bedah Mulut dan Maksilofasial** | Blok ini mencakup prosedur bedah sederhana di rongga mulut, yang masih dalam lingkup tanggung jawab departemen bedah . |
+| 12 | **Sistem Stomatognatik 2** | **Departemen Fisiologi / Biologi Oral** | Sistem stomatognatik adalah sistem yang melibatkan fungsi pengunyahan, yang sering menjadi kajian gabungan. **Biologi Oral** adalah departemen yang paling relevan karena mencakup fisiologi dan fungsi sistem pengunyahan . |
+| 13 | **Oral Rehabilitasi 1** | **Departemen Prostodonsia** | Rehabilitasi oral seringkali melibatkan pemulihan fungsi dan estetika gigi geligi, yang menjadi fokus utama dari Departemen Prostodonsia . |

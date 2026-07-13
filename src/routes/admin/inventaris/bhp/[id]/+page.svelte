@@ -52,7 +52,9 @@
 				toast.success('Berhasil', { description: 'BHP berhasil dihapus.' });
 				goto('/admin/inventaris/bhp');
 			} else {
-				toast.destructive('Gagal', { description: 'Gagal menghapus BHP. Item ini mungkin masih memiliki data stok aktif.' });
+				toast.destructive('Gagal', {
+					description: 'Gagal menghapus BHP. Item ini mungkin masih memiliki data stok aktif.'
+				});
 			}
 		});
 	}
@@ -154,7 +156,11 @@
 				</div>
 			</div>
 			{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
-				<Button variant="destructive" class="gap-2" onclick={() => (isDeleteItemConfirmOpen = true)}>
+				<Button
+					variant="destructive"
+					class="gap-2"
+					onclick={() => (isDeleteItemConfirmOpen = true)}
+				>
 					<Trash2 class="size-4" /> Hapus Item
 				</Button>
 			{/if}
@@ -245,7 +251,10 @@
 													{/if}
 												</span>
 												{#if isNewItem(batch.createdAt)}
-													<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
+													<Badge
+														class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
+														>Baru</Badge
+													>
 												{/if}
 											</div>
 										</div>

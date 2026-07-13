@@ -1,7 +1,9 @@
 import { db } from '$lib/server/db';
-import { laboratorium, laboratoriumMember, user } from '$lib/server/db/schema';
+import { laboratorium, laboratoriumMember } from '$lib/server/db/schema';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { eq, and } from 'drizzle-orm';
+import { notDeleted } from '$lib/server/db/soft-delete';
+import { createAuditLog } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -11,6 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	const labs = await db.query.laboratorium.findMany({
+		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false),
 		with: {
 			members: {
 				where: eq(laboratoriumMember.role, 'koordinator'),
@@ -22,7 +25,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	});
 
 	const coordinators = await db.query.user.findMany({
-		where: (user, { eq }) => eq(user.role, 'user')
+		where: (user, { eq, and }) => and(eq(user.role, 'user'), eq(user.isDeleted, false))
 	});
 
 	return {
@@ -118,14 +121,39 @@ export const actions: Actions = {
 		}
 	},
 
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { message: 'Unauthorized' });
+
 		const formData = await request.formData();
 		const id = formData.get('id') as string;
 
 		if (!id) return fail(400, { message: 'ID wajib diisi' });
 
 		try {
-			await db.delete(laboratorium).where(eq(laboratorium.id, id));
+			const [lab] = await db
+				.select()
+				.from(laboratorium)
+				.where(and(eq(laboratorium.id, id), notDeleted(laboratorium)))
+				.limit(1);
+			if (!lab) return fail(404, { message: 'Laboratorium tidak ditemukan' });
+
+			await db
+				.update(laboratorium)
+				.set({
+					isDeleted: true,
+					deletedAt: new Date(),
+					deletedBy: locals.user.id
+				})
+				.where(eq(laboratorium.id, id));
+
+			await createAuditLog({
+				userId: locals.user.id,
+				action: 'SOFT_DELETE_LABORATORIUM',
+				tableName: 'laboratorium',
+				recordId: id,
+				oldValue: lab
+			});
+
 			return { success: true, message: 'Laboratorium berhasil dihapus' };
 		} catch (e) {
 			console.error(e);

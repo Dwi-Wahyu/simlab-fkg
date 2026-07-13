@@ -2,6 +2,8 @@ import { db } from '$lib/server/db';
 import { practicumModule, block, department } from '$lib/server/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { fail, type Actions } from '@sveltejs/kit';
+import { notDeleted } from '$lib/server/db/soft-delete';
+import { createAuditLog } from '$lib/server/audit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
@@ -11,7 +13,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '10');
 	const offset = (page - 1) * pageSize;
 
-	const filters = [];
+	const filters = [eq(practicumModule.isDeleted, false)];
 	if (departmentId) {
 		filters.push(eq(block.departmentId, departmentId));
 	}
@@ -19,7 +21,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.push(eq(practicumModule.blockId, blockId));
 	}
 
-	const whereClause = filters.length > 0 ? and(...filters) : undefined;
+	const whereClause = and(...filters);
 
 	// Get total count for pagination
 	const [totalCountResult] = await db
@@ -51,7 +53,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		.offset(offset);
 
 	const departments = await db.query.department.findMany();
-	
+
 	// If department is selected, only show blocks for that department
 	const blocks = await db.query.block.findMany({
 		where: departmentId ? eq(block.departmentId, departmentId) : undefined
@@ -75,14 +77,39 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { message: 'Unauthorized' });
+
 		const formData = await request.formData();
 		const id = formData.get('id') as string;
 
 		if (!id) return fail(400, { message: 'ID diperlukan' });
 
 		try {
-			await db.delete(practicumModule).where(eq(practicumModule.id, id));
+			const [mod] = await db
+				.select()
+				.from(practicumModule)
+				.where(and(eq(practicumModule.id, id), notDeleted(practicumModule)))
+				.limit(1);
+			if (!mod) return fail(404, { message: 'Modul tidak ditemukan' });
+
+			await db
+				.update(practicumModule)
+				.set({
+					isDeleted: true,
+					deletedAt: new Date(),
+					deletedBy: locals.user.id
+				})
+				.where(eq(practicumModule.id, id));
+
+			await createAuditLog({
+				userId: locals.user.id,
+				action: 'SOFT_DELETE_PRACTICUM_MODULE',
+				tableName: 'practicum_module',
+				recordId: id,
+				oldValue: mod
+			});
+
 			return { success: true, message: 'Modul berhasil dihapus' };
 		} catch (error) {
 			console.error('Error deleting module:', error);

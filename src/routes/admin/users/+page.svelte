@@ -94,7 +94,7 @@
 		<Dialog.Root bind:open={isCreateModalOpen}>
 			<Dialog.Trigger>
 				<Button>
-					<Plus class="h-4 w-4 mr-2" />
+					<Plus class="mr-2 h-4 w-4" />
 					Tambah Pengguna
 				</Button>
 			</Dialog.Trigger>
@@ -186,7 +186,7 @@
 		</div>
 
 		<!-- Skeleton Table -->
-		<div class="rounded-md border bg-white shadow-sm animate-pulse">
+		<div class="animate-pulse rounded-md border bg-white shadow-sm">
 			<div class="overflow-x-auto">
 				<Table.Root>
 					<Table.Header>
@@ -252,7 +252,7 @@
 				</Card.Description>
 			</Card.Header>
 			<Card.Content class="p-0 md:p-6">
-				<div class="rounded-md border bg-white shadow-sm overflow-hidden">
+				<div class="overflow-hidden rounded-md border bg-white shadow-sm">
 					<Table.Root class="block md:table">
 						<Table.Header class="hidden md:table-header-group">
 							<Table.Row class="md:table-row">
@@ -265,9 +265,13 @@
 						</Table.Header>
 						<Table.Body class="block md:table-row-group">
 							{#each res.users as u (u.id)}
-								<Table.Row class="group flex flex-col border-b last:border-0 hover:bg-slate-50/50 md:table-row md:border-b">
+								<Table.Row
+									class="group flex flex-col border-b last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
+								>
 									<!-- Pengguna Cell -->
-									<Table.Cell class="flex items-center justify-between border-b-0 p-4 md:table-cell md:border-b md:px-6 md:py-4">
+									<Table.Cell
+										class="flex items-center justify-between border-b-0 p-4 md:table-cell md:border-b md:px-6 md:py-4"
+									>
 										<div class="flex items-center gap-2">
 											<div class="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
 												<User class="h-4 w-4" />
@@ -307,7 +311,9 @@
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Laboratorium & Role</span>
+										<span class="text-xs font-semibold text-slate-400 md:hidden"
+											>Laboratorium & Role</span
+										>
 										<div class="flex flex-col gap-1">
 											{#each u.members as member}
 												<div class="flex flex-wrap items-center gap-2 text-xs">
@@ -323,7 +329,8 @@
 													</span>
 												</div>
 											{:else}
-												<span class="text-xs text-muted-foreground italic">Tidak ada penugasan</span>
+												<span class="text-xs text-muted-foreground italic">Tidak ada penugasan</span
+												>
 											{/each}
 										</div>
 									</Table.Cell>
@@ -336,7 +343,9 @@
 										)}
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Dibuat Pada</span>
-										<span class="text-sm text-slate-600">{new Date(u.createdAt).toLocaleDateString('id-ID')}</span>
+										<span class="text-sm text-slate-600"
+											>{new Date(u.createdAt).toLocaleDateString('id-ID')}</span
+										>
 									</Table.Cell>
 
 									<!-- Aksi Cell -->
@@ -366,16 +375,25 @@
 								</Table.Row>
 							{:else}
 								<Table.Row>
-									<Table.Cell colspan={5} class="h-24 text-center text-muted-foreground">Belum ada pengguna.</Table.Cell>
+									<Table.Cell colspan={5} class="h-24 text-center text-muted-foreground"
+										>Belum ada pengguna.</Table.Cell
+									>
 								</Table.Row>
 							{/each}
 						</Table.Body>
 					</Table.Root>
 
 					<!-- Pagination Footer -->
-					<div class="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 gap-4">
+					<div
+						class="flex flex-col items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/30 p-4 sm:flex-row"
+					>
 						<div class="text-xs font-semibold text-slate-500">
-							Menampilkan {res.users.length > 0 ? (res.pagination.currentPage - 1) * res.pagination.limit + 1 : 0} sampai {Math.min(res.pagination.totalItems, res.pagination.currentPage * res.pagination.limit)} dari {res.pagination.totalItems} pengguna
+							Menampilkan {res.users.length > 0
+								? (res.pagination.currentPage - 1) * res.pagination.limit + 1
+								: 0} sampai {Math.min(
+								res.pagination.totalItems,
+								res.pagination.currentPage * res.pagination.limit
+							)} dari {res.pagination.totalItems} pengguna
 						</div>
 						<div class="flex items-center space-x-2">
 							<Button
@@ -404,7 +422,8 @@
 								size="icon"
 								class="h-8 w-8"
 								onclick={() => handlePageChange(res.pagination.currentPage + 1)}
-								disabled={res.pagination.currentPage === res.pagination.totalPages || res.pagination.totalPages === 0}
+								disabled={res.pagination.currentPage === res.pagination.totalPages ||
+									res.pagination.totalPages === 0}
 							>
 								<ChevronRight class="h-4 w-4" />
 							</Button>
@@ -413,7 +432,8 @@
 								size="icon"
 								class="hidden h-8 w-8 lg:flex"
 								onclick={() => handlePageChange(res.pagination.totalPages)}
-								disabled={res.pagination.currentPage === res.pagination.totalPages || res.pagination.totalPages === 0}
+								disabled={res.pagination.currentPage === res.pagination.totalPages ||
+									res.pagination.totalPages === 0}
 							>
 								<ChevronsRight class="h-4 w-4" />
 							</Button>

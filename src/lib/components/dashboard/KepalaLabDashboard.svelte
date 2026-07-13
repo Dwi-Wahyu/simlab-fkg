@@ -68,14 +68,20 @@
 				<Card.Title>Pemeliharaan Menunggu Review</Card.Title>
 			</Card.Header>
 			<Card.Content class="flex flex-col items-center justify-center py-6">
-				<span class="text-4xl font-extrabold {data.pendingMaintenanceApprovals > 0 ? 'text-amber-600' : 'text-slate-400'}">
+				<span
+					class="text-4xl font-extrabold {data.pendingMaintenanceApprovals > 0
+						? 'text-amber-600'
+						: 'text-slate-400'}"
+				>
 					{data.pendingMaintenanceApprovals}
 				</span>
-				<p class="text-xs text-muted-foreground mt-2">Pekerjaan selesai menunggu verifikasi</p>
+				<p class="mt-2 text-xs text-muted-foreground">Pekerjaan selesai menunggu verifikasi</p>
 			</Card.Content>
 			{#if data.pendingMaintenanceApprovals > 0}
 				<Card.Footer>
-					<Button href="/admin/pemeliharaan/approval" variant="link" class="w-full text-center">Tinjau Nota</Button>
+					<Button href="/admin/pemeliharaan/approval" variant="link" class="w-full text-center"
+						>Tinjau Nota</Button
+					>
 				</Card.Footer>
 			{/if}
 		</Card.Root>

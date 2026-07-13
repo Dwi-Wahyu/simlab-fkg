@@ -53,7 +53,9 @@
 		<div
 			transition:fly={{ y: 20, duration: 400, easing: cubicOut }}
 			onclick={(e) => e.stopPropagation()}
-			class="w-full {wide ? 'max-w-2xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-2xl"
+			class="w-full {wide
+				? 'max-w-2xl'
+				: 'max-w-md'} max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-2xl"
 		>
 			<div class="border-b border-gray-100 p-6">
 				<h3 class="text-xl font-bold text-gray-900">{title}</h3>

@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,11 +19,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const categories = await db.query.equipmentCategory.findMany();
-	const labs = await db.query.laboratorium.findMany();
+	const labs = await db.query.laboratorium.findMany({
+		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false)
+	});
 
 	// Fetch unique CONSUMABLE items for autocomplete
 	const existingBhp = await db.query.item.findMany({
-		where: eq(item.type, 'CONSUMABLE')
+		where: and(eq(item.type, 'CONSUMABLE'), eq(item.isDeleted, false))
 	});
 
 	return {
@@ -54,9 +56,10 @@ export const actions: Actions = {
 		const initialStock = parseInt((formData.get('initialStock') as string) || '0');
 		const condition = (formData.get('condition') as string) || 'baik';
 		const expiryDateRaw = formData.get('expiryDate') as string;
-		const parsedExpiryDate = expiryDateRaw && !isNaN(new Date(expiryDateRaw).getTime())
-			? new Date(expiryDateRaw).toISOString().slice(0, 10)
-			: null;
+		const parsedExpiryDate =
+			expiryDateRaw && !isNaN(new Date(expiryDateRaw).getTime())
+				? new Date(expiryDateRaw).toISOString().slice(0, 10)
+				: null;
 
 		if (!name || !baseUnit || !labId) {
 			return fail(400, {
@@ -89,7 +92,7 @@ export const actions: Actions = {
 		let itemId = uuidv4();
 		let isNewItem = true;
 		const existingItem = await db.query.item.findFirst({
-			where: eq(item.name, name)
+			where: and(eq(item.name, name), eq(item.isDeleted, false))
 		});
 
 		if (existingItem) {
@@ -137,7 +140,8 @@ export const actions: Actions = {
 
 				const newStockId = uuidv4();
 				if (existingStockRow) {
-					await tx.update(stock)
+					await tx
+						.update(stock)
 						.set({
 							qty: existingStockRow.qty + initialStock,
 							condition: condition || existingStockRow.condition

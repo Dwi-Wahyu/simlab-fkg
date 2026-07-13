@@ -88,7 +88,9 @@
 		align-items: center;
 		gap: 1rem;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-		transition: transform 0.2s, box-shadow 0.2s;
+		transition:
+			transform 0.2s,
+			box-shadow 0.2s;
 	}
 	.user-card:hover {
 		transform: translateY(-4px);

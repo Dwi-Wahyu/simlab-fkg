@@ -64,7 +64,14 @@
 	let debounceTimer: any;
 
 	import { untrack } from 'svelte';
-	import { Search, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, ChevronsLeft, ChevronsRight, XCircle } from '@lucide/svelte';
+	import {
+		Search,
+		ChevronLeft as ChevronLeftIcon,
+		ChevronRight as ChevronRightIcon,
+		ChevronsLeft,
+		ChevronsRight,
+		XCircle
+	} from '@lucide/svelte';
 
 	function updateUrl(params: Record<string, string | number | undefined>) {
 		const url = new URL(page.url);
@@ -115,13 +122,18 @@
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="space-y-1">
 			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Kelompok Mahasiswa</h1>
-			<p class="text-slate-500">Kelola pembagian kelompok belajar mahasiswa berdasarkan kelas praktikum.</p>
+			<p class="text-slate-500">
+				Kelola pembagian kelompok belajar mahasiswa berdasarkan kelas praktikum.
+			</p>
 		</div>
-		<Button onclick={() => {
-			groupName = '';
-			selectedClassId = data.selectedClassId || (data.classes[0]?.id ?? '');
-			isCreateModalOpen = true;
-		}} class="w-full sm:w-auto bg-[#2D5A43] text-white hover:bg-[#234735] gap-2">
+		<Button
+			onclick={() => {
+				groupName = '';
+				selectedClassId = data.selectedClassId || (data.classes[0]?.id ?? '');
+				isCreateModalOpen = true;
+			}}
+			class="w-full gap-2 bg-[#2D5A43] text-white hover:bg-[#234735] sm:w-auto"
+		>
 			<Plus class="size-4" />
 			Tambah Kelompok
 		</Button>
@@ -129,8 +141,8 @@
 
 	<!-- Filter & Search Section -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex items-center gap-4 bg-white p-4 rounded-lg border w-full sm:w-auto">
-			<Label class="text-sm font-medium text-slate-700 whitespace-nowrap">Filter Kelas:</Label>
+		<div class="flex w-full items-center gap-4 rounded-lg border bg-white p-4 sm:w-auto">
+			<Label class="text-sm font-medium whitespace-nowrap text-slate-700">Filter Kelas:</Label>
 			<Select.Root type="single" value={data.selectedClassId} onValueChange={handleClassFilter}>
 				<Select.Trigger class="w-[200px] bg-white">
 					{data.selectedClassId ? `${filterClassName}` : 'Semua Kelas'}
@@ -150,7 +162,7 @@
 			<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
 			<Input
 				placeholder="Cari kelompok..."
-				class="pl-10 bg-white"
+				class="bg-white pl-10"
 				bind:value={searchQuery}
 				oninput={handleSearch}
 			/>
@@ -211,19 +223,24 @@
 							{#each res.items as group (group.id)}
 								<Table.Row>
 									<Table.Cell>
-										<div class="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+										<div
+											class="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600"
+										>
 											<Users class="size-4" />
 										</div>
 									</Table.Cell>
 									<Table.Cell class="font-medium text-slate-900">
-										<a href="/admin/kelompok-mahasiswa/{group.id}" class="hover:underline text-[#2D5A43] font-semibold">
+										<a
+											href="/admin/kelompok-mahasiswa/{group.id}"
+											class="font-semibold text-[#2D5A43] hover:underline"
+										>
 											{group.name}
 										</a>
 									</Table.Cell>
 									<Table.Cell class="text-slate-600">
 										{group.class?.name} ({group.class?.batch})
 									</Table.Cell>
-									<Table.Cell class="text-center text-slate-900 font-semibold">
+									<Table.Cell class="text-center font-semibold text-slate-900">
 										{group.members?.length || 0} Mahasiswa
 									</Table.Cell>
 									<Table.Cell class="text-slate-600">
@@ -257,7 +274,7 @@
 												onclick={() => openDeleteModal(group)}
 												variant="outline"
 												size="sm"
-												class="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+												class="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
 											>
 												<Trash2 class="size-3.5" />
 											</Button>
@@ -272,7 +289,7 @@
 		</Card.Root>
 
 		<!-- Pagination & Limit -->
-		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
+		<div class="flex flex-col gap-4 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
 			<div class="text-sm text-slate-500">
 				Menampilkan {(res.pagination.currentPage - 1) * res.pagination.limit + 1} sampai {Math.min(
 					res.pagination.currentPage * res.pagination.limit,
@@ -301,7 +318,7 @@
 					<Button
 						variant="outline"
 						size="icon"
-						class="hidden h-8 w-8 lg:flex bg-white"
+						class="hidden h-8 w-8 bg-white lg:flex"
 						onclick={() => handlePageChange(1)}
 						disabled={res.pagination.currentPage === 1}
 					>
@@ -316,7 +333,7 @@
 					>
 						<ChevronLeftIcon class="h-4 w-4" />
 					</Button>
-					<div class="flex items-center justify-center text-sm font-medium px-2">
+					<div class="flex items-center justify-center px-2 text-sm font-medium">
 						Halaman {res.pagination.currentPage} dari {res.pagination.totalPages}
 					</div>
 					<Button
@@ -331,7 +348,7 @@
 					<Button
 						variant="outline"
 						size="icon"
-						class="hidden h-8 w-8 lg:flex bg-white"
+						class="hidden h-8 w-8 bg-white lg:flex"
 						onclick={() => handlePageChange(res.pagination.totalPages)}
 						disabled={res.pagination.currentPage === res.pagination.totalPages}
 					>
@@ -369,10 +386,16 @@
 		</Dialog.Header>
 		<form method="POST" use:enhance={handleActionSubmit} class="space-y-4 pt-2">
 			<input type="hidden" name="action" value="create" />
-			
+
 			<div class="space-y-2">
 				<Label for="create-name">Nama Kelompok</Label>
-				<Input id="create-name" name="name" bind:value={groupName} placeholder="Contoh: Kelompok 1" required />
+				<Input
+					id="create-name"
+					name="name"
+					bind:value={groupName}
+					placeholder="Contoh: Kelompok 1"
+					required
+				/>
 			</div>
 
 			<div class="space-y-2">
@@ -395,9 +418,7 @@
 				<Button type="button" variant="outline" onclick={() => (isCreateModalOpen = false)}>
 					Batal
 				</Button>
-				<Button type="submit" class="bg-[#2D5A43] text-white hover:bg-[#234735]">
-					Simpan
-				</Button>
+				<Button type="submit" class="bg-[#2D5A43] text-white hover:bg-[#234735]">Simpan</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>
@@ -408,9 +429,7 @@
 	<Dialog.Content class="sm:max-w-[425px]">
 		<Dialog.Header>
 			<Dialog.Title>Edit Kelompok</Dialog.Title>
-			<Dialog.Description>
-				Perbarui detail kelompok belajar mahasiswa.
-			</Dialog.Description>
+			<Dialog.Description>Perbarui detail kelompok belajar mahasiswa.</Dialog.Description>
 		</Dialog.Header>
 		<form method="POST" use:enhance={handleActionSubmit} class="space-y-4 pt-2">
 			<input type="hidden" name="action" value="update" />
@@ -418,7 +437,13 @@
 
 			<div class="space-y-2">
 				<Label for="edit-name">Nama Kelompok</Label>
-				<Input id="edit-name" name="name" bind:value={groupName} placeholder="Contoh: Kelompok 1" required />
+				<Input
+					id="edit-name"
+					name="name"
+					bind:value={groupName}
+					placeholder="Contoh: Kelompok 1"
+					required
+				/>
 			</div>
 
 			<div class="space-y-2">
@@ -461,8 +486,9 @@
 		{#if selectedGroup}
 			<div class="py-2 text-sm text-slate-600">
 				<p>Kelompok: <strong>{selectedGroup.name}</strong></p>
-				<p class="mt-2 text-red-500 font-semibold">
-					Peringatan: Sebanyak {selectedGroup.members?.length || 0} anggota mahasiswa di kelompok ini akan dilepas keanggotaannya.
+				<p class="mt-2 font-semibold text-red-500">
+					Peringatan: Sebanyak {selectedGroup.members?.length || 0} anggota mahasiswa di kelompok ini
+					akan dilepas keanggotaannya.
 				</p>
 			</div>
 		{/if}
@@ -473,9 +499,7 @@
 				<Button type="button" variant="outline" onclick={() => (isDeleteModalOpen = false)}>
 					Batal
 				</Button>
-				<Button type="submit" class="bg-red-600 text-white hover:bg-red-700">
-					Hapus Kelompok
-				</Button>
+				<Button type="submit" class="bg-red-600 text-white hover:bg-red-700">Hapus Kelompok</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

@@ -14,10 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	const allPendingApprovals = await db.query.approval.findMany({
-		where: and(
-			eq(approval.referenceType, 'MAINTENANCE'),
-			eq(approval.status, 'PENDING')
-		),
+		where: and(eq(approval.referenceType, 'MAINTENANCE'), eq(approval.status, 'PENDING')),
 		with: {
 			maintenance: {
 				with: {

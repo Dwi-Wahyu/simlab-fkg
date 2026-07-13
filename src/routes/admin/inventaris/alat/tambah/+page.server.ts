@@ -1,28 +1,24 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { base } from '$app/paths';
 import { db } from '$lib/server/db';
-import {
-	equipment,
-	item,
-	movement,
-	equipmentCategory,
-	laboratorium
-} from '$lib/server/db/schema';
+import { equipment, item, movement, equipmentCategory, laboratorium } from '$lib/server/db/schema';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const categories = await db.query.equipmentCategory.findMany();
-	const labs = await db.query.laboratorium.findMany();
+	const labs = await db.query.laboratorium.findMany({
+		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false)
+	});
 
 	// Fetch unique ASSET items for templates / auto-complete
 	const existingAssets = await db.query.item.findMany({
-		where: eq(item.type, 'ASSET')
+		where: and(eq(item.type, 'ASSET'), eq(item.isDeleted, false))
 	});
 
 	return {
@@ -87,7 +83,7 @@ export const actions: Actions = {
 		let itemId = uuidv4();
 		let isNewItem = true;
 		const existingItem = await db.query.item.findFirst({
-			where: eq(item.name, name)
+			where: and(eq(item.name, name), eq(item.isDeleted, false))
 		});
 
 		if (existingItem) {
@@ -114,9 +110,7 @@ export const actions: Actions = {
 				} else {
 					// update categoryId if not set
 					if (categoryId && !existingItem.categoryId) {
-						await tx.update(item)
-							.set({ categoryId })
-							.where(eq(item.id, itemId));
+						await tx.update(item).set({ categoryId }).where(eq(item.id, itemId));
 					}
 				}
 

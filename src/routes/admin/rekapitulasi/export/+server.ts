@@ -17,7 +17,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const role = locals.user.role;
 	if (!['koordinator', 'superadmin', 'kepalaLab'].includes(role)) throw error(403, 'Forbidden');
 
-	const labId = ['koordinator', 'kepalaLab'].includes(role) ? locals.user.laboratorium?.id : undefined;
+	const labId = ['koordinator', 'kepalaLab'].includes(role)
+		? locals.user.laboratorium?.id
+		: undefined;
 
 	const instructorId = url.searchParams.get('instructorId');
 	const seriesId = url.searchParams.get('seriesId');
@@ -95,7 +97,8 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const getScore = (studentId: string, scheduleId: string, moduleId: string) => {
 		const a = assessments.find(
-			(val) => val.studentId === studentId && val.scheduleId === scheduleId && val.moduleId === moduleId
+			(val) =>
+				val.studentId === studentId && val.scheduleId === scheduleId && val.moduleId === moduleId
 		);
 		return a ? a.score : null;
 	};

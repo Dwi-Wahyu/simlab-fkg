@@ -16,7 +16,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const { id } = params;
-	const [checklist] = await db.select().from(auditChecklist).where(eq(auditChecklist.id, id)).limit(1);
+	const [checklist] = await db
+		.select()
+		.from(auditChecklist)
+		.where(eq(auditChecklist.id, id))
+		.limit(1);
 
 	if (!checklist) {
 		throw error(404, 'Audit tidak ditemukan');
@@ -38,7 +42,11 @@ export const actions: Actions = {
 		}
 
 		const { id } = params;
-		const [checklist] = await db.select().from(auditChecklist).where(eq(auditChecklist.id, id)).limit(1);
+		const [checklist] = await db
+			.select()
+			.from(auditChecklist)
+			.where(eq(auditChecklist.id, id))
+			.limit(1);
 		if (!checklist) {
 			return fail(404, { message: 'Audit tidak ditemukan' });
 		}
@@ -60,7 +68,13 @@ export const actions: Actions = {
 		// Handle deleting certificate file
 		if (deleteCertificate && checklist.sertifikat) {
 			try {
-				const oldFilePath = join(process.cwd(), 'static', 'uploads', 'certificates', checklist.sertifikat);
+				const oldFilePath = join(
+					process.cwd(),
+					'static',
+					'uploads',
+					'certificates',
+					checklist.sertifikat
+				);
 				await unlink(oldFilePath);
 				sertifikatName = null;
 			} catch (err) {
@@ -74,7 +88,13 @@ export const actions: Actions = {
 				// Delete existing if any
 				if (checklist.sertifikat) {
 					try {
-						const oldFilePath = join(process.cwd(), 'static', 'uploads', 'certificates', checklist.sertifikat);
+						const oldFilePath = join(
+							process.cwd(),
+							'static',
+							'uploads',
+							'certificates',
+							checklist.sertifikat
+						);
 						await unlink(oldFilePath);
 					} catch (err) {
 						console.error('Failed to delete old certificate file:', err);

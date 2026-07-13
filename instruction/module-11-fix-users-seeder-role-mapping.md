@@ -14,7 +14,7 @@ for (const roleName of rolesToSeed) {
 	const prefix = isInstruktur ? 'dpjp' : roleName.toLowerCase();
 	const email = `${prefix}@unhas.ac.id`;
 	// ...
-	name: isInstruktur ? 'DPJP' : faker.person.fullName()
+	name: isInstruktur ? 'DPJP' : faker.person.fullName();
 	// ...
 }
 ```
@@ -74,13 +74,13 @@ for (const roleName of rolesToSeed) {
 Replace:
 
 ```ts
-				name: isInstruktur ? 'DPJP' : faker.person.fullName()
+name: isInstruktur ? 'DPJP' : faker.person.fullName();
 ```
 
 with:
 
 ```ts
-				name: seedConfig?.displayName ?? faker.person.fullName()
+name: seedConfig?.displayName ?? faker.person.fullName();
 ```
 
 ### Change 3 — the `teknisi`/`laboran` lab-membership block further down is unaffected
@@ -125,7 +125,7 @@ the other just resets its password. No duplicate or conflicting account is creat
      `role = 'peneliti'` (if `mahasiswa.ts`'s seeder already ran first and named it
      `"Mahasiswa Testing"`, running `db:seed-users` afterwards will overwrite the name to
      `"Mahasiswa"` — confirm this ordering behavior is acceptable, since whichever seed script
-     runs *last* wins on the `name` field).
+     runs _last_ wins on the `name` field).
    - `teknisi`, `spmi`, `laboran` accounts are unaffected (still random faker names, `teknisi`/
      `laboran` still get added as `laboratoriumMember`).
 3. `bun run check` / `bun run lint` pass (no unused `isInstruktur` references left behind).

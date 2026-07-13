@@ -21,9 +21,11 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!schedule) throw error(404, 'Schedule not found');
 
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === instructorId);
-	const isKoordinator = locals.user.role === 'koordinator' && (!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
+	const isKoordinator =
+		locals.user.role === 'koordinator' &&
+		(!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
 	const isAuthorized = isInstructor || locals.user.role === 'superadmin' || isKoordinator;
-	
+
 	if (!isAuthorized) {
 		throw error(403, 'Forbidden: You are not authorized to export this schedule assessments');
 	}

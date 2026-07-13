@@ -60,7 +60,9 @@ export const actions: Actions = {
 			const allowedExtensions = ['jpg', 'jpeg', 'png'];
 			const fileExt = imageFile.name.split('.').pop()?.toLowerCase();
 			if (!fileExt || !allowedExtensions.includes(fileExt)) {
-				return fail(400, { message: 'Ekstensi file tidak valid. Hanya JPG, PNG, atau JPEG yang diperbolehkan.' });
+				return fail(400, {
+					message: 'Ekstensi file tidak valid. Hanya JPG, PNG, atau JPEG yang diperbolehkan.'
+				});
 			}
 			if (imageFile.size > 5 * 1024 * 1024) {
 				return fail(400, { message: 'Ukuran file terlalu besar. Maksimal 5MB.' });
@@ -80,7 +82,12 @@ export const actions: Actions = {
 				fs.writeFileSync(filePath, buffer);
 
 				// Hapus foto profil lama jika ada dan bukan URL eksternal
-				if (currentUser.image && !currentUser.image.startsWith('http://') && !currentUser.image.startsWith('https://') && !currentUser.image.startsWith('/')) {
+				if (
+					currentUser.image &&
+					!currentUser.image.startsWith('http://') &&
+					!currentUser.image.startsWith('https://') &&
+					!currentUser.image.startsWith('/')
+				) {
 					const oldFilePath = path.join(uploadDir, currentUser.image);
 					if (fs.existsSync(oldFilePath)) {
 						fs.unlinkSync(oldFilePath);
@@ -114,9 +121,7 @@ export const actions: Actions = {
 					return fail(400, { message: 'Username sudah digunakan oleh akun lain' });
 				}
 
-				await db.update(user)
-					.set({ username: usernameVal })
-					.where(eq(user.id, currentUser.id));
+				await db.update(user).set({ username: usernameVal }).where(eq(user.id, currentUser.id));
 			}
 
 			return { success: true, message: 'Profil berhasil diperbarui' };

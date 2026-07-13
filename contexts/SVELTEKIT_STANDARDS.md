@@ -19,7 +19,7 @@ DILARANG menggunakan sintaks Svelte 4 (`let`, `$:`, `export let`). Selalu gunaka
 - **Props:** Gunakan `$props()` untuk menerima data dari parent.
   ```typescript
   // Contoh Svelte 5
-  let { name = 'Guest', items = [] } = $props<{ name: string, items: any[] }>();
+  let { name = 'Guest', items = [] } = $props<{ name: string; items: any[] }>();
   let count = $state(0);
   let double = $derived(count * 2);
   ```

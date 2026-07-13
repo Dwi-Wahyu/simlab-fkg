@@ -38,7 +38,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	// Filter for kepalaLab
-	if (currentUser.role === 'kepalaLab' && lendingData.laboratoriumId !== currentUser.laboratorium?.id) {
+	if (
+		currentUser.role === 'kepalaLab' &&
+		lendingData.laboratoriumId !== currentUser.laboratorium?.id
+	) {
 		throw error(403, 'Anda tidak memiliki izin untuk melihat peminjaman ini');
 	}
 
@@ -139,23 +142,25 @@ export const actions: Actions = {
 			}
 
 			// Filter for kepalaLab
-			if (currentUser.role === 'kepalaLab' && lendingData.laboratoriumId !== currentUser.laboratorium?.id) {
+			if (
+				currentUser.role === 'kepalaLab' &&
+				lendingData.laboratoriumId !== currentUser.laboratorium?.id
+			) {
 				return fail(403, { message: 'Anda tidak memiliki izin untuk menghapus peminjaman ini' });
 			}
 
 			// Constraint: only if status is RETURNED
 			if (lendingData.status !== 'RETURNED') {
-				return fail(400, { message: 'Peminjaman hanya dapat dihapus jika status sudah dikembalikan' });
+				return fail(400, {
+					message: 'Peminjaman hanya dapat dihapus jika status sudah dikembalikan'
+				});
 			}
 
 			await db.transaction(async (tx) => {
 				// Delete related approval
-				await tx.delete(approval).where(
-					and(
-						eq(approval.referenceType, 'LENDING'),
-						eq(approval.referenceId, id)
-					)
-				);
+				await tx
+					.delete(approval)
+					.where(and(eq(approval.referenceType, 'LENDING'), eq(approval.referenceId, id)));
 
 				// Delete the lending (lendingItem will cascade delete automatically)
 				await tx.delete(lending).where(eq(lending.id, id));

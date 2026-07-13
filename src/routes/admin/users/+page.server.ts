@@ -1,7 +1,9 @@
 import { db } from '$lib/server/db';
 import { user, laboratorium, laboratoriumMember } from '$lib/server/db/schema';
 import { error, fail } from '@sveltejs/kit';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
+import { notDeleted } from '$lib/server/db/soft-delete';
+import { createAuditLog } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 
@@ -11,7 +13,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw error(403, 'Forbidden: Akses khusus Superadmin');
 	}
 
-	const laboratoriums = await db.query.laboratorium.findMany();
+	const laboratoriums = await db.query.laboratorium.findMany({
+		where: eq(laboratorium.isDeleted, false)
+	});
 
 	return {
 		laboratoriums
@@ -45,7 +49,7 @@ export const actions: Actions = {
 					email,
 					password,
 					// Use email as username if not provided, or it will be handled by the plugin
-					username: email.split('@')[0], 
+					username: email.split('@')[0],
 					role: 'user' // Default global role
 				} as any
 			});
@@ -59,7 +63,7 @@ export const actions: Actions = {
 				await auth.api.addMember({
 					headers: request.headers,
 					body: {
-						organizationId: laboratoriumId, 
+						organizationId: laboratoriumId,
 						userId: newUser.id,
 						role: labRole as any
 					}
@@ -87,9 +91,10 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Better Auth updateMemberRole might need memberId. 
+			// Better Auth updateMemberRole might need memberId.
 			// If we don't have memberId easily, we can manually update DB.
-			await db.update(laboratoriumMember)
+			await db
+				.update(laboratoriumMember)
 				.set({ role })
 				.where(eq(laboratoriumMember.userId, userId));
 		} catch (e: any) {
@@ -112,20 +117,33 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Hapus user via Better Auth API
-			await auth.api.removeUser({
-				headers: request.headers,
-				body: {
-					userId
-				}
+			const [usr] = await db
+				.select()
+				.from(user)
+				.where(and(eq(user.id, userId), notDeleted(user)))
+				.limit(1);
+			if (!usr) return fail(404, { message: 'User tidak ditemukan' });
+
+			await db
+				.update(user)
+				.set({
+					isDeleted: true,
+					deletedAt: new Date(),
+					deletedBy: locals.user.id,
+					banned: true
+				})
+				.where(eq(user.id, userId));
+
+			await createAuditLog({
+				userId: locals.user.id,
+				action: 'SOFT_DELETE_USER',
+				tableName: 'user',
+				recordId: userId,
+				oldValue: usr
 			});
 		} catch (e: any) {
-			// Fallback: Delete directly if API fails
-			try {
-				await db.delete(user).where(eq(user.id, userId));
-			} catch (dbErr) {
-				return fail(500, { message: e.message || 'Gagal menghapus user' });
-			}
+			console.error(e);
+			return fail(500, { message: e.message || 'Gagal menghapus user' });
 		}
 
 		return { success: true };

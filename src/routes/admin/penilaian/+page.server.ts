@@ -61,9 +61,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(practicumClassMember)
 		.groupBy(practicumClassMember.classId);
 
-	const classMemberMap = new Map(
-		classMemberCounts.map((c) => [c.classId, Number(c.count)])
-	);
+	const classMemberMap = new Map(classMemberCounts.map((c) => [c.classId, Number(c.count)]));
 
 	// Get assessment counts grouped by scheduleId
 	const assessmentCounts = await db
@@ -74,9 +72,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(practicumAssessment)
 		.groupBy(practicumAssessment.scheduleId);
 
-	const assessmentMap = new Map(
-		assessmentCounts.map((a) => [a.scheduleId, Number(a.count)])
-	);
+	const assessmentMap = new Map(assessmentCounts.map((a) => [a.scheduleId, Number(a.count)]));
 
 	// Group by series (fallback to block, then to an "Ungrouped" bucket) so
 	// instructors/koordinator see workload per Blok/Seri, not one long flat list.
@@ -93,22 +89,24 @@ export const load: PageServerLoad = async ({ locals }) => {
 		const key = s.seriesId ?? s.blockId ?? 'ungrouped';
 		const label = s.series?.name ?? s.block?.name ?? 'Tanpa Blok/Seri';
 		const subLabel = s.block?.department?.name ?? '';
-		
+
 		if (!groups.has(key)) {
 			groups.set(key, { key, label, subLabel, schedules: [], assessedCount: 0, totalCount: 0 });
 		}
-		
+
 		const group = groups.get(key)!;
 		group.schedules.push(s);
 
 		// Calculate assessed/total for this schedule
 		const assessed = assessmentMap.get(s.id) || 0;
-		const studentCount = s.classId ? (classMemberMap.get(s.classId) || 0) : 0;
-		const columns = buildRekapColumns([{
-			id: s.id,
-			title: s.title,
-			modules: s.modules.map((m) => m.module)
-		}])[0].columns;
+		const studentCount = s.classId ? classMemberMap.get(s.classId) || 0 : 0;
+		const columns = buildRekapColumns([
+			{
+				id: s.id,
+				title: s.title,
+				modules: s.modules.map((m) => m.module)
+			}
+		])[0].columns;
 		const total = studentCount * columns.length;
 
 		group.assessedCount += assessed;

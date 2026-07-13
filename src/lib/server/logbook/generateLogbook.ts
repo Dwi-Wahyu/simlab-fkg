@@ -258,7 +258,11 @@ async function imageToDocxTemplateImage(imageUrl: string | null | undefined): Pr
 		let buf: Buffer;
 		let ext = 'jpg';
 		let resolvedUrl = imageUrl;
-		if (!resolvedUrl.startsWith('http://') && !resolvedUrl.startsWith('https://') && !resolvedUrl.startsWith('/')) {
+		if (
+			!resolvedUrl.startsWith('http://') &&
+			!resolvedUrl.startsWith('https://') &&
+			!resolvedUrl.startsWith('/')
+		) {
 			resolvedUrl = `/uploads/profiles/${resolvedUrl}`;
 		}
 		if (resolvedUrl.startsWith('http://') || resolvedUrl.startsWith('https://')) {
@@ -324,10 +328,13 @@ async function convertDocxToPdf(docxBuffer: Buffer, fileName: string): Promise<B
 	const formData = new FormData();
 	formData.append('files', new Blob([new Uint8Array(docxBuffer)]), fileName);
 
-	const response = await fetch(`${env.GOTENBERG_URL || 'http://localhost:4000'}/forms/libreoffice/convert`, {
-		method: 'POST',
-		body: formData
-	});
+	const response = await fetch(
+		`${env.GOTENBERG_URL || 'http://localhost:4000'}/forms/libreoffice/convert`,
+		{
+			method: 'POST',
+			body: formData
+		}
+	);
 
 	if (!response.ok) {
 		const text = await response.text();
@@ -377,7 +384,7 @@ export async function generateLogbookForSeries(
 	if (!finalTemplate) {
 		throw new Error(
 			'Tidak ada template logbook terdaftar di database (tabel practicum_logbook_template kosong). ' +
-			'Jalankan `bun run db:seed-logbook-templates` setelah seeder modul dijalankan.'
+				'Jalankan `bun run db:seed-logbook-templates` setelah seeder modul dijalankan.'
 		);
 	}
 
@@ -386,9 +393,7 @@ export async function generateLogbookForSeries(
 		orderBy: (f, { asc }) => [asc(f.sortOrder)]
 	});
 
-	const templateBuffer = await fs.readFile(
-		path.join(TEMPLATE_DIR, finalTemplate.templateFilePath)
-	);
+	const templateBuffer = await fs.readFile(path.join(TEMPLATE_DIR, finalTemplate.templateFilePath));
 
 	// 4. Jadwal dalam seri
 	const schedules = await db.query.practicumSchedule.findMany({
@@ -417,13 +422,19 @@ export async function generateLogbookForSeries(
 				}),
 				time: dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
 				assessments: (() => {
-					const scheduleComponents = new Set(assessments.map((a) => a.module?.component).filter(Boolean));
+					const scheduleComponents = new Set(
+						assessments.map((a) => a.module?.component).filter(Boolean)
+					);
 					return assessments.map((a) => {
 						const comp = a.module?.component;
 						const label = comp
 							? scheduleComponents.size > 1
-								? comp === 'PREPARASI' ? 'Prep' : 'Resto'
-								: comp === 'PREPARASI' ? 'Preparasi' : 'Restorasi'
+								? comp === 'PREPARASI'
+									? 'Prep'
+									: 'Resto'
+								: comp === 'PREPARASI'
+									? 'Preparasi'
+									: 'Restorasi'
 							: null;
 						return {
 							moduleName: label ? `${a.module?.name ?? '-'} (${label})` : (a.module?.name ?? '-'),
@@ -482,7 +493,9 @@ export async function generateLogbookForSeries(
 		}
 
 		if (field.valueType === 'image') {
-			const imgDesc = await imageToDocxTemplateImage(typeof rawValue === 'string' ? rawValue : null);
+			const imgDesc = await imageToDocxTemplateImage(
+				typeof rawValue === 'string' ? rawValue : null
+			);
 			renderData[field.placeholderKey] = imgDesc;
 			renderData['hasPhoto'] = !!imgDesc;
 		} else {

@@ -91,7 +91,7 @@
 							{/each}
 						</select>
 						{#if data.role === 'kepalaLab' || data.role === 'laboran'}
-							<p class="text-xs text-destructive italic font-medium">
+							<p class="text-xs font-medium text-destructive italic">
 								Wajib: Tentukan laboratorium penugasan.
 							</p>
 						{:else}

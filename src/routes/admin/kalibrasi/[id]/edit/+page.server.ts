@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, equipment } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
@@ -27,20 +27,23 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const labId = currentUser.laboratorium?.id;
 	const assets = await db.query.equipment.findMany({
-		where: (e, { eq }) => {
+		where: (e, { eq, and }) => {
+			const conds = [eq(e.isDeleted, false)];
 			if (labId && currentUser.role !== 'superadmin') {
-				return eq(e.laboratoriumId, labId);
+				conds.push(eq(e.laboratoriumId, labId));
 			}
-			return undefined;
+			return and(...conds);
 		},
 		with: {
-			item: true
+			item: {
+				where: (item, { eq }) => eq(item.isDeleted, false)
+			}
 		}
 	});
 
 	return {
 		calibration,
-		assets
+		assets: assets.filter((a) => a.item !== null && a.item !== undefined)
 	};
 };
 

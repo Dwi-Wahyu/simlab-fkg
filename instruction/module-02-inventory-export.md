@@ -77,7 +77,7 @@ way as Alat, sort by `item.name`.
 Create `src/lib/server/reports/inventoryExport.ts` exporting a function:
 
 ```ts
-export async function generateInventoryExport(laboratoriumId: string): Promise<Buffer>
+export async function generateInventoryExport(laboratoriumId: string): Promise<Buffer>;
 ```
 
 Using `exceljs`:

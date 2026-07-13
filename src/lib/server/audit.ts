@@ -18,7 +18,8 @@ export interface AuditParams {
  * Log an action to the audit_log table.
  */
 export async function createAuditLog(params: AuditParams) {
-	const { userId, action, tableName, recordId, oldValue, newValue, status, ipAddress, userAgent } = params;
+	const { userId, action, tableName, recordId, oldValue, newValue, status, ipAddress, userAgent } =
+		params;
 
 	return await db.insert(auditLog).values({
 		id: uuidv4(),

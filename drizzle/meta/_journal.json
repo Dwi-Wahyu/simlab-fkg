@@ -50,6 +50,20 @@
       "when": 1783895875616,
       "tag": "0006_petite_rogue",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1783899295305,
+      "tag": "0007_reflective_miek",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1783899315857,
+      "tag": "0008_big_lenny_balinger",
+      "breakpoints": true
     }
   ]
 }

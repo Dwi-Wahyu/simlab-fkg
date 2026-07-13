@@ -41,7 +41,8 @@ export const actions: Actions = {
 		const description = formData.get('description') as string;
 		const blockId = formData.get('blockId') as string;
 		const componentRaw = formData.get('component') as string;
-		const component = (componentRaw === 'PREPARASI' || componentRaw === 'RESTORASI') ? componentRaw : null;
+		const component =
+			componentRaw === 'PREPARASI' || componentRaw === 'RESTORASI' ? componentRaw : null;
 		const scoringMode = (formData.get('scoringMode') as 'TOTAL' | 'RUBRIK') || 'TOTAL';
 
 		const criteriaIds = formData.getAll('criteriaId[]') as string[];
@@ -77,12 +78,14 @@ export const actions: Actions = {
 					// 1. Delete removed criteria
 					const toDelete = existingIds.filter((id) => !submittedIds.includes(id));
 					if (toDelete.length > 0) {
-						await tx.delete(practicumModuleCriteria).where(
-							and(
-								eq(practicumModuleCriteria.moduleId, params.id),
-								inArray(practicumModuleCriteria.id, toDelete)
-							)
-						);
+						await tx
+							.delete(practicumModuleCriteria)
+							.where(
+								and(
+									eq(practicumModuleCriteria.moduleId, params.id),
+									inArray(practicumModuleCriteria.id, toDelete)
+								)
+							);
 					}
 
 					// 2. Upsert submitted criteria
@@ -94,7 +97,8 @@ export const actions: Actions = {
 						if (cName && cName.trim()) {
 							if (cId && existingIds.includes(cId)) {
 								// Update
-								await tx.update(practicumModuleCriteria)
+								await tx
+									.update(practicumModuleCriteria)
 									.set({
 										name: cName.trim(),
 										maxScore: cMaxScore,
@@ -116,7 +120,9 @@ export const actions: Actions = {
 				} else {
 					// If scoring mode was switched to TOTAL, delete all criteria
 					if (existingIds.length > 0) {
-						await tx.delete(practicumModuleCriteria).where(eq(practicumModuleCriteria.moduleId, params.id));
+						await tx
+							.delete(practicumModuleCriteria)
+							.where(eq(practicumModuleCriteria.moduleId, params.id));
 					}
 				}
 			});

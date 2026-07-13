@@ -115,22 +115,28 @@
 
 	<Accordion.Root type="multiple" class="w-full space-y-4">
 		{#each filteredGroups as group (group.key)}
-			<Accordion.Item value={group.key} class="border rounded-xl bg-white px-6 py-1 shadow-sm">
-				<Accordion.Trigger class="hover:no-underline py-4">
-					<div class="flex flex-col items-start text-left gap-1">
+			<Accordion.Item value={group.key} class="rounded-xl border bg-white px-6 py-1 shadow-sm">
+				<Accordion.Trigger class="py-4 hover:no-underline">
+					<div class="flex flex-col items-start gap-1 text-left">
 						{#if group.subLabel}
-							<span class="text-xs font-semibold text-primary tracking-wider uppercase">{group.subLabel}</span>
+							<span class="text-xs font-semibold tracking-wider text-primary uppercase"
+								>{group.subLabel}</span
+							>
 						{/if}
 						<h3 class="text-lg font-bold text-slate-900">{group.label}</h3>
 						<div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
 							<span>{group.schedules.length} Jadwal</span>
 							<span>•</span>
-							<span>Progress: <strong class="text-slate-700">{group.assessedCount}/{group.totalCount}</strong> dinilai</span>
+							<span
+								>Progress: <strong class="text-slate-700"
+									>{group.assessedCount}/{group.totalCount}</strong
+								> dinilai</span
+							>
 						</div>
 					</div>
 				</Accordion.Trigger>
 				<Accordion.Content class="pt-2 pb-4">
-					<div class="overflow-hidden rounded-lg border bg-white shadow-sm mt-2">
+					<div class="mt-2 overflow-hidden rounded-lg border bg-white shadow-sm">
 						<Table.Root class="block md:table">
 							<Table.Header class="hidden md:table-header-group">
 								<Table.Row class="md:table-row">
@@ -150,7 +156,9 @@
 											<div class="flex flex-col gap-1">
 												<span class="text-base font-bold md:text-sm">{schedule.title}</span>
 												<div class="flex flex-wrap gap-2">
-													<span class={badgeVariants({ variant: 'outline' })}>Kelas {schedule.class}</span>
+													<span class={badgeVariants({ variant: 'outline' })}
+														>Kelas {schedule.class}</span
+													>
 												</div>
 											</div>
 											<Button
@@ -209,12 +217,20 @@
 												: 'hidden'} border-b-0 p-4 pt-2 pb-4 text-left md:table-cell md:border-b md:p-4 md:text-right"
 										>
 											{#if data.isCoordinatorView}
-												<Button href="/admin/penilaian/{schedule.id}/rekapitulasi" size="sm" class="w-full md:w-auto">
+												<Button
+													href="/admin/penilaian/{schedule.id}/rekapitulasi"
+													size="sm"
+													class="w-full md:w-auto"
+												>
 													<FileText class="mr-2 h-4 w-4" />
 													Lihat Rekapitulasi
 												</Button>
 											{:else}
-												<Button href="/admin/penilaian/{schedule.id}" size="sm" class="w-full md:w-auto">
+												<Button
+													href="/admin/penilaian/{schedule.id}"
+													size="sm"
+													class="w-full md:w-auto"
+												>
 													<ClipboardCheck />
 													Catat Nilai
 												</Button>

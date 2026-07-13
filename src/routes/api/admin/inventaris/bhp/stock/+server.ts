@@ -7,7 +7,11 @@ import type { RequestHandler } from './$types';
 async function deductFefo(tx: any, stockId: string, amount: number) {
 	let remaining = amount;
 	const batches = await tx.query.stockBatch.findMany({
-		where: and(eq(stockBatch.stockId, stockId), sql`${stockBatch.qty} > 0`),
+		where: and(
+			eq(stockBatch.stockId, stockId),
+			sql`${stockBatch.qty} > 0`,
+			eq(stockBatch.isDeleted, false)
+		),
 		orderBy: (b: any, { asc, sql }: any) => [sql`${b.expiryDate} IS NULL`, asc(b.expiryDate)]
 	});
 	for (const batch of batches) {
@@ -39,11 +43,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(400, 'Invalid JSON body');
 	}
 
-	const { itemId, eventType, qty, notes, laboratoriumId, warehouseId: reqWarehouseId, expiryDate, brand, variant } = body;
+	const {
+		itemId,
+		eventType,
+		qty,
+		notes,
+		laboratoriumId,
+		warehouseId: reqWarehouseId,
+		expiryDate,
+		brand,
+		variant
+	} = body;
 
-	const parsedExpiryDate = expiryDate && !isNaN(new Date(expiryDate).getTime())
-		? new Date(expiryDate).toISOString().slice(0, 10)
-		: null;
+	const parsedExpiryDate =
+		expiryDate && !isNaN(new Date(expiryDate).getTime())
+			? new Date(expiryDate).toISOString().slice(0, 10)
+			: null;
 
 	if (!itemId || !eventType || qty == null || !laboratoriumId) {
 		throw error(400, 'itemId, eventType, qty, laboratoriumId required');
@@ -53,7 +68,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	// Fetch item
-	const [targetItem] = await db.select().from(item).where(eq(item.id, itemId)).limit(1);
+	const [targetItem] = await db
+		.select()
+		.from(item)
+		.where(and(eq(item.id, itemId), eq(item.isDeleted, false)))
+		.limit(1);
 	if (!targetItem) throw error(404, 'Item not found');
 	if (targetItem.type !== 'CONSUMABLE') throw error(400, 'Only CONSUMABLE items supported');
 
@@ -81,7 +100,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				eq(stock.itemId, itemId),
 				eq(stock.laboratoriumId, laboratoriumId),
 				brand ? eq(stock.brand, brand) : sql`(${stock.brand} IS NULL OR ${stock.brand} = '')`,
-				variant ? eq(stock.variant, variant) : sql`(${stock.variant} IS NULL OR ${stock.variant} = '')`
+				variant
+					? eq(stock.variant, variant)
+					: sql`(${stock.variant} IS NULL OR ${stock.variant} = '')`
 			)
 		)
 		.limit(1);

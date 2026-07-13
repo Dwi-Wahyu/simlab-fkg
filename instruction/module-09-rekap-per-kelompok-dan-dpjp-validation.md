@@ -6,6 +6,7 @@ This is a SvelteKit + Drizzle (MySQL) project (Simlab). Two independent, unrelat
 bundled in this instruction file because they're small. Do them as two separate commits.
 
 Reference files (already provided alongside this instruction, do not re-derive them):
+
 - `(CSL 1) FORM PENILAIAN CSL BM BLOK BEDAH MINOR 2026.xlsx` — the target **structural** pattern:
   one worksheet per kelompok (sheet name = kelompok name, e.g. "KELOMPOK 1 REG A"), each sheet
   listing only the students who belong to that kelompok, with the assessor's name shown on the
@@ -43,10 +44,11 @@ writes **one sheet per kelompok** instead of one combined sheet.
   change the column logic itself (`groups`/`columns`/`subLabel` semantics stay exactly as they
   are today) — only lift it out of the main function body so it can be reused per-sheet.
 - Change the `Params` interface: replace the single `students: Student[]` field with:
+
   ```ts
   interface RekapSheet {
-  	sheetName: string;      // e.g. "Kelompok 1", or "Tanpa Kelompok"
-  	penilai: string;        // e.g. "Budi Santoso, S.Ked" or "-" if none assigned
+  	sheetName: string; // e.g. "Kelompok 1", or "Tanpa Kelompok"
+  	penilai: string; // e.g. "Budi Santoso, S.Ked" or "-" if none assigned
   	students: Student[];
   }
 
@@ -56,6 +58,7 @@ writes **one sheet per kelompok** instead of one combined sheet.
   	getScore: (studentId: string, scheduleId: string, moduleId: string) => number | string | null;
   }
   ```
+
 - In `buildRekapWorkbookBuffer`, loop over `sheets` and, for each entry:
   - Call the extracted header helper to get `{ headerRow1, headerRow2, merges }` (fresh copy per
     sheet — don't mutate a shared array across iterations).
@@ -77,7 +80,11 @@ writes **one sheet per kelompok** instead of one combined sheet.
     - Write a small local helper, e.g.:
       ```ts
       function sanitizeSheetName(name: string, used: Set<string>): string {
-      	let clean = name.replace(/[:\\\/\?\*\[\]]/g, '').slice(0, 31).trim() || 'Sheet';
+      	let clean =
+      		name
+      			.replace(/[:\\\/\?\*\[\]]/g, '')
+      			.slice(0, 31)
+      			.trim() || 'Sheet';
       	let candidate = clean;
       	let i = 2;
       	while (used.has(candidate)) {
@@ -134,6 +141,7 @@ writes **one sheet per kelompok** instead of one combined sheet.
   `'-'`.
 - Using the existing `students` array (already fetched — all class members) plus the membership
   map, partition students into per-kelompok buckets:
+
   ```ts
   const sheets = groupsList
   	.map((g) => ({
@@ -149,6 +157,7 @@ writes **one sheet per kelompok** instead of one combined sheet.
   	sheets.push({ sheetName: 'Tanpa Kelompok', penilai: '-', students: unassignedStudents });
   }
   ```
+
 - If `groupsList.length === 0` (class has no kelompok configured at all), skip all of the above and
   fall back to the previous behavior: a single sheet named `'Rekapitulasi Nilai'` containing all
   `students`, `penilai: '-'`. This preserves current behavior for classes that don't use kelompok.
@@ -178,8 +187,9 @@ writes **one sheet per kelompok** instead of one combined sheet.
 ### Problem
 
 In `src/routes/admin/jadwal-praktikum/tambah/+page.svelte`, the form already validates:
+
 - at least one DPJP is selected (`selectedInstructorIds.length === 0` check), and
-- every kelompok in the class is assigned to *some* DPJP (`hasUnassignedGroups` check).
+- every kelompok in the class is assigned to _some_ DPJP (`hasUnassignedGroups` check).
 
 It does **not** validate the inverse: a DPJP can be toggled "on" (added to `instructorGroupMap`
 with an empty array) without ever picking a kelompok for them. Because the hidden `assignments`

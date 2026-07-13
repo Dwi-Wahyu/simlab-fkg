@@ -39,8 +39,14 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 	switch (role) {
 		case 'superadmin': {
-			const [totalUsersResult] = await db.select({ value: count() }).from(user);
-			const [totalLabResult] = await db.select({ value: count() }).from(laboratorium);
+			const [totalUsersResult] = await db
+				.select({ value: count() })
+				.from(user)
+				.where(eq(user.isDeleted, false));
+			const [totalLabResult] = await db
+				.select({ value: count() })
+				.from(laboratorium)
+				.where(eq(laboratorium.isDeleted, false));
 
 			const recentLogs = await db.query.auditLog.findMany({
 				orderBy: [desc(auditLog.createdAt)],
@@ -51,12 +57,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			const [baikResult] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(eq(equipment.condition, 'BAIK'));
+				.where(and(eq(equipment.condition, 'BAIK'), eq(equipment.isDeleted, false)));
 			const [rusakResult] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(eq(equipment.condition, 'RUSAK'));
-			const [totalEquipResult] = await db.select({ value: count() }).from(equipment);
+				.where(and(eq(equipment.condition, 'RUSAK'), eq(equipment.isDeleted, false)));
+			const [totalEquipResult] = await db
+				.select({ value: count() })
+				.from(equipment)
+				.where(eq(equipment.isDeleted, false));
 
 			const [incidentsResult] = await db
 				.select({ value: count() })
@@ -134,23 +143,47 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			const [totalEquip] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(eq(equipment.laboratoriumId, labId));
+				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.isDeleted, false)));
 			const [baik] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'BAIK')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.condition, 'BAIK'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 			const [rusak] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'RUSAK')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.condition, 'RUSAK'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 			const [inUse] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.status, 'IN_USE')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.status, 'IN_USE'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 			const [maint] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.status, 'MAINTENANCE')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.status, 'MAINTENANCE'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 
 			// Pending lending approvals untuk lab ini
 			const pendingLendings = await db.query.lending.findMany({
@@ -213,23 +246,47 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			const [totalEquip] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(eq(equipment.laboratoriumId, labId));
+				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.isDeleted, false)));
 			const [baik] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'BAIK')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.condition, 'BAIK'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 			const [rusak] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.condition, 'RUSAK')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.condition, 'RUSAK'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 			const [inUse] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.status, 'IN_USE')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.status, 'IN_USE'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 			const [maint] = await db
 				.select({ value: count() })
 				.from(equipment)
-				.where(and(eq(equipment.laboratoriumId, labId), eq(equipment.status, 'MAINTENANCE')));
+				.where(
+					and(
+						eq(equipment.laboratoriumId, labId),
+						eq(equipment.status, 'MAINTENANCE'),
+						eq(equipment.isDeleted, false)
+					)
+				);
 
 			const latestReport = await db.query.inventoryReport.findFirst({
 				where: (r, { eq }) => eq(r.laboratoriumId, labId),
@@ -389,7 +446,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 			// Alat rusak perlu perhatian
 			const needsAttention = await db.query.equipment.findMany({
-				where: (e, { ne }) => ne(e.condition, 'BAIK'),
+				where: (e, { ne, and, eq }) => and(ne(e.condition, 'BAIK'), eq(e.isDeleted, false)),
 				limit: 6,
 				with: { item: { columns: { name: true } } }
 			});
@@ -445,7 +502,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				with: { laboratorium: { columns: { name: true } } }
 			});
 
-			const [totalEquipResult] = await db.select({ value: count() }).from(equipment);
+			const [totalEquipResult] = await db
+				.select({ value: count() })
+				.from(equipment)
+				.where(eq(equipment.isDeleted, false));
 			// Alat yang sudah dikalibrasi (punya record maintenance KALIBRASI COMPLETED)
 			const [calibratedResult] = await db
 				.select({ value: count() })

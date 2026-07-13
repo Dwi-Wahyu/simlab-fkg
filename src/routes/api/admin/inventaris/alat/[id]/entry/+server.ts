@@ -20,12 +20,14 @@ export const GET: RequestHandler = async ({ url, params, locals }) => {
 	const isRestrictedRole = user.role === 'kepalaLab' || user.role === 'laboran';
 	const queryLabId = url.searchParams.get('laboratoriumId');
 	const targetLabId = isRestrictedRole
-		? (user.laboratorium?.id || 'none')
-		: (queryLabId && queryLabId !== '' && queryLabId !== 'all' ? queryLabId : null);
+		? user.laboratorium?.id || 'none'
+		: queryLabId && queryLabId !== '' && queryLabId !== 'all'
+			? queryLabId
+			: null;
 
 	try {
 		// Prepare where clause for items
-		const conditions = [eq(equipment.itemId, id)];
+		const conditions = [eq(equipment.itemId, id), eq(equipment.isDeleted, false)];
 		if (targetLabId) {
 			conditions.push(eq(equipment.laboratoriumId, targetLabId));
 		}
@@ -34,7 +36,10 @@ export const GET: RequestHandler = async ({ url, params, locals }) => {
 		}
 		const whereClause = and(...conditions);
 
-		const equipmentData = await db.select().from(item).where(eq(item.id, id));
+		const equipmentData = await db
+			.select()
+			.from(item)
+			.where(and(eq(item.id, id), eq(item.isDeleted, false)));
 
 		if (equipmentData.length === 0) {
 			throw Error('Alat tidak ditemukan');

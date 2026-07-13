@@ -3,9 +3,9 @@
 		ChevronDown,
 		ChevronLeft,
 		ChevronRight,
-		ChevronUp,
 		ChevronsLeft,
 		ChevronsRight,
+		ChevronUp,
 		FilterX,
 		Pencil,
 		Plus,
@@ -15,8 +15,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -89,54 +89,52 @@
 			<p class="text-muted-foreground">Manajemen daftar modul praktikum laboratorium.</p>
 		</div>
 		<Button href="/admin/master/modul/tambah" class="w-full md:w-fit">
-			<Plus class="mr-2 size-4" /> Tambah Modul
+			<Plus /> Tambah Modul
 		</Button>
 	</div>
 
-	<Card.Root mobileAware={true}>
-		<Card.Content>
-			<div class="flex flex-wrap items-end gap-4">
-				<div class="grid w-full max-w-xs gap-1.5">
-					<label for="department" class="text-sm font-medium">Departemen</label>
-					<Select.Root
-						type="single"
-						bind:value={selectedDepartmentId}
-						onValueChange={() => {
-							selectedBlockId = '';
-							handleFilter();
-						}}
-					>
-						<Select.Trigger class="w-full text-left">
-							{departmentTrigger}
-						</Select.Trigger>
-						<Select.Content>
-							{#each data.departments as dept (dept.id)}
-								<Select.Item value={dept.id} label={dept.name}>{dept.name}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				</div>
-
-				<div class="grid w-full max-w-xs gap-1.5">
-					<label for="block" class="text-sm font-medium">Blok</label>
-					<Select.Root type="single" bind:value={selectedBlockId} onValueChange={handleFilter}>
-						<Select.Trigger class="w-full text-left">
-							{blockTrigger}
-						</Select.Trigger>
-						<Select.Content>
-							{#each data.blocks as block (block.id)}
-								<Select.Item value={block.id} label={block.name}>{block.name}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				</div>
-
-				<Button variant="outline" class="w-full md:w-fit" onclick={resetFilter}>
-					<FilterX /> Reset
-				</Button>
+	<div>
+		<div class="flex flex-wrap items-end gap-4">
+			<div class="grid w-full max-w-xs gap-1.5">
+				<label for="department" class="text-sm font-medium">Departemen</label>
+				<Select.Root
+					type="single"
+					bind:value={selectedDepartmentId}
+					onValueChange={() => {
+						selectedBlockId = '';
+						handleFilter();
+					}}
+				>
+					<Select.Trigger class="w-full text-left">
+						{departmentTrigger}
+					</Select.Trigger>
+					<Select.Content>
+						{#each data.departments as dept (dept.id)}
+							<Select.Item value={dept.id} label={dept.name}>{dept.name}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
 			</div>
-		</Card.Content>
-	</Card.Root>
+
+			<div class="grid w-full max-w-xs gap-1.5">
+				<label for="block" class="text-sm font-medium">Blok</label>
+				<Select.Root type="single" bind:value={selectedBlockId} onValueChange={handleFilter}>
+					<Select.Trigger class="w-full text-left">
+						{blockTrigger}
+					</Select.Trigger>
+					<Select.Content>
+						{#each data.blocks as block (block.id)}
+							<Select.Item value={block.id} label={block.name}>{block.name}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</div>
+
+			<Button variant="outline" class="w-full md:w-fit" onclick={resetFilter}>
+				<FilterX /> Reset
+			</Button>
+		</div>
+	</div>
 
 	<div class="rounded-md border bg-white shadow-sm">
 		<Table.Root class="block md:table">
@@ -166,13 +164,21 @@
 								class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
 							>
 								<div class="flex flex-col">
-									<div class="flex items-center gap-2 flex-wrap">
+									<div class="flex flex-wrap items-center gap-2">
 										<span class="font-bold text-slate-900 md:font-medium">{module.name}</span>
 										{#if module.component}
 											{#if module.component === 'PREPARASI'}
-												<Badge variant="outline" class="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">Preparasi</Badge>
+												<Badge
+													variant="outline"
+													class="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400"
+													>Preparasi</Badge
+												>
 											{:else if module.component === 'RESTORASI'}
-												<Badge variant="outline" class="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">Restorasi</Badge>
+												<Badge
+													variant="outline"
+													class="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
+													>Restorasi</Badge
+												>
 											{/if}
 										{/if}
 									</div>

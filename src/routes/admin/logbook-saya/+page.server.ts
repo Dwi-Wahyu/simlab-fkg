@@ -54,9 +54,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	);
 
 	// Filter null (seri tanpa data mahasiswa)
-	const filtered = seriesWithStats.filter(Boolean) as NonNullable<
-		(typeof seriesWithStats)[0]
-	>[];
+	const filtered = seriesWithStats.filter(Boolean) as NonNullable<(typeof seriesWithStats)[0]>[];
 
 	// Ambil logbook user untuk lastGeneratedAt
 	const logbook = await db.query.practicumLogbook.findFirst({

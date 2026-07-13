@@ -18,16 +18,20 @@ import type { PageServerLoad, Actions } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
 
-	const labs = await db.query.laboratorium.findMany();
+	const labs = await db.query.laboratorium.findMany({
+		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false)
+	});
 	const instructors = await db.query.user.findMany({
-		where: eq(user.role, 'instruktur')
+		where: (user, { eq, and }) => and(eq(user.role, 'instruktur'), eq(user.isDeleted, false))
 	});
 	const blocks = await db.query.block.findMany({
 		with: {
 			department: true
 		}
 	});
-	const modules = await db.query.practicumModule.findMany();
+	const modules = await db.query.practicumModule.findMany({
+		where: (practicumModule, { eq }) => eq(practicumModule.isDeleted, false)
+	});
 	const series = await db.query.practicumSeries.findMany({
 		orderBy: (ps, { asc }) => [asc(ps.name)]
 	});
@@ -38,6 +42,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		orderBy: (pc, { desc }) => [desc(pc.batch), pc.name]
 	});
 	const groups = await db.query.kelompokMahasiswa.findMany({
+		where: (km, { eq }) => eq(km.isDeleted, false),
 		orderBy: (km, { asc }) => [asc(km.name)]
 	});
 
@@ -110,7 +115,10 @@ export const actions: Actions = {
 			where: and(
 				eq(practicumSchedule.laboratoriumId, labId),
 				or(
-					and(gte(practicumSchedule.startTime, startTime), lte(practicumSchedule.startTime, endTime)),
+					and(
+						gte(practicumSchedule.startTime, startTime),
+						lte(practicumSchedule.startTime, endTime)
+					),
 					and(gte(practicumSchedule.endTime, startTime), lte(practicumSchedule.endTime, endTime)),
 					and(lte(practicumSchedule.startTime, startTime), gte(practicumSchedule.endTime, endTime))
 				)

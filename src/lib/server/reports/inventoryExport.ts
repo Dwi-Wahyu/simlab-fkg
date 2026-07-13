@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { equipment, stock } from '$lib/server/db/schema';
 
@@ -40,25 +40,30 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 
 	// Query equipment
 	const equipmentList = await db.query.equipment.findMany({
-		where: eq(equipment.laboratoriumId, laboratoriumId),
+		where: and(eq(equipment.laboratoriumId, laboratoriumId), eq(equipment.isDeleted, false)),
 		with: {
-			item: true
+			item: {
+				where: (item, { eq }) => eq(item.isDeleted, false)
+			}
 		}
 	});
 
 	const assets = equipmentList.filter((e) => e.item && e.item.type === 'ASSET');
 
 	// Group assets by itemId, then by (brand, variant, condition)
-	const groupedAssets: Record<string, {
-		name: string;
-		baseUnit: string;
-		subRows: Array<{
-			brand: string;
-			variant: string;
-			condition: string;
-			count: number;
-		}>;
-	}> = {};
+	const groupedAssets: Record<
+		string,
+		{
+			name: string;
+			baseUnit: string;
+			subRows: Array<{
+				brand: string;
+				variant: string;
+				condition: string;
+				count: number;
+			}>;
+		}
+	> = {};
 
 	for (const eqp of assets) {
 		const itemId = eqp.itemId;
@@ -101,9 +106,10 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 	for (const itemId of sortedAssetIds) {
 		const itemGroup = groupedAssets[itemId];
 		const startRow = rowNum;
-		const rowsToAdd = itemGroup.subRows.length > 0
-			? itemGroup.subRows
-			: [{ brand: '-', variant: '-', condition: 'BAIK', count: 0 }];
+		const rowsToAdd =
+			itemGroup.subRows.length > 0
+				? itemGroup.subRows
+				: [{ brand: '-', variant: '-', condition: 'BAIK', count: 0 }];
 
 		for (const sub of rowsToAdd) {
 			const addedRow = sheetAlat.addRow({
@@ -125,7 +131,11 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 				cell.alignment = { vertical: 'middle', horizontal: 'center' };
 			});
 
-			addedRow.getCell('name').alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+			addedRow.getCell('name').alignment = {
+				vertical: 'middle',
+				horizontal: 'left',
+				wrapText: true
+			};
 			rowNum++;
 		}
 
@@ -135,11 +145,14 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 			sheetAlat.mergeCells(`B${startRow}:B${endRow}`);
 
 			sheetAlat.getCell(`A${startRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
-			sheetAlat.getCell(`B${startRow}`).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+			sheetAlat.getCell(`B${startRow}`).alignment = {
+				vertical: 'middle',
+				horizontal: 'left',
+				wrapText: true
+			};
 		}
 		index++;
 	}
-
 
 	// ==========================================
 	// 2. BAHAN (CONSUMABLE) SHEET
@@ -178,20 +191,25 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 	const stockList = await db.query.stock.findMany({
 		where: eq(stock.laboratoriumId, laboratoriumId),
 		with: {
-			item: true
+			item: {
+				where: (item, { eq }) => eq(item.isDeleted, false)
+			}
 		}
 	});
 
-	const groupedBhp: Record<string, {
-		name: string;
-		baseUnit: string;
-		subRows: Array<{
-			brand: string;
-			variant: string;
-			condition: string;
-			qty: number;
-		}>;
-	}> = {};
+	const groupedBhp: Record<
+		string,
+		{
+			name: string;
+			baseUnit: string;
+			subRows: Array<{
+				brand: string;
+				variant: string;
+				condition: string;
+				qty: number;
+			}>;
+		}
+	> = {};
 
 	for (const stk of stockList) {
 		if (!stk.item || stk.item.type !== 'CONSUMABLE') continue;
@@ -222,9 +240,10 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 	for (const itemId of sortedBhpIds) {
 		const itemGroup = groupedBhp[itemId];
 		const startRow = rowNum;
-		const rowsToAdd = itemGroup.subRows.length > 0
-			? itemGroup.subRows
-			: [{ brand: '-', variant: '-', condition: 'baik', qty: 0 }];
+		const rowsToAdd =
+			itemGroup.subRows.length > 0
+				? itemGroup.subRows
+				: [{ brand: '-', variant: '-', condition: 'baik', qty: 0 }];
 
 		for (const sub of rowsToAdd) {
 			const addedRow = sheetBahan.addRow({
@@ -247,7 +266,11 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 				cell.alignment = { vertical: 'middle', horizontal: 'center' };
 			});
 
-			addedRow.getCell('name').alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+			addedRow.getCell('name').alignment = {
+				vertical: 'middle',
+				horizontal: 'left',
+				wrapText: true
+			};
 			rowNum++;
 		}
 
@@ -258,12 +281,16 @@ export async function generateInventoryExport(laboratoriumId: string): Promise<B
 			sheetBahan.mergeCells(`F${startRow}:F${endRow}`);
 
 			sheetBahan.getCell(`A${startRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
-			sheetBahan.getCell(`B${startRow}`).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+			sheetBahan.getCell(`B${startRow}`).alignment = {
+				vertical: 'middle',
+				horizontal: 'left',
+				wrapText: true
+			};
 			sheetBahan.getCell(`F${startRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
 		}
 		index++;
 	}
 
-	const buffer = await workbook.xlsx.writeBuffer() as Buffer;
+	const buffer = (await workbook.xlsx.writeBuffer()) as Buffer;
 	return buffer;
 }

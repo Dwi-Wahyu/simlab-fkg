@@ -6,21 +6,21 @@ import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 
 const slugToRole: Record<string, string> = {
-	'koordinator': 'koordinator',
+	koordinator: 'koordinator',
 	'kepala-lab': 'kepalaLab',
-	'instruktur': 'instruktur',
-	'teknisi': 'teknisi',
-	'spmi': 'spmi',
-	'laboran': 'laboran'
+	instruktur: 'instruktur',
+	teknisi: 'teknisi',
+	spmi: 'spmi',
+	laboran: 'laboran'
 };
 
 const roleToLabel: Record<string, string> = {
-	'koordinator': 'PJ Mata Kuliah',
-	'kepalaLab': 'Kepala Lab',
-	'instruktur': 'Dosen',
-	'teknisi': 'Teknisi',
-	'spmi': 'SPMI',
-	'laboran': 'Laboran'
+	koordinator: 'PJ Mata Kuliah',
+	kepalaLab: 'Kepala Lab',
+	instruktur: 'Dosen',
+	teknisi: 'Teknisi',
+	spmi: 'SPMI',
+	laboran: 'Laboran'
 };
 
 export const load: PageServerLoad = async ({ params, locals }) => {

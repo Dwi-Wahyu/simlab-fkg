@@ -121,19 +121,20 @@ The `userId` and session headers cannot be used together:
 By default, any user can create an organization. To restrict this, set the `allowUserToCreateOrganization` option to a function that returns a boolean, or directly to `true` or `false`.
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 const auth = betterAuth({
-  //...
-  plugins: [
-    organization({
-      allowUserToCreateOrganization: async (user) => { // [!code highlight]
-        const subscription = await getSubscription(user.id); // [!code highlight]
-        return subscription.plan === "pro"; // [!code highlight]
-      }, // [!code highlight]
-    }),
-  ],
+	//...
+	plugins: [
+		organization({
+			allowUserToCreateOrganization: async (user) => {
+				// [!code highlight]
+				const subscription = await getSubscription(user.id); // [!code highlight]
+				return subscription.plan === 'pro'; // [!code highlight]
+			} // [!code highlight]
+		})
+	]
 });
 ```
 
@@ -164,51 +165,51 @@ You can customize organization operations using hooks that run before and after 
 Control organization lifecycle operations:
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      organizationHooks: {
-        // Organization creation hooks
-        beforeCreateOrganization: async ({ organization, user }) => {
-          // Run custom logic before organization is created
-          // Optionally modify the organization data
-          return {
-            data: {
-              ...organization,
-              metadata: {
-                customField: "value",
-              },
-            },
-          };
-        },
+	plugins: [
+		organization({
+			organizationHooks: {
+				// Organization creation hooks
+				beforeCreateOrganization: async ({ organization, user }) => {
+					// Run custom logic before organization is created
+					// Optionally modify the organization data
+					return {
+						data: {
+							...organization,
+							metadata: {
+								customField: 'value'
+							}
+						}
+					};
+				},
 
-        afterCreateOrganization: async ({ organization, member, user }) => {
-          // Run custom logic after organization is created
-          // e.g., create default resources, send notifications
-          await setupDefaultResources(organization.id);
-        },
+				afterCreateOrganization: async ({ organization, member, user }) => {
+					// Run custom logic after organization is created
+					// e.g., create default resources, send notifications
+					await setupDefaultResources(organization.id);
+				},
 
-        // Organization update hooks
-        beforeUpdateOrganization: async ({ organization, user, member }) => {
-          // Validate updates, apply business rules
-          return {
-            data: {
-              ...organization,
-              name: organization.name?.toLowerCase(),
-            },
-          };
-        },
+				// Organization update hooks
+				beforeUpdateOrganization: async ({ organization, user, member }) => {
+					// Validate updates, apply business rules
+					return {
+						data: {
+							...organization,
+							name: organization.name?.toLowerCase()
+						}
+					};
+				},
 
-        afterUpdateOrganization: async ({ organization, user, member }) => {
-          // Sync changes to external systems
-          await syncOrganizationToExternalSystems(organization);
-        },
-      },
-    }),
-  ],
+				afterUpdateOrganization: async ({ organization, user, member }) => {
+					// Sync changes to external systems
+					await syncOrganizationToExternalSystems(organization);
+				}
+			}
+		})
+	]
 });
 ```
 
@@ -223,76 +224,66 @@ export const auth = betterAuth({
 Control member operations within organizations:
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      organizationHooks: {
-        // Before a member is added to an organization
-        beforeAddMember: async ({ member, user, organization }) => {
-          // Custom validation or modification
-          console.log(`Adding ${user.email} to ${organization.name}`);
+	plugins: [
+		organization({
+			organizationHooks: {
+				// Before a member is added to an organization
+				beforeAddMember: async ({ member, user, organization }) => {
+					// Custom validation or modification
+					console.log(`Adding ${user.email} to ${organization.name}`);
 
-          // Optionally modify member data
-          return {
-            data: {
-              ...member,
-              role: "custom-role", // Override the role
-            },
-          };
-        },
+					// Optionally modify member data
+					return {
+						data: {
+							...member,
+							role: 'custom-role' // Override the role
+						}
+					};
+				},
 
-        // After a member is added
-        afterAddMember: async ({ member, user, organization }) => {
-          // Send welcome email, create default resources, etc.
-          await sendWelcomeEmail(user.email, organization.name);
-        },
+				// After a member is added
+				afterAddMember: async ({ member, user, organization }) => {
+					// Send welcome email, create default resources, etc.
+					await sendWelcomeEmail(user.email, organization.name);
+				},
 
-        // Before a member is removed
-        beforeRemoveMember: async ({ member, user, organization }) => {
-          // Cleanup user's resources, send notification, etc.
-          await cleanupUserResources(user.id, organization.id);
-        },
+				// Before a member is removed
+				beforeRemoveMember: async ({ member, user, organization }) => {
+					// Cleanup user's resources, send notification, etc.
+					await cleanupUserResources(user.id, organization.id);
+				},
 
-        // After a member is removed
-        afterRemoveMember: async ({ member, user, organization }) => {
-          await logMemberRemoval(user.id, organization.id);
-        },
+				// After a member is removed
+				afterRemoveMember: async ({ member, user, organization }) => {
+					await logMemberRemoval(user.id, organization.id);
+				},
 
-        // Before updating a member's role
-        beforeUpdateMemberRole: async ({
-          member,
-          newRole,
-          user,
-          organization,
-        }) => {
-          // Validate role change permissions
-          if (newRole === "owner" && !hasOwnerUpgradePermission(user)) {
-            throw new Error("Cannot upgrade to owner role");
-          }
+				// Before updating a member's role
+				beforeUpdateMemberRole: async ({ member, newRole, user, organization }) => {
+					// Validate role change permissions
+					if (newRole === 'owner' && !hasOwnerUpgradePermission(user)) {
+						throw new Error('Cannot upgrade to owner role');
+					}
 
-          // Optionally modify the role
-          return {
-            data: {
-              role: newRole,
-            },
-          };
-        },
+					// Optionally modify the role
+					return {
+						data: {
+							role: newRole
+						}
+					};
+				},
 
-        // After updating a member's role
-        afterUpdateMemberRole: async ({
-          member,
-          previousRole,
-          user,
-          organization,
-        }) => {
-          await logRoleChange(user.id, previousRole, member.role);
-        },
-      },
-    }),
-  ],
+				// After updating a member's role
+				afterUpdateMemberRole: async ({ member, previousRole, user, organization }) => {
+					await logRoleChange(user.id, previousRole, member.role);
+				}
+			}
+		})
+	]
 });
 ```
 
@@ -301,87 +292,64 @@ export const auth = betterAuth({
 Control invitation lifecycle:
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      organizationHooks: {
-        // Before creating an invitation
-        beforeCreateInvitation: async ({
-          invitation,
-          inviter,
-          organization,
-        }) => {
-          // Custom validation or expiration logic
-          const customExpiration = new Date(
-            Date.now() + 1000 * 60 * 60 * 24 * 7
-          ); // 7 days
+	plugins: [
+		organization({
+			organizationHooks: {
+				// Before creating an invitation
+				beforeCreateInvitation: async ({ invitation, inviter, organization }) => {
+					// Custom validation or expiration logic
+					const customExpiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
 
-          return {
-            data: {
-              ...invitation,
-              expiresAt: customExpiration,
-            },
-          };
-        },
+					return {
+						data: {
+							...invitation,
+							expiresAt: customExpiration
+						}
+					};
+				},
 
-        // After creating an invitation
-        afterCreateInvitation: async ({
-          invitation,
-          inviter,
-          organization,
-        }) => {
-          // Send custom invitation email, track metrics, etc.
-          await sendCustomInvitationEmail(invitation, organization);
-        },
+				// After creating an invitation
+				afterCreateInvitation: async ({ invitation, inviter, organization }) => {
+					// Send custom invitation email, track metrics, etc.
+					await sendCustomInvitationEmail(invitation, organization);
+				},
 
-        // Before accepting an invitation
-        beforeAcceptInvitation: async ({ invitation, user, organization }) => {
-          // Additional validation before acceptance
-          await validateUserEligibility(user, organization);
-        },
+				// Before accepting an invitation
+				beforeAcceptInvitation: async ({ invitation, user, organization }) => {
+					// Additional validation before acceptance
+					await validateUserEligibility(user, organization);
+				},
 
-        // After accepting an invitation
-        afterAcceptInvitation: async ({
-          invitation,
-          member,
-          user,
-          organization,
-        }) => {
-          // Setup user account, assign default resources
-          await setupNewMemberResources(user, organization);
-        },
+				// After accepting an invitation
+				afterAcceptInvitation: async ({ invitation, member, user, organization }) => {
+					// Setup user account, assign default resources
+					await setupNewMemberResources(user, organization);
+				},
 
-        // Before/after rejecting invitations
-        beforeRejectInvitation: async ({ invitation, user, organization }) => {
-          // Log rejection reason, send notification to inviter
-        },
+				// Before/after rejecting invitations
+				beforeRejectInvitation: async ({ invitation, user, organization }) => {
+					// Log rejection reason, send notification to inviter
+				},
 
-        afterRejectInvitation: async ({ invitation, user, organization }) => {
-          await notifyInviterOfRejection(invitation.inviterId, user.email);
-        },
+				afterRejectInvitation: async ({ invitation, user, organization }) => {
+					await notifyInviterOfRejection(invitation.inviterId, user.email);
+				},
 
-        // Before/after cancelling invitations
-        beforeCancelInvitation: async ({
-          invitation,
-          cancelledBy,
-          organization,
-        }) => {
-          // Verify cancellation permissions
-        },
+				// Before/after cancelling invitations
+				beforeCancelInvitation: async ({ invitation, cancelledBy, organization }) => {
+					// Verify cancellation permissions
+				},
 
-        afterCancelInvitation: async ({
-          invitation,
-          cancelledBy,
-          organization,
-        }) => {
-          await logInvitationCancellation(invitation.id, cancelledBy.id);
-        },
-      },
-    }),
-  ],
+				afterCancelInvitation: async ({ invitation, cancelledBy, organization }) => {
+					await logInvitationCancellation(invitation.id, cancelledBy.id);
+				}
+			}
+		})
+	]
 });
 ```
 
@@ -390,102 +358,82 @@ export const auth = betterAuth({
 Control team operations (when teams are enabled):
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      teams: { enabled: true },
-      organizationHooks: {
-        // Before creating a team
-        beforeCreateTeam: async ({ team, user, organization }) => {
-          // Validate team name, apply naming conventions
-          return {
-            data: {
-              ...team,
-              name: team.name.toLowerCase().replace(/\s+/g, "-"),
-            },
-          };
-        },
+	plugins: [
+		organization({
+			teams: { enabled: true },
+			organizationHooks: {
+				// Before creating a team
+				beforeCreateTeam: async ({ team, user, organization }) => {
+					// Validate team name, apply naming conventions
+					return {
+						data: {
+							...team,
+							name: team.name.toLowerCase().replace(/\s+/g, '-')
+						}
+					};
+				},
 
-        // After creating a team
-        afterCreateTeam: async ({ team, user, organization }) => {
-          // Create default team resources, channels, etc.
-          await createDefaultTeamResources(team.id);
-        },
+				// After creating a team
+				afterCreateTeam: async ({ team, user, organization }) => {
+					// Create default team resources, channels, etc.
+					await createDefaultTeamResources(team.id);
+				},
 
-        // Before updating a team
-        beforeUpdateTeam: async ({ team, updates, user, organization }) => {
-          // Validate updates, apply business rules
-          return {
-            data: {
-              ...updates,
-              name: updates.name?.toLowerCase(),
-            },
-          };
-        },
+				// Before updating a team
+				beforeUpdateTeam: async ({ team, updates, user, organization }) => {
+					// Validate updates, apply business rules
+					return {
+						data: {
+							...updates,
+							name: updates.name?.toLowerCase()
+						}
+					};
+				},
 
-        // After updating a team
-        afterUpdateTeam: async ({ team, user, organization }) => {
-          await syncTeamChangesToExternalSystems(team);
-        },
+				// After updating a team
+				afterUpdateTeam: async ({ team, user, organization }) => {
+					await syncTeamChangesToExternalSystems(team);
+				},
 
-        // Before deleting a team
-        beforeDeleteTeam: async ({ team, user, organization }) => {
-          // Backup team data, notify members
-          await backupTeamData(team.id);
-        },
+				// Before deleting a team
+				beforeDeleteTeam: async ({ team, user, organization }) => {
+					// Backup team data, notify members
+					await backupTeamData(team.id);
+				},
 
-        // After deleting a team
-        afterDeleteTeam: async ({ team, user, organization }) => {
-          await cleanupTeamResources(team.id);
-        },
+				// After deleting a team
+				afterDeleteTeam: async ({ team, user, organization }) => {
+					await cleanupTeamResources(team.id);
+				},
 
-        // Team member operations
-        beforeAddTeamMember: async ({
-          teamMember,
-          team,
-          user,
-          organization,
-        }) => {
-          // Validate team membership limits, permissions
-          const memberCount = await getTeamMemberCount(team.id);
-          if (memberCount >= 10) {
-            throw new Error("Team is full");
-          }
-        },
+				// Team member operations
+				beforeAddTeamMember: async ({ teamMember, team, user, organization }) => {
+					// Validate team membership limits, permissions
+					const memberCount = await getTeamMemberCount(team.id);
+					if (memberCount >= 10) {
+						throw new Error('Team is full');
+					}
+				},
 
-        afterAddTeamMember: async ({
-          teamMember,
-          team,
-          user,
-          organization,
-        }) => {
-          await grantTeamAccess(user.id, team.id);
-        },
+				afterAddTeamMember: async ({ teamMember, team, user, organization }) => {
+					await grantTeamAccess(user.id, team.id);
+				},
 
-        beforeRemoveTeamMember: async ({
-          teamMember,
-          team,
-          user,
-          organization,
-        }) => {
-          // Backup user's team-specific data
-          await backupTeamMemberData(user.id, team.id);
-        },
+				beforeRemoveTeamMember: async ({ teamMember, team, user, organization }) => {
+					// Backup user's team-specific data
+					await backupTeamMemberData(user.id, team.id);
+				},
 
-        afterRemoveTeamMember: async ({
-          teamMember,
-          team,
-          user,
-          organization,
-        }) => {
-          await revokeTeamAccess(user.id, team.id);
-        },
-      },
-    }),
-  ],
+				afterRemoveTeamMember: async ({ teamMember, team, user, organization }) => {
+					await revokeTeamAccess(user.id, team.id);
+				}
+			}
+		})
+	]
 });
 ```
 
@@ -494,37 +442,36 @@ export const auth = betterAuth({
 All hooks support error handling. Throwing an error in a `before` hook will prevent the operation from proceeding:
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
-import { APIError } from "better-auth/api";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
+import { APIError } from 'better-auth/api';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      organizationHooks: {
-        beforeAddMember: async ({ member, user, organization }) => {
-          // Check if user has pending violations
-          const violations = await checkUserViolations(user.id);
-          if (violations.length > 0) {
-            throw new APIError("BAD_REQUEST", {
-              message:
-                "User has pending violations and cannot join organizations",
-            });
-          }
-        },
+	plugins: [
+		organization({
+			organizationHooks: {
+				beforeAddMember: async ({ member, user, organization }) => {
+					// Check if user has pending violations
+					const violations = await checkUserViolations(user.id);
+					if (violations.length > 0) {
+						throw new APIError('BAD_REQUEST', {
+							message: 'User has pending violations and cannot join organizations'
+						});
+					}
+				},
 
-        beforeCreateTeam: async ({ team, user, organization }) => {
-          // Validate team name uniqueness
-          const existingTeam = await findTeamByName(team.name, organization.id);
-          if (existingTeam) {
-            throw new APIError("BAD_REQUEST", {
-              message: "Team name already exists in this organization",
-            });
-          }
-        },
-      },
-    }),
-  ],
+				beforeCreateTeam: async ({ team, user, organization }) => {
+					// Validate team name uniqueness
+					const existingTeam = await findTeamByName(team.name, organization.id);
+					if (existingTeam) {
+						throw new APIError('BAD_REQUEST', {
+							message: 'Team name already exists in this organization'
+						});
+					}
+				}
+			}
+		})
+	]
 });
 ```
 
@@ -536,16 +483,17 @@ To list the organizations that a user is a member of, you can use `useListOrgani
 <Tab value="React">
 
 ```tsx title="client.tsx"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from '@/lib/auth-client';
 
-function App(){
-const { data: organizations } = authClient.useListOrganizations()
-return (
-  <div>
-    {organizations.map((org) => (
-      <p>{org.name}</p>
-    ))}
-  </div>)
+function App() {
+	const { data: organizations } = authClient.useListOrganizations();
+	return (
+		<div>
+			{organizations.map((org) => (
+				<p>{org.name}</p>
+			))}
+		</div>
+	);
 }
 ```
 
@@ -650,25 +598,25 @@ type setActiveOrganization = {
 To automatically set an active organization when a session is created, you can use [database hooks](/docs/concepts/database#database-hooks). You'll need to implement logic to determine which organization to set as the initial active organization.
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+import { betterAuth } from 'better-auth';
 
 export const auth = betterAuth({
-  databaseHooks: {
-    session: {
-      create: {
-        before: async (session) => {
-          // Implement your custom logic to set initial active organization
-          const organization = await getInitialOrganization(session.userId);
-          return {
-            data: {
-              ...session,
-              activeOrganizationId: organization?.id,
-            },
-          };
-        },
-      },
-    },
-  },
+	databaseHooks: {
+		session: {
+			create: {
+				before: async (session) => {
+					// Implement your custom logic to set initial active organization
+					const organization = await getInitialOrganization(session.userId);
+					return {
+						data: {
+							...session,
+							activeOrganizationId: organization?.id
+						}
+					};
+				}
+			}
+		}
+	}
 });
 ```
 
@@ -678,7 +626,8 @@ To retrieve the active organization for the user, you can call the `useActiveOrg
 
 <Tabs items={['React', 'Vue', 'Svelte']}>
 <Tab value="React">
-```tsx title="client.tsx"
+
+````tsx title="client.tsx"
 import { authClient } from "@/lib/auth-client"
 
     function App(){
@@ -762,7 +711,7 @@ type getFullOrganization = {
      */
     membersLimit?: number = 100
 }
-```
+````
 
 </APIMethod>
 
@@ -836,23 +785,23 @@ If the user has the necessary permissions (by default: role is owner) in the spe
 You can configure how organization deletion is handled through `organizationDeletion` option:
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 const auth = betterAuth({
-  plugins: [
-    organization({
-      disableOrganizationDeletion: true, //to disable it altogether
-      organizationHooks: {
-        beforeDeleteOrganization: async (data, request) => {
-          // a callback to run before deleting org
-        },
-        afterDeleteOrganization: async (data, request) => {
-          // a callback to run after deleting org
-        },
-      },
-    }),
-  ],
+	plugins: [
+		organization({
+			disableOrganizationDeletion: true, //to disable it altogether
+			organizationHooks: {
+				beforeDeleteOrganization: async (data, request) => {
+					// a callback to run before deleting org
+				},
+				afterDeleteOrganization: async (data, request) => {
+					// a callback to run after deleting org
+				}
+			}
+		})
+	]
 });
 ```
 
@@ -867,25 +816,25 @@ For member invitation to work we first need to provide `sendInvitationEmail` to 
 You'll need to construct and send the invitation link to the user. The link should include the invitation ID, which will be used with the acceptInvitation function when the user clicks on it.
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
-import { sendOrganizationInvitation } from "./email";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
+import { sendOrganizationInvitation } from './email';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      async sendInvitationEmail(data) {
-        const inviteLink = `https://example.com/accept-invitation/${data.id}`;
-        sendOrganizationInvitation({
-          email: data.email,
-          invitedByUsername: data.inviter.user.name,
-          invitedByEmail: data.inviter.user.email,
-          teamName: data.organization.name,
-          inviteLink,
-        });
-      },
-    }),
-  ],
+	plugins: [
+		organization({
+			async sendInvitationEmail(data) {
+				const inviteLink = `https://example.com/accept-invitation/${data.id}`;
+				sendOrganizationInvitation({
+					email: data.email,
+					invitedByUsername: data.inviter.user.name,
+					invitedByEmail: data.inviter.user.email,
+					teamName: data.organization.name,
+					inviteLink
+				});
+			}
+		})
+	]
 });
 ```
 
@@ -951,18 +900,18 @@ type acceptInvitation = {
 If the `requireEmailVerificationOnInvitation` option is enabled in your organization configuration, users must verify their email address before they can accept invitations. This adds an extra security layer to ensure that only verified users can join your organization.
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      requireEmailVerificationOnInvitation: true, // [!code highlight]
-      async sendInvitationEmail(data) {
-        // ... your email sending logic
-      },
-    }),
-  ],
+	plugins: [
+		organization({
+			requireEmailVerificationOnInvitation: true, // [!code highlight]
+			async sendInvitationEmail(data) {
+				// ... your email sending logic
+			}
+		})
+	]
 });
 ```
 
@@ -1047,7 +996,7 @@ type listInvitations = {
 To list all invitations for a given user you can use the `listUserInvitations` function provided by the client.
 
 ```ts
-import { authClient } from "@/lib/auth-client"
+import { authClient } from '@/lib/auth-client';
 
 const invitations = await authClient.organization.listUserInvitations();
 ```
@@ -1056,9 +1005,9 @@ On the server, you can pass the user ID as a query parameter.
 
 ```ts title="list-user-invitations.ts"
 const invitations = await auth.api.listUserInvitations({
-  query: {
-    email: "user@example.com",
-  },
+	query: {
+		email: 'user@example.com'
+	}
 });
 ```
 
@@ -1169,8 +1118,7 @@ resultVariable="member"
 >
 
 ```ts
-type getActiveMember = {
-}
+type getActiveMember = {};
 ```
 
 </APIMethod>
@@ -1188,8 +1136,7 @@ resultVariable="{ role }"
 >
 
 ```ts
-type getActiveMemberRole = {
-}
+type getActiveMemberRole = {};
 ```
 
 </APIMethod>
@@ -1425,26 +1372,26 @@ The plugin provides an easy way to define your own set of permissions for each r
 You can use the `hasPermission` action provided by the `api` to check the permission of the user.
 
 ```ts title="has-permission.ts"
-import { auth } from "@/lib/auth"
+import { auth } from '@/lib/auth';
 
 await auth.api.hasPermission({
-  headers: await headers(),
-  body: {
-    permissions: {
-      project: ["create"], // This must match the structure in your access control
-    },
-  },
+	headers: await headers(),
+	body: {
+		permissions: {
+			project: ['create'] // This must match the structure in your access control
+		}
+	}
 });
 
 // You can also check multiple resource permissions at the same time
 await auth.api.hasPermission({
-  headers: await headers(),
-  body: {
-    permissions: {
-      project: ["create"], // This must match the structure in your access control
-      sale: ["create"],
-    },
-  },
+	headers: await headers(),
+	body: {
+		permissions: {
+			project: ['create'], // This must match the structure in your access control
+			sale: ['create']
+		}
+	}
 });
 ```
 
@@ -1452,19 +1399,18 @@ If you want to check the permission of the user on the client from the server yo
 
 ```ts title="auth-client.ts"
 const canCreateProject = await authClient.organization.hasPermission({
-  permissions: {
-    project: ["create"],
-  },
+	permissions: {
+		project: ['create']
+	}
 });
 
 // You can also check multiple resource permissions at the same time
-const canCreateProjectAndCreateSale =
-  await authClient.organization.hasPermission({
-    permissions: {
-      project: ["create"],
-      sale: ["create"],
-    },
-  });
+const canCreateProjectAndCreateSale = await authClient.organization.hasPermission({
+	permissions: {
+		project: ['create'],
+		sale: ['create']
+	}
+});
 ```
 
 **Check Role Permission**:
@@ -1472,24 +1418,23 @@ const canCreateProjectAndCreateSale =
 Once you have defined the roles and permissions to avoid checking the permission from the server you can use the `checkRolePermission` function provided by the client.
 
 ```ts title="auth-client.ts"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from '@/lib/auth-client';
 
 const canCreateProject = authClient.organization.checkRolePermission({
-  permissions: {
-    organization: ["delete"],
-  },
-  role: "admin",
+	permissions: {
+		organization: ['delete']
+	},
+	role: 'admin'
 });
 
 // You can also check multiple resource permissions at the same time
-const canCreateProjectAndCreateSale =
-  authClient.organization.checkRolePermission({
-    permissions: {
-      organization: ["delete"],
-      member: ["delete"],
-    },
-    role: "admin",
-  });
+const canCreateProjectAndCreateSale = authClient.organization.checkRolePermission({
+	permissions: {
+		organization: ['delete'],
+		member: ['delete']
+	},
+	role: 'admin'
+});
 ```
 
 <Callout type="warn">
@@ -1512,35 +1457,39 @@ Ensure you have pre-defined an `ac` instance on the server auth plugin.
 This is important as this is how we can infer the permissions that are available for use.
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
-import { ac } from "@/auth/permissions";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
+import { ac } from '@/auth/permissions';
 
 export const auth = betterAuth({
-    plugins: [
-        organization({ // [!code highlight]
-            ac, // Must be defined in order for dynamic access control to work // [!code highlight]
-            dynamicAccessControl: { // [!code highlight]
-              enabled: true, // [!code highlight]
-            }, // [!code highlight]
-        }) // [!code highlight]
-    ]
-})
+	plugins: [
+		organization({
+			// [!code highlight]
+			ac, // Must be defined in order for dynamic access control to work // [!code highlight]
+			dynamicAccessControl: {
+				// [!code highlight]
+				enabled: true // [!code highlight]
+			} // [!code highlight]
+		}) // [!code highlight]
+	]
+});
 ```
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client";
-import { organizationClient } from "better-auth/client/plugins";
+import { createAuthClient } from 'better-auth/client';
+import { organizationClient } from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
-    plugins: [
-        organizationClient({ // [!code highlight]
-            dynamicAccessControl: { // [!code highlight]
-              enabled: true, // [!code highlight]
-            }, // [!code highlight]
-        }) // [!code highlight]
-    ]
-})
+	plugins: [
+		organizationClient({
+			// [!code highlight]
+			dynamicAccessControl: {
+				// [!code highlight]
+				enabled: true // [!code highlight]
+			} // [!code highlight]
+		}) // [!code highlight]
+	]
+});
 ```
 
 <Callout>
@@ -1737,10 +1686,10 @@ This option is used to enable or disable dynamic access control. By default, it 
 
 ```ts
 organization({
-  dynamicAccessControl: {
-    enabled: true // [!code highlight]
-  }
-})
+	dynamicAccessControl: {
+		enabled: true // [!code highlight]
+	}
+});
 ```
 
 #### `maximumRolesPerOrganization`
@@ -1751,23 +1700,24 @@ By default, the maximum number of roles that can be created for an organization 
 
 ```ts
 organization({
-  dynamicAccessControl: {
-    maximumRolesPerOrganization: 10 // [!code highlight]
-  }
-})
+	dynamicAccessControl: {
+		maximumRolesPerOrganization: 10 // [!code highlight]
+	}
+});
 ```
 
 You can also pass a function that returns a number.
 
 ```ts
 organization({
-  dynamicAccessControl: {
-    maximumRolesPerOrganization: async (organizationId) => { // [!code highlight]
-      const organization = await getOrganization(organizationId); // [!code highlight]
-      return organization.plan === "pro" ? 100 : 10; // [!code highlight]
-    } // [!code highlight]
-  }
-})
+	dynamicAccessControl: {
+		maximumRolesPerOrganization: async (organizationId) => {
+			// [!code highlight]
+			const organization = await getOrganization(organizationId); // [!code highlight]
+			return organization.plan === 'pro' ? 100 : 10; // [!code highlight]
+		} // [!code highlight]
+	}
+});
 ```
 
 ### Additional Fields
@@ -1776,59 +1726,59 @@ To add additional fields to the `organizationRole` table, you can pass the `addi
 
 ```ts
 organization({
-  schema: {
-    organizationRole: {
-      additionalFields: {
-        // Role colors!
-        color: {
-          type: "string",
-          defaultValue: "#ffffff",
-        },
-        //... other fields
-      },
-    },
-  },
-})
+	schema: {
+		organizationRole: {
+			additionalFields: {
+				// Role colors!
+				color: {
+					type: 'string',
+					defaultValue: '#ffffff'
+				}
+				//... other fields
+			}
+		}
+	}
+});
 ```
 
 Then, if you don't already use `inferOrgAdditionalFields` to infer the additional fields, you can use it to infer the additional fields.
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client"
-import { organizationClient, inferOrgAdditionalFields } from "better-auth/client/plugins"
-import type { auth } from "@/lib/auth" // import the auth object type only
+import { createAuthClient } from 'better-auth/client';
+import { organizationClient, inferOrgAdditionalFields } from 'better-auth/client/plugins';
+import type { auth } from '@/lib/auth'; // import the auth object type only
 
 export const authClient = createAuthClient({
-    plugins: [
-        organizationClient({
-            schema: inferOrgAdditionalFields<typeof auth>()
-        })
-    ]
-})
+	plugins: [
+		organizationClient({
+			schema: inferOrgAdditionalFields<typeof auth>()
+		})
+	]
+});
 ```
 
 Otherwise, you can pass the schema values directly, the same way you do on the org plugin in the server.
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client"
-import { organizationClient } from "better-auth/client/plugins"
+import { createAuthClient } from 'better-auth/client';
+import { organizationClient } from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
-    plugins: [
-        organizationClient({
-            schema: {
-                organizationRole: {
-                    additionalFields: {
-                        color: {
-                            type: "string",
-                            defaultValue: "#ffffff",
-                        }
-                    }
-                }
-            }
-        })
-    ]
-})
+	plugins: [
+		organizationClient({
+			schema: {
+				organizationRole: {
+					additionalFields: {
+						color: {
+							type: 'string',
+							defaultValue: '#ffffff'
+						}
+					}
+				}
+			}
+		})
+	]
+});
 ```
 
 ---
@@ -1842,34 +1792,34 @@ Teams allow you to group members within an organization. The teams feature provi
 To enable teams, pass the `teams` configuration option to both server and client plugins:
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 export const auth = betterAuth({
-  plugins: [
-    organization({
-      teams: {
-        enabled: true,
-        maximumTeams: 10, // Optional: limit teams per organization
-        allowRemovingAllTeams: false, // Optional: prevent removing the last team
-      },
-    }),
-  ],
+	plugins: [
+		organization({
+			teams: {
+				enabled: true,
+				maximumTeams: 10, // Optional: limit teams per organization
+				allowRemovingAllTeams: false // Optional: prevent removing the last team
+			}
+		})
+	]
 });
 ```
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client";
-import { organizationClient } from "better-auth/client/plugins";
+import { createAuthClient } from 'better-auth/client';
+import { organizationClient } from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
-  plugins: [
-    organizationClient({
-      teams: {
-        enabled: true,
-      },
-    }),
-  ],
+	plugins: [
+		organizationClient({
+			teams: {
+				enabled: true
+			}
+		})
+	]
 });
 ```
 
@@ -2110,9 +2060,9 @@ When inviting members to an organization, you can specify a team:
 
 ```ts
 await authClient.organization.inviteMember({
-  email: "user@example.com",
-  role: "member",
-  teamId: "team-id",
+	email: 'user@example.com',
+	role: 'member',
+	teamId: 'team-id'
 });
 ```
 
@@ -2488,30 +2438,30 @@ isOptional: true,
 To change the schema table name or fields, you can pass `schema` option to the organization plugin.
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 const auth = betterAuth({
-  plugins: [
-    organization({
-      schema: {
-        organization: {
-          modelName: "organizations", //map the organization table to organizations
-          fields: {
-            name: "title", //map the name field to title
-          },
-          additionalFields: {
-            // Add a new field to the organization table
-            myCustomField: {
-              type: "string",
-              input: true,
-              required: false,
-            },
-          },
-        },
-      },
-    }),
-  ],
+	plugins: [
+		organization({
+			schema: {
+				organization: {
+					modelName: 'organizations', //map the organization table to organizations
+					fields: {
+						name: 'title' //map the name field to title
+					},
+					additionalFields: {
+						// Add a new field to the organization table
+						myCustomField: {
+							type: 'string',
+							input: true,
+							required: false
+						}
+					}
+				}
+			}
+		})
+	]
 });
 ```
 
@@ -2522,73 +2472,67 @@ Starting with [Better Auth v1.3](https://github.com/better-auth/better-auth/rele
 When you add extra fields to a model, the relevant API endpoints will automatically accept and return these new properties. For instance, if you add a custom field to the `organization` table, the `createOrganization` endpoint will include this field in its request and response payloads as needed.
 
 ```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { betterAuth } from 'better-auth';
+import { organization } from 'better-auth/plugins';
 
 const auth = betterAuth({
-  plugins: [
-    organization({
-      schema: {
-        organization: {
-          additionalFields: {
-            myCustomField: {
-              // [!code highlight]
-              type: "string", // [!code highlight]
-              input: true, // [!code highlight]
-              required: false, // [!code highlight]
-            }, // [!code highlight]
-          },
-        },
-      },
-    }),
-  ],
+	plugins: [
+		organization({
+			schema: {
+				organization: {
+					additionalFields: {
+						myCustomField: {
+							// [!code highlight]
+							type: 'string', // [!code highlight]
+							input: true, // [!code highlight]
+							required: false // [!code highlight]
+						} // [!code highlight]
+					}
+				}
+			}
+		})
+	]
 });
 ```
 
 For inferring the additional fields, you can use the `inferOrgAdditionalFields` function. This function will infer the additional fields from the auth object type.
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client";
-import {
-  inferOrgAdditionalFields,
-  organizationClient,
-} from "better-auth/client/plugins";
-import type { auth } from "@/lib/auth" // import the auth object type only
+import { createAuthClient } from 'better-auth/client';
+import { inferOrgAdditionalFields, organizationClient } from 'better-auth/client/plugins';
+import type { auth } from '@/lib/auth'; // import the auth object type only
 
 const client = createAuthClient({
-  plugins: [
-    organizationClient({
-      schema: inferOrgAdditionalFields<typeof auth>(),
-    }),
-  ],
+	plugins: [
+		organizationClient({
+			schema: inferOrgAdditionalFields<typeof auth>()
+		})
+	]
 });
 ```
 
 if you can't import the auth object type, you can use the `inferOrgAdditionalFields` function without the generic. This function will infer the additional fields from the schema object.
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client";
-import {
-  inferOrgAdditionalFields,
-  organizationClient,
-} from "better-auth/client/plugins";
+import { createAuthClient } from 'better-auth/client';
+import { inferOrgAdditionalFields, organizationClient } from 'better-auth/client/plugins';
 
 const client = createAuthClient({
-  plugins: [
-    organizationClient({
-      schema: inferOrgAdditionalFields({
-        organization: {
-          // [!code highlight]
-          additionalFields: {
-            newField: {
-              // [!code highlight]
-              type: "string", // [!code highlight]
-            }, // [!code highlight]
-          },
-        },
-      }),
-    }),
-  ],
+	plugins: [
+		organizationClient({
+			schema: inferOrgAdditionalFields({
+				organization: {
+					// [!code highlight]
+					additionalFields: {
+						newField: {
+							// [!code highlight]
+							type: 'string' // [!code highlight]
+						} // [!code highlight]
+					}
+				}
+			})
+		})
+	]
 });
 ```
 
@@ -2596,11 +2540,11 @@ const client = createAuthClient({
 
 ```ts
 await client.organization.create({
-  name: "Test",
-  slug: "test",
-  newField: "123", //this should be allowed
-  //@ts-expect-error - this field is not available
-  unavailableField: "123", //this should be not allowed
+	name: 'Test',
+	slug: 'test',
+	newField: '123', //this should be allowed
+	//@ts-expect-error - this field is not available
+	unavailableField: '123' //this should be not allowed
 });
 ```
 

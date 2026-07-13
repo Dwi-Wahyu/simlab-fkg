@@ -1,5 +1,10 @@
 import { db } from '$lib/server/db';
-import { practicumAssessment, practicumSchedule, practicumModule, user } from '$lib/server/db/schema';
+import {
+	practicumAssessment,
+	practicumSchedule,
+	practicumModule,
+	user
+} from '$lib/server/db/schema';
 import { eq, desc, and, or, like, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
@@ -17,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	async function fetchRiwayat() {
 		// Build conditions
 		const conditions = [eq(practicumAssessment.studentId, locals.user!.id)];
-		
+
 		if (search) {
 			// Subqueries or joins needed for deep search, for simplicity we do a joined query or let Drizzle handle it in JS if small.
 			// Since we want DB-level pagination, we should ideally use relational query with `where` but Drizzle's `where` inside `with` doesn't filter the parent.
@@ -86,8 +91,23 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				limit
 			},
 			summary: [
-				{ label: 'Total Praktikum', value: filtered.length.toString(), icon: 'BookOpen', color: 'text-emerald-600', bg: 'bg-emerald-100' },
-				{ label: 'Rata-rata Nilai', value: (filtered.length ? (filtered.reduce((acc, curr) => acc + curr.score, 0) / filtered.length) : 0).toFixed(2), icon: 'Award', color: 'text-blue-600', bg: 'bg-blue-100' }
+				{
+					label: 'Total Praktikum',
+					value: filtered.length.toString(),
+					icon: 'BookOpen',
+					color: 'text-emerald-600',
+					bg: 'bg-emerald-100'
+				},
+				{
+					label: 'Rata-rata Nilai',
+					value: (filtered.length
+						? filtered.reduce((acc, curr) => acc + curr.score, 0) / filtered.length
+						: 0
+					).toFixed(2),
+					icon: 'Award',
+					color: 'text-blue-600',
+					bg: 'bg-blue-100'
+				}
 			]
 		};
 	}

@@ -19,8 +19,8 @@ interface Student {
 }
 
 interface RekapSheet {
-	sheetName: string;      // e.g. "Kelompok 1", or "Tanpa Kelompok"
-	penilai: string;        // e.g. "Budi Santoso, S.Ked" or "-" if none assigned
+	sheetName: string; // e.g. "Kelompok 1", or "Tanpa Kelompok"
+	penilai: string; // e.g. "Budi Santoso, S.Ked" or "-" if none assigned
 	students: Student[];
 }
 
@@ -63,7 +63,11 @@ function buildHeaderRows(groups: Group[]): {
 }
 
 function sanitizeSheetName(name: string, used: Set<string>): string {
-	let clean = name.replace(/[:\\\/\?\*\[\]]/g, '').slice(0, 31).trim() || 'Sheet';
+	let clean =
+		name
+			.replace(/[:\\\/\?\*\[\]]/g, '')
+			.slice(0, 31)
+			.trim() || 'Sheet';
 	let candidate = clean;
 	let i = 2;
 	while (used.has(candidate)) {
@@ -102,7 +106,9 @@ export function buildRekapWorkbookBuffer({ groups, sheets, getScore }: Params): 
 			sheet.students.forEach((s, i) => {
 				const scores = columns.map((c) => getScore(s.userId, c.scheduleId, c.moduleId));
 				const valid = scores.filter((v): v is number => typeof v === 'number');
-				const avg = valid.length ? Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10 : '';
+				const avg = valid.length
+					? Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10
+					: '';
 				studentRows.push([i + 1, s.username, s.name, ...scores.map((v) => v ?? ''), avg]);
 			});
 

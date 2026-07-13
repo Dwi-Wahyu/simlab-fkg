@@ -67,7 +67,9 @@
 				toast.success('Berhasil', { description: 'Item berhasil dihapus.' });
 				goto('/admin/inventaris/alat');
 			} else {
-				toast.destructive('Gagal', { description: 'Gagal menghapus item. Item ini mungkin masih memiliki data unit aktif.' });
+				toast.destructive('Gagal', {
+					description: 'Gagal menghapus item. Item ini mungkin masih memiliki data unit aktif.'
+				});
 			}
 		});
 	}
@@ -157,7 +159,11 @@
 				</div>
 			</div>
 			{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
-				<Button variant="destructive" class="gap-2" onclick={() => (isDeleteItemConfirmOpen = true)}>
+				<Button
+					variant="destructive"
+					class="gap-2"
+					onclick={() => (isDeleteItemConfirmOpen = true)}
+				>
 					<Trash2 class="size-4" /> Hapus Item
 				</Button>
 			{/if}
@@ -236,7 +242,10 @@
 													>{equipment.serialNumber}</span
 												>
 												{#if isNewItem(equipment.createdAt)}
-													<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
+													<Badge
+														class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
+														>Baru</Badge
+													>
 												{/if}
 											</div>
 										</div>
@@ -260,7 +269,10 @@
 										<div class="flex items-center gap-2">
 											<span>{equipment.brand || '-'}</span>
 											{#if isNewItem(equipment.createdAt)}
-												<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
+												<Badge
+													class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
+													>Baru</Badge
+												>
 											{/if}
 										</div>
 									</Table.Cell>
@@ -283,7 +295,9 @@
 											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
 										)}
 									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Ditambahkan</span>
+										<span class="text-xs font-semibold text-slate-400 md:hidden"
+											>Tanggal Ditambahkan</span
+										>
 										<span class="text-sm text-slate-600">
 											{equipment.createdAt
 												? new Date(equipment.createdAt).toLocaleDateString('id-ID', {
@@ -309,7 +323,8 @@
 													variant="outline"
 													size="icon"
 													class="h-8 w-8"
-													href="/admin/inventaris/alat/{res.equipment.id}/edit?equipmentId={equipment.id}"
+													href="/admin/inventaris/alat/{res.equipment
+														.id}/edit?equipmentId={equipment.id}"
 												>
 													<Edit class="h-4 w-4" />
 												</Button>
@@ -406,7 +421,9 @@
 				toast.success('Berhasil', { description: 'Alat berhasil dihapus.' });
 				await invalidateAll();
 			} else {
-				toast.destructive('Gagal', { description: 'Gagal menghapus alat. Alat mungkin sudah digunakan di modul lain.' });
+				toast.destructive('Gagal', {
+					description: 'Gagal menghapus alat. Alat mungkin sudah digunakan di modul lain.'
+				});
 			}
 		});
 	}}

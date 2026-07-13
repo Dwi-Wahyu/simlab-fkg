@@ -51,9 +51,12 @@
 												class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-muted"
 											>
 												{#if member.user.image}
-													{@const imageSrc = member.user.image.startsWith('http://') || member.user.image.startsWith('https://') || member.user.image.startsWith('/')
-														? member.user.image
-														: `/uploads/profiles/${member.user.image}`}
+													{@const imageSrc =
+														member.user.image.startsWith('http://') ||
+														member.user.image.startsWith('https://') ||
+														member.user.image.startsWith('/')
+															? member.user.image
+															: `/uploads/profiles/${member.user.image}`}
 													<img
 														src={imageSrc}
 														alt={member.user.name}
@@ -84,8 +87,9 @@
 												>Terverifikasi</Badge
 											>
 										{:else}
-											<Badge variant="outline" class="border-yellow-200 bg-yellow-100 text-yellow-700"
-												>Pending</Badge
+											<Badge
+												variant="outline"
+												class="border-yellow-200 bg-yellow-100 text-yellow-700">Pending</Badge
 											>
 										{/if}
 									</Table.Cell>

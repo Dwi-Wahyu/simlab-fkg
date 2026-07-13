@@ -104,22 +104,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Fetch all approvals related to the maintenance list to show their status
 	const maintenanceIds = maintenanceList.map((m) => m.id);
-	const approvalList = maintenanceIds.length > 0
-		? await db.query.approval.findMany({
-				where: and(
-					eq(approval.referenceType, 'MAINTENANCE'),
-					inArray(approval.referenceId, maintenanceIds)
-				)
-			})
-		: [];
+	const approvalList =
+		maintenanceIds.length > 0
+			? await db.query.approval.findMany({
+					where: and(
+						eq(approval.referenceType, 'MAINTENANCE'),
+						inArray(approval.referenceId, maintenanceIds)
+					)
+				})
+			: [];
 
 	let pendingApprovalsCount = 0;
 	if (['superadmin', 'kepalaLab'].includes(currentUser.role)) {
 		const allPending = await db.query.approval.findMany({
-			where: and(
-				eq(approval.referenceType, 'MAINTENANCE'),
-				eq(approval.status, 'PENDING')
-			),
+			where: and(eq(approval.referenceType, 'MAINTENANCE'), eq(approval.status, 'PENDING')),
 			with: {
 				maintenance: {
 					with: {

@@ -19,22 +19,32 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const isRestrictedRole = user.role === 'kepalaLab' || user.role === 'laboran';
 	const queryLabId = url.searchParams.get('laboratoriumId');
 	const targetLabId = isRestrictedRole
-		? (user.laboratorium?.id || 'none')
-		: (queryLabId && queryLabId !== '' && queryLabId !== 'all' ? queryLabId : null);
+		? user.laboratorium?.id || 'none'
+		: queryLabId && queryLabId !== '' && queryLabId !== 'all'
+			? queryLabId
+			: null;
 
 	// Summary data
 	const [totalResult] = await db
 		.select({ value: count() })
 		.from(equipment)
-		.where(targetLabId ? eq(equipment.laboratoriumId, targetLabId) : undefined);
+		.where(
+			targetLabId
+				? and(eq(equipment.laboratoriumId, targetLabId), eq(equipment.isDeleted, false))
+				: eq(equipment.isDeleted, false)
+		);
 
 	const [baikResult] = await db
 		.select({ value: count() })
 		.from(equipment)
 		.where(
 			targetLabId
-				? and(eq(equipment.condition, 'BAIK'), eq(equipment.laboratoriumId, targetLabId))
-				: eq(equipment.condition, 'BAIK')
+				? and(
+						eq(equipment.condition, 'BAIK'),
+						eq(equipment.laboratoriumId, targetLabId),
+						eq(equipment.isDeleted, false)
+					)
+				: and(eq(equipment.condition, 'BAIK'), eq(equipment.isDeleted, false))
 		);
 
 	const [rusakResult] = await db
@@ -42,13 +52,17 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.from(equipment)
 		.where(
 			targetLabId
-				? and(eq(equipment.condition, 'RUSAK'), eq(equipment.laboratoriumId, targetLabId))
-				: eq(equipment.condition, 'RUSAK')
+				? and(
+						eq(equipment.condition, 'RUSAK'),
+						eq(equipment.laboratoriumId, targetLabId),
+						eq(equipment.isDeleted, false)
+					)
+				: and(eq(equipment.condition, 'RUSAK'), eq(equipment.isDeleted, false))
 		);
 
 	// Per-item aggregated counts filter
 	const queryCategoryId = url.searchParams.get('categoryId');
-	const conditions = [];
+	const conditions = [eq(equipment.isDeleted, false), eq(item.isDeleted, false)];
 	if (targetLabId) {
 		conditions.push(eq(equipment.laboratoriumId, targetLabId));
 	}
@@ -58,7 +72,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	if (search) {
 		conditions.push(sql`${item.name} LIKE ${'%' + search + '%'}`);
 	}
-	const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+	const whereClause = and(...conditions);
 
 	const itemStats = await db
 		.select({
@@ -115,4 +129,3 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		pagination: { totalItems, totalPages, currentPage: page, limit }
 	});
 };
-

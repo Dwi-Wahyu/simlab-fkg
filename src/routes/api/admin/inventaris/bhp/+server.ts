@@ -34,9 +34,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		}
 	});
 
-	const targetLabId = ['kepalaLab', 'laboran'].includes(user.role)
-		? user.laboratorium?.id
-		: null;
+	const targetLabId = ['kepalaLab', 'laboran'].includes(user.role) ? user.laboratorium?.id : null;
 
 	const processedItems = items
 		.map((i) => {
@@ -73,7 +71,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const totalItems = processedItems.length;
 	const totalPages = Math.ceil(totalItems / limit);
-	
+
 	// Slice for pagination since we process status in memory
 	// In production with huge data, this logic should move to SQL
 	const paginatedItems = processedItems.slice(offset, offset + limit);

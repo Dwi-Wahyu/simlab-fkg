@@ -70,6 +70,7 @@ sama sekali — kolom yang dipakai sudah ada).
 ## BAGIAN 1 — AUTOFILL BLOK & LABORATORIUM DARI SERI PRAKTIKUM
 
 **File:**
+
 - `src/routes/admin/jadwal-praktikum/tambah/+page.svelte`
 - `src/routes/admin/jadwal-praktikum/[id]/edit/+page.svelte`
 
@@ -120,6 +121,7 @@ manual (misal seri tidak punya blok/lab, atau user memang ingin beda).
 ## BAGIAN 2 — HAPUS INPUT SEMESTER
 
 **File:**
+
 - `src/routes/admin/jadwal-praktikum/tambah/+page.svelte`
 - `src/routes/admin/jadwal-praktikum/tambah/+page.server.ts`
 - `src/routes/admin/jadwal-praktikum/[id]/edit/+page.svelte`
@@ -180,6 +182,7 @@ dulu apakah ada laporan/export lain yang membaca `practicumSchedule.semester`
 ## BAGIAN 3 — DISTRIBUSI KELOMPOK PER INSTRUKTUR
 
 **File:**
+
 - `src/routes/admin/jadwal-praktikum/tambah/+page.svelte`
 - `src/routes/admin/jadwal-praktikum/tambah/+page.server.ts`
 - `src/routes/admin/jadwal-praktikum/[id]/edit/+page.svelte`
@@ -235,9 +238,7 @@ let expandedInstructorId = $state<string | null>(null);
 
 const selectedInstructorIds = $derived(Object.keys(instructorGroupMap));
 
-const groupsForClass = $derived(
-	data.groups.filter((g: any) => g.classId === selectedClassId)
-);
+const groupsForClass = $derived(data.groups.filter((g: any) => g.classId === selectedClassId));
 
 // Union semua kelompok yang sudah dipakai instruktur MANAPUN
 function assignedElsewhere(instructorId: string): Set<string> {
@@ -276,9 +277,7 @@ function toggleGroupForInstructor(instructorId: string, groupId: string) {
 
 // Kelompok kelas yang belum dipilih instruktur manapun
 const unassignedGroups = $derived(
-	groupsForClass.filter(
-		(g: any) => !Object.values(instructorGroupMap).flat().includes(g.id)
-	)
+	groupsForClass.filter((g: any) => !Object.values(instructorGroupMap).flat().includes(g.id))
 );
 
 function autoDistributeGroups() {
@@ -293,9 +292,7 @@ function autoDistributeGroups() {
 }
 
 const hasUnassignedGroups = $derived(
-	groupsForClass.length > 0 &&
-		selectedInstructorIds.length > 0 &&
-		unassignedGroups.length > 0
+	groupsForClass.length > 0 && selectedInstructorIds.length > 0 && unassignedGroups.length > 0
 );
 ```
 
@@ -314,7 +311,7 @@ sedang dicentang/expanded:
 				checked={instructor.id in instructorGroupMap}
 				onCheckedChange={() => toggleInstructor(instructor.id)}
 			/>
-			<div class="flex flex-col gap-0.5 flex-1">
+			<div class="flex flex-1 flex-col gap-0.5">
 				<span class="text-sm leading-none font-medium">{instructor.name}</span>
 				<span class="text-xs text-muted-foreground">{instructor.email}</span>
 			</div>
@@ -364,7 +361,9 @@ Di footer card instruktur, tambahkan peringatan + tombol bagi rata:
 		{/if}
 	</div>
 	{#if hasUnassignedGroups}
-		<div class="flex items-center justify-between gap-2 rounded-md bg-amber-50 p-2 text-xs text-amber-700">
+		<div
+			class="flex items-center justify-between gap-2 rounded-md bg-amber-50 p-2 text-xs text-amber-700"
+		>
 			<span>{unassignedGroups.length} kelompok belum ditugaskan ke instruktur manapun.</span>
 			<Button type="button" variant="outline" size="sm" onclick={autoDistributeGroups}>
 				Bagi Rata Otomatis
@@ -511,7 +510,9 @@ dari semua kelompok tersebut sekaligus:
 
 ```ts
 const myInstructorRows = schedule.instructors.filter((i) => i.instructorId === instructorId);
-const myGroupIds = [...new Set(myInstructorRows.map((i) => i.groupId).filter((g): g is string => !!g))];
+const myGroupIds = [
+	...new Set(myInstructorRows.map((i) => i.groupId).filter((g): g is string => !!g))
+];
 const isScopedUser = !['superadmin', 'koordinator'].includes(locals.user.role);
 
 const filterGroupId = url.searchParams.get('groupId') || undefined;
@@ -576,9 +577,11 @@ seeder utama `src/lib/server/db/seeds/index.ts` (`bun run db:seed`).
 ### Langkah perbaikan
 
 1. **Immediate fix (jalankan di environment yang error):**
+
    ```bash
    bun run db:seed-logbook-templates
    ```
+
    Ini akan mengisi satu baris `practicumLogbookTemplate` per
    `practicumModule` yang ada, dengan file default
    `TEMPLATE_LOGBOOK_PRAKTIKUM_SIMLAB.docx`.
@@ -592,13 +595,11 @@ seeder utama `src/lib/server/db/seeds/index.ts` (`bun run db:seed`).
      fungsi yang dipanggil di proses `db:seed` yang sama (bukan proses
      terpisah dengan koneksi DB sendiri). Refactor `logbook-templates.ts`
      agar logic-nya diekspor sebagai fungsi (`export async function
-     seedLogbookTemplates(db)`), lalu:
-     - `logbook-templates.ts` tetap bisa dijalankan standalone (untuk
-       backward compat script `db:seed-logbook-templates`), sekarang cuma
-       memanggil fungsi yang diekspor dengan `db` lokal miliknya sendiri.
-     - `index.ts` mengimpor fungsi tersebut dan memanggilnya dengan `db`
-       instance yang sudah ada di `index.ts`, sehingga satu kali `bun run
-       db:seed` sudah cukup untuk semua termasuk template logbook.
+seedLogbookTemplates(db)`), lalu: - `logbook-templates.ts` tetap bisa dijalankan standalone (untuk
+     backward compat script `db:seed-logbook-templates`), sekarang cuma
+     memanggil fungsi yang diekspor dengan `db` lokal miliknya sendiri. - `index.ts` mengimpor fungsi tersebut dan memanggilnya dengan `db`
+     instance yang sudah ada di `index.ts`, sehingga satu kali `bun run
+db:seed` sudah cukup untuk semua termasuk template logbook.
    - Field `tableBuilderKey: 'logbook-rowspan-table'` dan nama
      `Template Logbook — ${mod.name}` tetap sama seperti sekarang, tidak
      perlu diubah.
@@ -606,15 +607,17 @@ seeder utama `src/lib/server/db/seeds/index.ts` (`bun run db:seed`).
 3. **Perbaikan pesan error supaya lebih actionable** di
    `src/lib/server/logbook/generateLogbook.ts` sekitar baris 376–377,
    ganti pesan generik jadi lebih spesifik untuk admin yang membaca log:
+
    ```ts
    const finalTemplate = templateRecord ?? (await db.query.practicumLogbookTemplate.findFirst());
    if (!finalTemplate) {
    	throw new Error(
    		'Tidak ada template logbook terdaftar di database (tabel practicum_logbook_template kosong). ' +
-   		'Jalankan `bun run db:seed-logbook-templates` setelah seeder modul dijalankan.'
+   			'Jalankan `bun run db:seed-logbook-templates` setelah seeder modul dijalankan.'
    	);
    }
    ```
+
    Ini murni perbaikan pesan diagnostik, tidak mengubah alur fungsi.
 
 4. Setelah menjalankan seeder, verifikasi endpoint
@@ -670,94 +673,474 @@ Di `src/lib/server/db/seeds/index.ts`:
 type CslCriterion = { name: string; sectionLabel: string; maxScore: number; sortOrder: number };
 
 const cslKewaspadaanStandar: CslCriterion[] = [
-	{ name: 'Mempersiapkan semua alat yang dibutuhkan (sabun antiseptik, jas operasi/gown steril, sarung tangan/glove steril)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 1 },
-	{ name: 'Mempersiapkan diri (melepas aksesoris, kuku pendek dan bersih)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 2 },
-	{ name: 'Mengalirkan air dan membasahi tangan hingga siku', sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)', maxScore: 2, sortOrder: 3 },
-	{ name: 'Mengambil sabun antiseptik dan melakukan 6 langkah WHO pada telapak hingga punggung tangan', sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)', maxScore: 2, sortOrder: 4 },
-	{ name: 'Membersihkan kuku dan sela jari secara teliti', sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)', maxScore: 2, sortOrder: 5 },
-	{ name: 'Melakukan scrubbing/gosokan dari arah tangan menuju siku (satu arah)', sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)', maxScore: 2, sortOrder: 6 },
-	{ name: 'Membilas dengan air mengalir dari ujung jari ke arah siku (tangan tetap lebih tinggi dari siku)', sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)', maxScore: 2, sortOrder: 7 },
-	{ name: 'Menutup kran dengan siku/pedal dan mengeringkan tangan dengan handuk steril secara aseptik', sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)', maxScore: 2, sortOrder: 8 },
-	{ name: 'Mengambil jas operasi steril, membiarkan terbuka tanpa menyentuh benda non-steril', sectionLabel: 'C. Prosedur Gowning', maxScore: 2, sortOrder: 9 },
-	{ name: 'Memasukkan kedua tangan ke lengan jas tanpa mengeluarkan jari dari ujung manset (teknik tertutup)', sectionLabel: 'C. Prosedur Gowning', maxScore: 2, sortOrder: 10 },
-	{ name: 'Memakai sarung tangan dengan teknik tertutup (tangan tetap di dalam manset jas)', sectionLabel: 'D. Prosedur Gloving', maxScore: 2, sortOrder: 11 },
-	{ name: 'Memastikan sarung tangan menutupi manset jas operasi dan tidak ada kebocoran/kontaminasi', sectionLabel: 'D. Prosedur Gloving', maxScore: 2, sortOrder: 12 }
+	{
+		name: 'Mempersiapkan semua alat yang dibutuhkan (sabun antiseptik, jas operasi/gown steril, sarung tangan/glove steril)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 1
+	},
+	{
+		name: 'Mempersiapkan diri (melepas aksesoris, kuku pendek dan bersih)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 2
+	},
+	{
+		name: 'Mengalirkan air dan membasahi tangan hingga siku',
+		sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)',
+		maxScore: 2,
+		sortOrder: 3
+	},
+	{
+		name: 'Mengambil sabun antiseptik dan melakukan 6 langkah WHO pada telapak hingga punggung tangan',
+		sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)',
+		maxScore: 2,
+		sortOrder: 4
+	},
+	{
+		name: 'Membersihkan kuku dan sela jari secara teliti',
+		sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)',
+		maxScore: 2,
+		sortOrder: 5
+	},
+	{
+		name: 'Melakukan scrubbing/gosokan dari arah tangan menuju siku (satu arah)',
+		sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)',
+		maxScore: 2,
+		sortOrder: 6
+	},
+	{
+		name: 'Membilas dengan air mengalir dari ujung jari ke arah siku (tangan tetap lebih tinggi dari siku)',
+		sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)',
+		maxScore: 2,
+		sortOrder: 7
+	},
+	{
+		name: 'Menutup kran dengan siku/pedal dan mengeringkan tangan dengan handuk steril secara aseptik',
+		sectionLabel: 'B. Prosedur Cuci Tangan Bedah (WHO)',
+		maxScore: 2,
+		sortOrder: 8
+	},
+	{
+		name: 'Mengambil jas operasi steril, membiarkan terbuka tanpa menyentuh benda non-steril',
+		sectionLabel: 'C. Prosedur Gowning',
+		maxScore: 2,
+		sortOrder: 9
+	},
+	{
+		name: 'Memasukkan kedua tangan ke lengan jas tanpa mengeluarkan jari dari ujung manset (teknik tertutup)',
+		sectionLabel: 'C. Prosedur Gowning',
+		maxScore: 2,
+		sortOrder: 10
+	},
+	{
+		name: 'Memakai sarung tangan dengan teknik tertutup (tangan tetap di dalam manset jas)',
+		sectionLabel: 'D. Prosedur Gloving',
+		maxScore: 2,
+		sortOrder: 11
+	},
+	{
+		name: 'Memastikan sarung tangan menutupi manset jas operasi dan tidak ada kebocoran/kontaminasi',
+		sectionLabel: 'D. Prosedur Gloving',
+		maxScore: 2,
+		sortOrder: 12
+	}
 ];
 
 const cslAnestesiLokal: CslCriterion[] = [
-	{ name: 'Menyiapkan alat: spuit/cito-ject, ampul/karpul anestesi, antiseptik (povidone iodine), kapas/tampon', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 1 },
-	{ name: 'Persiapan pasien: rekam medik dan informed consent', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 2 },
-	{ name: 'Posisi kerja dokter dan posisi kursi pasien sesuai regio yang akan dianestesi', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 3 },
-	{ name: 'Aplikasi antiseptik pada area mukosa yang akan disuntik', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 4 },
-	{ name: 'Memegang spuit dengan teknik yang benar (pen grasp)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 5 },
-	{ name: 'Melakukan insersi jarum dengan sudut yang tepat (45 derajat untuk infiltrasi)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 6 },
-	{ name: 'Teknik infiltrasi pada mucobuccal fold / teknik blok menentukan landmark (plica pterygomandibularis, linea obliqua interna)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 7 },
-	{ name: 'Melakukan aspirasi (memastikan jarum tidak masuk pembuluh darah)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 8 },
-	{ name: 'Mendeponir larutan anestesi secara perlahan', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 9 },
-	{ name: 'Menarik jarum keluar dengan hati-hati dan menutup jarum (one-hand technique)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 10 },
-	{ name: 'Evaluasi efek anestesi (subjektif: rasa kebas; objektif: tes dengan sonde/eksavator)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 11 }
+	{
+		name: 'Menyiapkan alat: spuit/cito-ject, ampul/karpul anestesi, antiseptik (povidone iodine), kapas/tampon',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 1
+	},
+	{
+		name: 'Persiapan pasien: rekam medik dan informed consent',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 2
+	},
+	{
+		name: 'Posisi kerja dokter dan posisi kursi pasien sesuai regio yang akan dianestesi',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 3
+	},
+	{
+		name: 'Aplikasi antiseptik pada area mukosa yang akan disuntik',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 4
+	},
+	{
+		name: 'Memegang spuit dengan teknik yang benar (pen grasp)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 5
+	},
+	{
+		name: 'Melakukan insersi jarum dengan sudut yang tepat (45 derajat untuk infiltrasi)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 6
+	},
+	{
+		name: 'Teknik infiltrasi pada mucobuccal fold / teknik blok menentukan landmark (plica pterygomandibularis, linea obliqua interna)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 7
+	},
+	{
+		name: 'Melakukan aspirasi (memastikan jarum tidak masuk pembuluh darah)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 8
+	},
+	{
+		name: 'Mendeponir larutan anestesi secara perlahan',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 9
+	},
+	{
+		name: 'Menarik jarum keluar dengan hati-hati dan menutup jarum (one-hand technique)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 10
+	},
+	{
+		name: 'Evaluasi efek anestesi (subjektif: rasa kebas; objektif: tes dengan sonde/eksavator)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 11
+	}
 ];
 
 const cslPeresepanObat: CslCriterion[] = [
-	{ name: 'Memeriksa rekam medis pasien dan indikasi pencabutan', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 1 },
-	{ name: 'Memastikan tidak ada kontraindikasi obat (alergi, penyakit sistemik, interaksi obat)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 2 },
-	{ name: 'Menuliskan identitas dokter (nama, SIP) pada resep', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 3 },
-	{ name: 'Menuliskan identitas pasien (nama, umur, alamat/berat badan)', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 4 },
-	{ name: 'Menuliskan tanggal penulisan resep', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 5 },
-	{ name: 'Menuliskan tanda R/ (Recipe) dengan benar', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 6 },
-	{ name: 'Analgesik: memilih jenis dan dosis yang tepat (misal Paracetamol 500mg, Asam Mefenamat 500mg, atau Ibuprofen 400mg)', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 7 },
-	{ name: 'Antibiotik: memilih antibiotik yang rasional (misal Amoxicillin 500mg) sesuai infeksi/prosedur', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 8 },
-	{ name: 'Menuliskan jumlah obat (jumlah total/angka romawi)', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 9 },
-	{ name: 'Menuliskan aturan pakai (signa) yang jelas (frekuensi, waktu penggunaan)', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 10 },
-	{ name: 'Menuliskan tanda tangan atau paraf dokter', sectionLabel: 'B. Prosedur (Peresepan)', maxScore: 2, sortOrder: 11 },
-	{ name: 'Menjelaskan tujuan pemberian obat kepada pasien', sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)', maxScore: 2, sortOrder: 12 },
-	{ name: 'Menjelaskan efek samping obat yang mungkin terjadi', sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)', maxScore: 2, sortOrder: 13 },
-	{ name: 'Menginstruksikan pasien untuk meminum antibiotik hingga habis', sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)', maxScore: 2, sortOrder: 14 },
-	{ name: 'Menginstruksikan pasien penggunaan analgesik hanya saat nyeri', sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)', maxScore: 2, sortOrder: 15 }
+	{
+		name: 'Memeriksa rekam medis pasien dan indikasi pencabutan',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 1
+	},
+	{
+		name: 'Memastikan tidak ada kontraindikasi obat (alergi, penyakit sistemik, interaksi obat)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 2
+	},
+	{
+		name: 'Menuliskan identitas dokter (nama, SIP) pada resep',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 3
+	},
+	{
+		name: 'Menuliskan identitas pasien (nama, umur, alamat/berat badan)',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 4
+	},
+	{
+		name: 'Menuliskan tanggal penulisan resep',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 5
+	},
+	{
+		name: 'Menuliskan tanda R/ (Recipe) dengan benar',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 6
+	},
+	{
+		name: 'Analgesik: memilih jenis dan dosis yang tepat (misal Paracetamol 500mg, Asam Mefenamat 500mg, atau Ibuprofen 400mg)',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 7
+	},
+	{
+		name: 'Antibiotik: memilih antibiotik yang rasional (misal Amoxicillin 500mg) sesuai infeksi/prosedur',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 8
+	},
+	{
+		name: 'Menuliskan jumlah obat (jumlah total/angka romawi)',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 9
+	},
+	{
+		name: 'Menuliskan aturan pakai (signa) yang jelas (frekuensi, waktu penggunaan)',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 10
+	},
+	{
+		name: 'Menuliskan tanda tangan atau paraf dokter',
+		sectionLabel: 'B. Prosedur (Peresepan)',
+		maxScore: 2,
+		sortOrder: 11
+	},
+	{
+		name: 'Menjelaskan tujuan pemberian obat kepada pasien',
+		sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)',
+		maxScore: 2,
+		sortOrder: 12
+	},
+	{
+		name: 'Menjelaskan efek samping obat yang mungkin terjadi',
+		sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)',
+		maxScore: 2,
+		sortOrder: 13
+	},
+	{
+		name: 'Menginstruksikan pasien untuk meminum antibiotik hingga habis',
+		sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)',
+		maxScore: 2,
+		sortOrder: 14
+	},
+	{
+		name: 'Menginstruksikan pasien penggunaan analgesik hanya saat nyeri',
+		sectionLabel: 'C. Tahap Pasca Interaksi (Edukasi)',
+		maxScore: 2,
+		sortOrder: 15
+	}
 ];
 
 const cslPencabutanClosedMethod: CslCriterion[] = [
-	{ name: 'Mempersiapkan semua alat yang dibutuhkan (diagnostik set, tang ekstraksi, elevator)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 1 },
-	{ name: 'Mempersiapkan semua bahan yang dibutuhkan (betadine, kapas dan tampon)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 2 },
-	{ name: 'Mempersiapkan pasien (rekam medik, informed consent)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 3 },
-	{ name: 'Tiap kelompok terdiri dari 2 orang yang bertindak sebagai dokter dan pasien', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 4 },
-	{ name: 'Dokter menggunakan jas kerja dan masker (surgical mask)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 5 },
-	{ name: 'Dokter menyapa pasien dan mempersilahkan pasien duduk di kursi unit', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 6 },
-	{ name: 'Dokter melakukan cuci tangan (scrubbing up)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 7 },
-	{ name: 'Dokter menggunakan sarung tangan (gloved hand)', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 8 },
-	{ name: 'Dokter berada di tempat (tools dental unit) yang telah disediakan', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 9 },
-	{ name: 'Dokter memilih dan menentukan jenis teknik anestesi', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 10 },
-	{ name: 'Dokter melakukan desinfeksi extra dan intra oral', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 11 },
-	{ name: 'Dokter melakukan teknik anestesi', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 12 },
-	{ name: 'Dokter melakukan evaluasi efek dan keefektifan anestesi', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 13 },
-	{ name: 'Dokter memilih dan menentukan jenis teknik pencabutan yang digunakan', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 14 },
-	{ name: 'Dokter memilih dan menentukan jenis tang yang digunakan', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 15 },
-	{ name: 'Dokter melakukan pencabutan gigi sesuai teknik yang dipilih', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 16 },
-	{ name: 'Dokter melakukan pembersihan daerah luka pencabutan', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 17 },
-	{ name: 'Dokter memberikan instruksi setelah pencabutan gigi', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 18 },
-	{ name: 'Dokter mengevaluasi kemungkinan komplikasi yang terjadi', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 19 },
-	{ name: 'Dokter mempersilahkan pasien bertanya bila ada hal yang belum jelas', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 20 },
-	{ name: 'Dokter mempersilahkan pasien pulang', sectionLabel: 'B. Prosedur', maxScore: 2, sortOrder: 21 },
-	{ name: 'Mengumpulkan seluruh alat yang telah digunakan ke wadah yang telah disiapkan', sectionLabel: 'C. Manajemen Setelah Prosedur', maxScore: 2, sortOrder: 22 }
+	{
+		name: 'Mempersiapkan semua alat yang dibutuhkan (diagnostik set, tang ekstraksi, elevator)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 1
+	},
+	{
+		name: 'Mempersiapkan semua bahan yang dibutuhkan (betadine, kapas dan tampon)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 2
+	},
+	{
+		name: 'Mempersiapkan pasien (rekam medik, informed consent)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 3
+	},
+	{
+		name: 'Tiap kelompok terdiri dari 2 orang yang bertindak sebagai dokter dan pasien',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 4
+	},
+	{
+		name: 'Dokter menggunakan jas kerja dan masker (surgical mask)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 5
+	},
+	{
+		name: 'Dokter menyapa pasien dan mempersilahkan pasien duduk di kursi unit',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 6
+	},
+	{
+		name: 'Dokter melakukan cuci tangan (scrubbing up)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 7
+	},
+	{
+		name: 'Dokter menggunakan sarung tangan (gloved hand)',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 8
+	},
+	{
+		name: 'Dokter berada di tempat (tools dental unit) yang telah disediakan',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 9
+	},
+	{
+		name: 'Dokter memilih dan menentukan jenis teknik anestesi',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 10
+	},
+	{
+		name: 'Dokter melakukan desinfeksi extra dan intra oral',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 11
+	},
+	{
+		name: 'Dokter melakukan teknik anestesi',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 12
+	},
+	{
+		name: 'Dokter melakukan evaluasi efek dan keefektifan anestesi',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 13
+	},
+	{
+		name: 'Dokter memilih dan menentukan jenis teknik pencabutan yang digunakan',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 14
+	},
+	{
+		name: 'Dokter memilih dan menentukan jenis tang yang digunakan',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 15
+	},
+	{
+		name: 'Dokter melakukan pencabutan gigi sesuai teknik yang dipilih',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 16
+	},
+	{
+		name: 'Dokter melakukan pembersihan daerah luka pencabutan',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 17
+	},
+	{
+		name: 'Dokter memberikan instruksi setelah pencabutan gigi',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 18
+	},
+	{
+		name: 'Dokter mengevaluasi kemungkinan komplikasi yang terjadi',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 19
+	},
+	{
+		name: 'Dokter mempersilahkan pasien bertanya bila ada hal yang belum jelas',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 20
+	},
+	{
+		name: 'Dokter mempersilahkan pasien pulang',
+		sectionLabel: 'B. Prosedur',
+		maxScore: 2,
+		sortOrder: 21
+	},
+	{
+		name: 'Mengumpulkan seluruh alat yang telah digunakan ke wadah yang telah disiapkan',
+		sectionLabel: 'C. Manajemen Setelah Prosedur',
+		maxScore: 2,
+		sortOrder: 22
+	}
 ];
 
 const cslPenjahitan: CslCriterion[] = [
-	{ name: 'Persiapan alat & bahan (needle holder, gunting, pinset sirurgis, jarum, benang, kassa, povidone iodine)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 1 },
-	{ name: 'Persiapan diri (mencuci tangan 6 langkah, memakai masker dan sarung tangan steril)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 2 },
-	{ name: 'Persiapan pasien (posisi kerja dan lampu operasional yang tepat)', sectionLabel: 'A. Persiapan', maxScore: 2, sortOrder: 3 },
-	{ name: 'Debridement (membersihkan sisa bekuan darah/debris dengan kassa steril)', sectionLabel: 'B. Tahap Pre-Suturing', maxScore: 2, sortOrder: 4 },
-	{ name: 'Inspeksi soket (memastikan tidak ada perdarahan aktif yang masif sebelum dijahit)', sectionLabel: 'B. Tahap Pre-Suturing', maxScore: 2, sortOrder: 5 },
-	{ name: 'Melakukan aplikasi antiseptik pada area kerja/anestesi lokal tambahan (bila perlu) dan fiksasi tepi luka', sectionLabel: 'B. Tahap Pre-Suturing', maxScore: 2, sortOrder: 6 },
-	{ name: 'Pemasangan jarum: dipegang pada 1/3 belakang (dekat mata benang) menggunakan needle holder', sectionLabel: 'C. Tahap Prosedur Penjahitan', maxScore: 2, sortOrder: 7 },
-	{ name: 'Penetrasi: jarum masuk tegak lurus terhadap jaringan, minimal 2-3 mm dari tepi luka', sectionLabel: 'C. Tahap Prosedur Penjahitan', maxScore: 2, sortOrder: 8 },
-	{ name: 'Teknik penjahitan: menggunakan teknik simple interrupted suture (atau sesuai instruksi)', sectionLabel: 'C. Tahap Prosedur Penjahitan', maxScore: 2, sortOrder: 9 },
-	{ name: 'Simpul (knotting): membuat simpul bedah dengan tegangan yang pas (tidak terlalu kencang/kendur)', sectionLabel: 'C. Tahap Prosedur Penjahitan', maxScore: 2, sortOrder: 10 },
-	{ name: 'Posisi simpul: diletakkan di samping garis luka (bukan tepat di atas luka)', sectionLabel: 'C. Tahap Prosedur Penjahitan', maxScore: 2, sortOrder: 11 },
-	{ name: 'Pemotongan benang: memotong ujung benang dengan menyisakan sekitar 2-3 mm', sectionLabel: 'C. Tahap Prosedur Penjahitan', maxScore: 2, sortOrder: 12 },
-	{ name: 'Asepsis: menjaga sterilitas alat dan benang selama prosedur berlangsung', sectionLabel: 'C. Tahap Prosedur Penjahitan', maxScore: 2, sortOrder: 13 },
-	{ name: 'Melakukan aplikasi antiseptik terakhir di atas area jahitan', sectionLabel: 'D. Tahap Akhir & Edukasi', maxScore: 2, sortOrder: 14 },
-	{ name: 'Instruksi pasien: menghindari menyentuh jahitan, diet lunak, dan jadwal kontrol/lepas jahitan', sectionLabel: 'D. Tahap Akhir & Edukasi', maxScore: 2, sortOrder: 15 },
-	{ name: 'Manajemen sampah medis (membuang jarum ke sharp container)', sectionLabel: 'D. Tahap Akhir & Edukasi', maxScore: 2, sortOrder: 16 }
+	{
+		name: 'Persiapan alat & bahan (needle holder, gunting, pinset sirurgis, jarum, benang, kassa, povidone iodine)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 1
+	},
+	{
+		name: 'Persiapan diri (mencuci tangan 6 langkah, memakai masker dan sarung tangan steril)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 2
+	},
+	{
+		name: 'Persiapan pasien (posisi kerja dan lampu operasional yang tepat)',
+		sectionLabel: 'A. Persiapan',
+		maxScore: 2,
+		sortOrder: 3
+	},
+	{
+		name: 'Debridement (membersihkan sisa bekuan darah/debris dengan kassa steril)',
+		sectionLabel: 'B. Tahap Pre-Suturing',
+		maxScore: 2,
+		sortOrder: 4
+	},
+	{
+		name: 'Inspeksi soket (memastikan tidak ada perdarahan aktif yang masif sebelum dijahit)',
+		sectionLabel: 'B. Tahap Pre-Suturing',
+		maxScore: 2,
+		sortOrder: 5
+	},
+	{
+		name: 'Melakukan aplikasi antiseptik pada area kerja/anestesi lokal tambahan (bila perlu) dan fiksasi tepi luka',
+		sectionLabel: 'B. Tahap Pre-Suturing',
+		maxScore: 2,
+		sortOrder: 6
+	},
+	{
+		name: 'Pemasangan jarum: dipegang pada 1/3 belakang (dekat mata benang) menggunakan needle holder',
+		sectionLabel: 'C. Tahap Prosedur Penjahitan',
+		maxScore: 2,
+		sortOrder: 7
+	},
+	{
+		name: 'Penetrasi: jarum masuk tegak lurus terhadap jaringan, minimal 2-3 mm dari tepi luka',
+		sectionLabel: 'C. Tahap Prosedur Penjahitan',
+		maxScore: 2,
+		sortOrder: 8
+	},
+	{
+		name: 'Teknik penjahitan: menggunakan teknik simple interrupted suture (atau sesuai instruksi)',
+		sectionLabel: 'C. Tahap Prosedur Penjahitan',
+		maxScore: 2,
+		sortOrder: 9
+	},
+	{
+		name: 'Simpul (knotting): membuat simpul bedah dengan tegangan yang pas (tidak terlalu kencang/kendur)',
+		sectionLabel: 'C. Tahap Prosedur Penjahitan',
+		maxScore: 2,
+		sortOrder: 10
+	},
+	{
+		name: 'Posisi simpul: diletakkan di samping garis luka (bukan tepat di atas luka)',
+		sectionLabel: 'C. Tahap Prosedur Penjahitan',
+		maxScore: 2,
+		sortOrder: 11
+	},
+	{
+		name: 'Pemotongan benang: memotong ujung benang dengan menyisakan sekitar 2-3 mm',
+		sectionLabel: 'C. Tahap Prosedur Penjahitan',
+		maxScore: 2,
+		sortOrder: 12
+	},
+	{
+		name: 'Asepsis: menjaga sterilitas alat dan benang selama prosedur berlangsung',
+		sectionLabel: 'C. Tahap Prosedur Penjahitan',
+		maxScore: 2,
+		sortOrder: 13
+	},
+	{
+		name: 'Melakukan aplikasi antiseptik terakhir di atas area jahitan',
+		sectionLabel: 'D. Tahap Akhir & Edukasi',
+		maxScore: 2,
+		sortOrder: 14
+	},
+	{
+		name: 'Instruksi pasien: menghindari menyentuh jahitan, diet lunak, dan jadwal kontrol/lepas jahitan',
+		sectionLabel: 'D. Tahap Akhir & Edukasi',
+		maxScore: 2,
+		sortOrder: 15
+	},
+	{
+		name: 'Manajemen sampah medis (membuang jarum ke sharp container)',
+		sectionLabel: 'D. Tahap Akhir & Edukasi',
+		maxScore: 2,
+		sortOrder: 16
+	}
 ];
 
 const cslScoreLegend = [
@@ -838,20 +1221,23 @@ sudah membaca `crit.name`, `crit.maxScore`, `crit.sortOrder`,
    deploy perubahan ini, jalankan pembersihan manual satu kali (hanya di
    environment yang belum punya data penilaian nyata terhubung ke modul
    lama tersebut — cek dulu):
+
    ```bash
    # Cek dulu apakah modul lama ini sudah dipakai di penilaian nyata:
    # SELECT * FROM practicum_assessment WHERE module_id = '<id modul lama>';
    ```
+
    Jika belum ada assessment yang terhubung, modul lama beserta
    kriterianya aman dihapus manual lewat `db:studio` atau query SQL
    terarah (`DELETE FROM practicum_module WHERE name = 'CSL Bedah Minor -
-   Ekstraksi Gigi'` — `onDelete: 'cascade'` pada
+Ekstraksi Gigi'` — `onDelete: 'cascade'` pada
    `practicumModuleCriteria.moduleId` akan otomatis membersihkan
    kriterianya). Jika **sudah** ada assessment nyata terhubung, jangan
    dihapus — biarkan sebagai modul historis, cukup pastikan modul baru
    (5 CSL di atas) yang dipakai untuk sesi selanjutnya.
 
 5. Jalankan ulang seeder untuk menerapkan:
+
    ```bash
    bun run db:seed
    ```

@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { maintenance, equipment, user } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import type { PageServerLoad, Actions } from './$types';
@@ -45,11 +45,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const equipmentList = await db.query.equipment.findMany({
-		where: (table, { eq }) => {
+		where: (table, { eq, and }) => {
+			const conds = [eq(table.isDeleted, false)];
 			if (!isGlobalRole && labId) {
-				return eq(table.laboratoriumId, labId);
+				conds.push(eq(table.laboratoriumId, labId));
 			}
-			return undefined;
+			return and(...conds);
 		},
 		columns: { id: true, serialNumber: true, condition: true },
 		with: {
@@ -67,7 +68,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	);
 
 	const technicianList = await db.query.user.findMany({
-		where: (table, { eq }) => eq(table.role, 'teknisi'),
+		where: (table, { eq, and }) => and(eq(table.role, 'teknisi'), eq(table.isDeleted, false)),
 		columns: { id: true, name: true, email: true },
 		orderBy: (user, { asc }) => [asc(user.name)]
 	});

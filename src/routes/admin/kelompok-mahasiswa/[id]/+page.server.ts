@@ -3,7 +3,13 @@ import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { base } from '$app/paths';
 import { db } from '$lib/server/db';
-import { kelompokMahasiswa, kelompokMahasiswaMember, user, practicumClassMember, practicumClass } from '$lib/server/db/schema';
+import {
+	kelompokMahasiswa,
+	kelompokMahasiswaMember,
+	user,
+	practicumClassMember,
+	practicumClass
+} from '$lib/server/db/schema';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
@@ -16,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 
 	const id = params.id;
 	const kelompok = await db.query.kelompokMahasiswa.findFirst({
-		where: eq(kelompokMahasiswa.id, id),
+		where: and(eq(kelompokMahasiswa.id, id), eq(kelompokMahasiswa.isDeleted, false)),
 		with: {
 			class: true
 		}
@@ -30,7 +36,9 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const members = await db.query.kelompokMahasiswaMember.findMany({
 		where: eq(kelompokMahasiswaMember.kelompokId, id),
 		with: {
-			user: true
+			user: {
+				where: (u, { eq }) => eq(u.isDeleted, false)
+			}
 		},
 		orderBy: (kmm, { desc }) => [desc(kmm.createdAt)]
 	});
@@ -39,7 +47,9 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const classMembers = await db.query.practicumClassMember.findMany({
 		where: eq(practicumClassMember.classId, kelompok.classId),
 		with: {
-			user: true
+			user: {
+				where: (u, { eq }) => eq(u.isDeleted, false)
+			}
 		}
 	});
 
@@ -52,7 +62,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	// 4. Optionally load all student users (role = 'peneliti') for system-wide assignment
 	const fetchAllStudents = async () => {
 		return await db.query.user.findMany({
-			where: eq(user.role, 'peneliti'),
+			where: and(eq(user.role, 'peneliti'), eq(user.isDeleted, false)),
 			orderBy: (u, { asc }) => [asc(u.name)]
 		});
 	};
@@ -128,12 +138,14 @@ export const actions: Actions = {
 		}
 
 		try {
-			await db.delete(kelompokMahasiswaMember).where(
-				and(
-					eq(kelompokMahasiswaMember.kelompokId, kelompokId),
-					eq(kelompokMahasiswaMember.userId, userId)
-				)
-			);
+			await db
+				.delete(kelompokMahasiswaMember)
+				.where(
+					and(
+						eq(kelompokMahasiswaMember.kelompokId, kelompokId),
+						eq(kelompokMahasiswaMember.userId, userId)
+					)
+				);
 			return { success: true, message: 'Mahasiswa berhasil dihapus dari kelompok.' };
 		} catch (err) {
 			console.error(err);

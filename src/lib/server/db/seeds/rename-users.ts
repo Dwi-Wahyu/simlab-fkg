@@ -15,13 +15,15 @@ async function main() {
 
 	try {
 		// Update username 'koordinator' to "PJ Mata Kuliah"
-		await db.update(authSchema.user)
+		await db
+			.update(authSchema.user)
 			.set({ name: 'PJ Mata Kuliah' })
 			.where(eq(authSchema.user.username, 'koordinator'));
 		console.log('- Updated username "koordinator" name to "PJ Mata Kuliah"');
 
 		// Update username 'peneliti' to "Mahasiswa"
-		await db.update(authSchema.user)
+		await db
+			.update(authSchema.user)
 			.set({ name: 'Mahasiswa' })
 			.where(eq(authSchema.user.username, 'peneliti'));
 		console.log('- Updated username "peneliti" name to "Mahasiswa"');

@@ -13,8 +13,16 @@ import {
 	json,
 	date
 } from 'drizzle-orm/mysql-core';
-import { relations } from 'drizzle-orm';
-import { laboratorium, user, laboratoriumMember, session, account, apiKey } from './auth.schema';
+import { relations, sql } from 'drizzle-orm';
+import {
+	laboratorium,
+	user,
+	laboratoriumMember,
+	session,
+	account,
+	apiKey,
+	softDeleteColumns
+} from './auth.schema';
 
 export const auditLog = mysqlTable('audit_log', {
 	id: varchar('id', { length: 36 }).primaryKey(),
@@ -95,7 +103,12 @@ export const equipment = mysqlTable(
 	'equipment',
 	{
 		id: varchar('id', { length: 36 }).primaryKey(),
-		serialNumber: varchar('serial_number', { length: 100 }).unique(),
+		serialNumber: varchar('serial_number', { length: 100 }),
+		// DB-managed generated column (see drizzle/0008_soft_delete_partial_unique.sql). Never write to this.
+		serialNumberActive: varchar('serial_number_active', { length: 100 }).generatedAlwaysAs(
+			sql`IF(\`is_deleted\` = 0, \`serial_number\`, NULL)`,
+			{ mode: 'stored' }
+		),
 		brand: varchar('brand', { length: 100 }),
 		variant: varchar('variant', { length: 255 }),
 
@@ -107,49 +120,59 @@ export const equipment = mysqlTable(
 			.notNull()
 			.references(() => item.id), // Ensure item.type = 'ASSET'
 
-		condition: mysqlEnum('condition', ['BAIK', 'RUSAK'])
-			.default('BAIK')
-			.notNull(),
+		condition: mysqlEnum('condition', ['BAIK', 'RUSAK']).default('BAIK').notNull(),
 
 		status: mysqlEnum('status', ['READY', 'IN_USE', 'MAINTENANCE']).default('READY'),
 		storageLocation: varchar('storage_location', { length: 255 }),
 
 		createdAt: timestamp('created_at').defaultNow().notNull(),
-		updatedAt: timestamp('updated_at').onUpdateNow()
+		updatedAt: timestamp('updated_at').onUpdateNow(),
+		...softDeleteColumns
 	},
 	(table) => [
 		index('equipment_condition_idx').on(table.condition),
-		index('equipment_item_id_idx').on(table.itemId) // Add index for itemId
+		index('equipment_item_id_idx').on(table.itemId), // Add index for itemId
+		index('equipment_is_deleted_idx').on(table.isDeleted),
+		index('equipment_is_deleted_item_idx').on(table.isDeleted, table.itemId)
 	]
 );
 
-export const item = mysqlTable('item', {
-	id: varchar('id', { length: 36 }).primaryKey(),
-	categoryId: varchar('category_id', { length: 36 }).references(() => equipmentCategory.id),
+export const item = mysqlTable(
+	'item',
+	{
+		id: varchar('id', { length: 36 }).primaryKey(),
+		categoryId: varchar('category_id', { length: 36 }).references(() => equipmentCategory.id),
 
-	name: varchar('name', { length: 255 }).notNull(),
+		name: varchar('name', { length: 255 }).notNull(),
 
-	type: mysqlEnum('type', ['ASSET', 'CONSUMABLE']).notNull(), // ASSET = individual, CONSUMABLE = quantity-based
+		type: mysqlEnum('type', ['ASSET', 'CONSUMABLE']).notNull(), // ASSET = individual, CONSUMABLE = quantity-based
 
-	// Only applicable if type is ASSET
-	equipmentType: mysqlEnum('equipment_type', [
-		'DENTAL_UNIT',
-		'LAB_INSTRUMENT',
-		'IMAGING',
-		'FURNITURE',
-		'INSTRUMENT',
-		'EQUIPMENT'
-	]),
+		// Only applicable if type is ASSET
+		equipmentType: mysqlEnum('equipment_type', [
+			'DENTAL_UNIT',
+			'LAB_INSTRUMENT',
+			'IMAGING',
+			'FURNITURE',
+			'INSTRUMENT',
+			'EQUIPMENT'
+		]),
 
-	minStock: int('min_stock').default(0),
-	qrCodePath: text('qr_code_path'),
+		minStock: int('min_stock').default(0),
+		qrCodePath: text('qr_code_path'),
 
-	baseUnit: mysqlEnum('base_unit', ['PCS', 'BOX', 'METER', 'ROLL', 'UNIT', 'BOTOL']).notNull(),
+		baseUnit: mysqlEnum('base_unit', ['PCS', 'BOX', 'METER', 'ROLL', 'UNIT', 'BOTOL']).notNull(),
 
-	description: text('description'),
+		description: text('description'),
 
-	createdAt: timestamp('created_at').defaultNow().notNull()
-});
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		...softDeleteColumns
+	},
+	(table) => [
+		index('item_is_deleted_idx').on(table.isDeleted),
+		index('item_is_deleted_category_idx').on(table.isDeleted, table.categoryId),
+		index('item_is_deleted_type_idx').on(table.isDeleted, table.type)
+	]
+);
 
 export const itemUnitConversion = mysqlTable(
 	'item_unit_conversion',
@@ -189,7 +212,12 @@ export const stock = mysqlTable(
 
 	(table) => [
 		index('stock_item_idx').on(table.itemId),
-		uniqueIndex('stock_unique_idx').on(table.itemId, table.laboratoriumId, table.brand, table.variant)
+		uniqueIndex('stock_unique_idx').on(
+			table.itemId,
+			table.laboratoriumId,
+			table.brand,
+			table.variant
+		)
 	]
 );
 
@@ -221,11 +249,14 @@ export const stockBatch = mysqlTable(
 
 		notes: text('notes'),
 
-		createdAt: timestamp('created_at').defaultNow().notNull()
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		...softDeleteColumns
 	},
 	(table) => [
 		index('stock_batch_stock_idx').on(table.stockId),
-		index('stock_batch_expiry_idx').on(table.expiryDate)
+		index('stock_batch_expiry_idx').on(table.expiryDate),
+		index('stock_batch_is_deleted_idx').on(table.isDeleted),
+		index('stock_batch_is_deleted_stock_idx').on(table.isDeleted, table.stockId)
 	]
 );
 
@@ -562,11 +593,13 @@ export const kelompokMahasiswa = mysqlTable(
 			.notNull()
 			.references(() => practicumClass.id, { onDelete: 'cascade' }),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
-		updatedAt: timestamp('updated_at').onUpdateNow()
+		updatedAt: timestamp('updated_at').onUpdateNow(),
+		...softDeleteColumns
 	},
 	(table) => [
 		index('kelompok_mahasiswa_class_idx').on(table.classId),
-		uniqueIndex('kelompok_mahasiswa_unique_idx').on(table.classId, table.name)
+		uniqueIndex('kelompok_mahasiswa_unique_idx').on(table.classId, table.name),
+		index('kelompok_mahasiswa_is_deleted_idx').on(table.isDeleted)
 	]
 );
 
@@ -602,21 +635,28 @@ export const practicumModuleScoringModeEnum = mysqlEnum('practicum_module_scorin
 	'CHECKLIST'
 ]);
 
-export const practicumModule = mysqlTable('practicum_module', {
-	id: varchar('id', { length: 36 }).primaryKey(),
-	name: varchar('name', { length: 255 }).notNull(),
-	description: text('description'),
-	blockId: varchar('block_id', { length: 36 }).references(() => block.id, { onDelete: 'cascade' }),
-	// NULL = general module, no Preparasi/Restorasi split (e.g. "Caries Removal").
-	// 'PREPARASI' / 'RESTORASI' = this module represents that half of a schedule's
-	// assessment (e.g. "Kelas I — Preparasi", "Kelas I — Restorasi", or a
-	// standalone "Inlay — Preparasi" module that has no Restorasi counterpart).
-	component: practicumModuleComponentEnum,
-	scoringMode: practicumModuleScoringModeEnum.default('TOTAL').notNull(),
-	groupLabel: varchar('group_label', { length: 255 }),
-	scoreLegend: json('score_legend').$type<{ value: number; label: string }[] | null>(),
-	createdAt: timestamp('created_at').defaultNow().notNull()
-});
+export const practicumModule = mysqlTable(
+	'practicum_module',
+	{
+		id: varchar('id', { length: 36 }).primaryKey(),
+		name: varchar('name', { length: 255 }).notNull(),
+		description: text('description'),
+		blockId: varchar('block_id', { length: 36 }).references(() => block.id, {
+			onDelete: 'cascade'
+		}),
+		// NULL = general module, no Preparasi/Restorasi split (e.g. "Caries Removal").
+		// 'PREPARASI' / 'RESTORASI' = this module represents that half of a schedule's
+		// assessment (e.g. "Kelas I — Preparasi", "Kelas I — Restorasi", or a
+		// standalone "Inlay — Preparasi" module that has no Restorasi counterpart).
+		component: practicumModuleComponentEnum,
+		scoringMode: practicumModuleScoringModeEnum.default('TOTAL').notNull(),
+		groupLabel: varchar('group_label', { length: 255 }),
+		scoreLegend: json('score_legend').$type<{ value: number; label: string }[] | null>(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		...softDeleteColumns
+	},
+	(table) => [index('practicum_module_is_deleted_idx').on(table.isDeleted)]
+);
 
 export const practicumAssessmentStatusEnum = mysqlEnum('practicum_assessment_status', [
 	'DRAFT',
@@ -780,12 +820,19 @@ export const practicumSchedule = mysqlTable(
 		notes: text('notes'),
 
 		createdAt: timestamp('created_at').defaultNow().notNull(),
-		updatedAt: timestamp('updated_at').onUpdateNow()
+		updatedAt: timestamp('updated_at').onUpdateNow(),
+		...softDeleteColumns
 	},
 	(table) => [
 		index('practicum_schedule_laboratorium_idx').on(table.laboratoriumId),
 		index('practicum_schedule_series_idx').on(table.seriesId),
-		index('practicum_schedule_time_idx').on(table.startTime, table.endTime)
+		index('practicum_schedule_time_idx').on(table.startTime, table.endTime),
+		index('practicum_schedule_is_deleted_idx').on(table.isDeleted),
+		index('practicum_schedule_is_deleted_time_idx').on(
+			table.isDeleted,
+			table.startTime,
+			table.endTime
+		)
 	]
 );
 
@@ -893,8 +940,7 @@ export const practicumLogbookTemplateField = mysqlTable(
 		id: varchar('id', { length: 36 })
 			.primaryKey()
 			.$defaultFn(() => crypto.randomUUID()),
-		templateId: varchar('template_id', { length: 36 })
-			.notNull(),
+		templateId: varchar('template_id', { length: 36 }).notNull(),
 
 		// Nama variabel persis seperti di template docx, tanpa kurung kurawal.
 		// Untuk valueType 'html', generator otomatis menambahkan prefix '~'
@@ -940,10 +986,7 @@ export const practicumLogbookTemplateField = mysqlTable(
 	},
 	(table) => [
 		index('logbook_template_field_template_idx').on(table.templateId),
-		uniqueIndex('logbook_template_field_unique_idx').on(
-			table.templateId,
-			table.placeholderKey
-		),
+		uniqueIndex('logbook_template_field_unique_idx').on(table.templateId, table.placeholderKey),
 		foreignKey({
 			name: 'practicum_logbook_template_field_template_id_fk',
 			columns: [table.templateId],
@@ -1416,7 +1459,9 @@ export const laboratoriumRelations = relations(laboratorium, ({ many }) => ({
 export const practicumLogbookGeneration = mysqlTable(
 	'practicum_logbook_generation',
 	{
-		id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
 		userId: varchar('user_id', { length: 36 })
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
@@ -1454,8 +1499,6 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 		references: [user.id]
 	})
 }));
-
-
 
 export const inventoryReportRelations = relations(inventoryReport, ({ one }) => ({
 	laboratorium: one(laboratorium, {

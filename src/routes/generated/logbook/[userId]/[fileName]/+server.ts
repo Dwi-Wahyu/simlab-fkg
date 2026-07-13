@@ -12,9 +12,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 	// Keamanan: Cek apakah user yang login adalah pemilik logbook tersebut, atau admin/staff
 	const isOwner = locals.user.id === userId;
-	const isAdminOrStaff = ['superadmin', 'koordinator', 'kepalaLab', 'instruktur', 'teknisi'].includes(
-		locals.user.role || ''
-	);
+	const isAdminOrStaff = [
+		'superadmin',
+		'koordinator',
+		'kepalaLab',
+		'instruktur',
+		'teknisi'
+	].includes(locals.user.role || '');
 
 	if (!isOwner && !isAdminOrStaff) {
 		throw error(403, 'Forbidden');

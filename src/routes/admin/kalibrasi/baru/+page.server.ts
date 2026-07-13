@@ -4,6 +4,7 @@ import { maintenance, equipment } from '$lib/server/db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { and } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -14,19 +15,22 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Fetch assets (equipment) available for calibration
 	const assets = await db.query.equipment.findMany({
-		where: (e, { eq, sql }) => {
+		where: (e, { eq, and }) => {
+			const conds = [eq(e.isDeleted, false)];
 			if (labId && currentUser.role !== 'superadmin') {
-				return eq(e.laboratoriumId, labId);
+				conds.push(eq(e.laboratoriumId, labId));
 			}
-			return undefined;
+			return and(...conds);
 		},
 		with: {
-			item: true
+			item: {
+				where: (item, { eq }) => eq(item.isDeleted, false)
+			}
 		}
 	});
 
 	return {
-		assets
+		assets: assets.filter((a) => a.item !== null && a.item !== undefined)
 	};
 };
 

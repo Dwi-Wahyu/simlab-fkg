@@ -512,9 +512,7 @@
 							{/if}
 						</div>
 					{:else}
-						<p class="text-center text-sm text-muted-foreground py-8">
-							DPJP tidak ditemukan.
-						</p>
+						<p class="text-center text-sm text-muted-foreground py-8">DPJP tidak ditemukan.</p>
 					{/each}
 				</Card.Content>
 				<Card.Footer class="flex flex-col items-stretch gap-2 border-t bg-muted/20 p-4">

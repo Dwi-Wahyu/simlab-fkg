@@ -122,12 +122,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		)
 	});
 
-	const cooldownRemainingSeconds = lastGen && env.NODE_ENV !== 'development'
-		? Math.max(
-				0,
-				Math.ceil((COOLDOWN_MS - (Date.now() - new Date(lastGen.generatedAt).getTime())) / 1000)
-			)
-		: 0;
+	const cooldownRemainingSeconds =
+		lastGen && env.NODE_ENV !== 'development'
+			? Math.max(
+					0,
+					Math.ceil((COOLDOWN_MS - (Date.now() - new Date(lastGen.generatedAt).getTime())) / 1000)
+				)
+			: 0;
 
 	return {
 		series: {
@@ -152,7 +153,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 				}
 			: null,
 		cooldownRemainingSeconds, // 0 = boleh generate
-		manualFields: manualFields.map(f => ({
+		manualFields: manualFields.map((f) => ({
 			placeholderKey: f.placeholderKey,
 			label: f.label,
 			valueType: f.valueType,

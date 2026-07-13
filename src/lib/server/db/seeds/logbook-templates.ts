@@ -65,4 +65,3 @@ if (import.meta.main) {
 		process.exit(1);
 	});
 }
-

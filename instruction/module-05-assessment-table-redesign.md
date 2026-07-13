@@ -473,7 +473,7 @@ schedules won't have any CSL modules.
       lettered sections; `practicumModule.scoreLegend` stores the
       per-scale 0/1/2-style legend text
 - [ ] CSL modules + their criteria (grouped by `sectionLabel`, `maxScore:
-    2`) exist in the Module 3 seeder, not a one-off migration script
+2`) exist in the Module 3 seeder, not a one-off migration script
 - [ ] Saving a `CHECKLIST` module computes
       `finalScore = round((totalScore / totalMax) × 100)` — verified
       against the sample doc's own Nilai formula for at least one CSL

@@ -1,5 +1,13 @@
 import { db } from './db';
-import { distribution, distributionItem, movement, approval, stock, equipment, auditLog } from './db/schema';
+import {
+	distribution,
+	distributionItem,
+	movement,
+	approval,
+	stock,
+	equipment,
+	auditLog
+} from './db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { eq, and, sql } from 'drizzle-orm';
 import { createNotification } from './notification';
@@ -100,7 +108,7 @@ export async function validateDistribution(distributionId: string, userId: strin
 					where: eq(warehouse.organizationId, dist.fromOrganizationId as string),
 					columns: { id: true }
 				});
-				const warehouseIds = warehousesInOrg.map(w => w.id);
+				const warehouseIds = warehousesInOrg.map((w) => w.id);
 
 				if (warehouseIds.length === 0) {
 					throw new Error('Organisasi pengirim tidak memiliki gudang');
@@ -109,23 +117,24 @@ export async function validateDistribution(distributionId: string, userId: strin
 				const totalStock = await tx
 					.select({ total: sql<number>`sum(${stock.qty})` })
 					.from(stock)
-					.where(and(
-						eq(stock.itemId, itemData.itemId),
-						sql`${stock.warehouseId} IN ${warehouseIds}`
-					));
+					.where(
+						and(eq(stock.itemId, itemData.itemId), sql`${stock.warehouseId} IN ${warehouseIds}`)
+					);
 
 				const qty = totalStock[0]?.total || 0;
 				if (qty < itemData.quantity) {
-					throw new Error(`Stok tidak mencukupi di kesatuan pengirim. Tersedia: ${qty}, Dibutuhkan: ${itemData.quantity}`);
+					throw new Error(
+						`Stok tidak mencukupi di kesatuan pengirim. Tersedia: ${qty}, Dibutuhkan: ${itemData.quantity}`
+					);
 				}
-			}
- else {
+			} else {
 				throw new Error('Distribution item must have either equipmentId or itemId');
 			}
 		}
 
 		// Update distribution status to VALIDATED
-		await tx.update(distribution)
+		await tx
+			.update(distribution)
 			.set({ status: 'VALIDATED' })
 			.where(eq(distribution.id, distributionId));
 
@@ -145,7 +154,12 @@ export async function validateDistribution(distributionId: string, userId: strin
 /**
  * 3. APPROVAL KOMANDO
  */
-export async function approveDistribution(distributionId: string, userId: string, isApproved: boolean, note?: string) {
+export async function approveDistribution(
+	distributionId: string,
+	userId: string,
+	isApproved: boolean,
+	note?: string
+) {
 	return await db.transaction(async (tx) => {
 		const dist = await tx.query.distribution.findFirst({
 			where: eq(distribution.id, distributionId)
@@ -172,8 +186,9 @@ export async function approveDistribution(distributionId: string, userId: string
 		});
 
 		// Update distribution status
-		await tx.update(distribution)
-			.set({ 
+		await tx
+			.update(distribution)
+			.set({
 				status: status,
 				approvedBy: isApproved ? userId : null
 			})
@@ -216,7 +231,11 @@ export async function approveDistribution(distributionId: string, userId: string
 /**
  * 4. PREPARE & SHIPMENT (BEKHARRAH)
  */
-export async function shipDistribution(distributionId: string, userId: string, fromWarehouseId: string) {
+export async function shipDistribution(
+	distributionId: string,
+	userId: string,
+	fromWarehouseId: string
+) {
 	return await db.transaction(async (tx) => {
 		const dist = await tx.query.distribution.findFirst({
 			where: eq(distribution.id, distributionId),
@@ -226,7 +245,8 @@ export async function shipDistribution(distributionId: string, userId: string, f
 		});
 
 		if (!dist) throw new Error('Distribution not found');
-		if (dist.status !== 'APPROVED') throw new Error('Distribution must be APPROVED before shipping');
+		if (dist.status !== 'APPROVED')
+			throw new Error('Distribution must be APPROVED before shipping');
 
 		for (const itemData of dist.items) {
 			if (itemData.equipmentId) {
@@ -247,24 +267,24 @@ export async function shipDistribution(distributionId: string, userId: string, f
 				});
 
 				// Update equipment status
-				await tx.update(equipment)
+				await tx
+					.update(equipment)
 					.set({ status: 'TRANSIT' })
 					.where(eq(equipment.id, itemData.equipmentId));
-
 			} else if (itemData.itemId) {
 				// Reduce stock for consumable
 				const currentStock = await tx.query.stock.findFirst({
-					where: and(
-						eq(stock.itemId, itemData.itemId),
-						eq(stock.warehouseId, fromWarehouseId)
-					)
+					where: and(eq(stock.itemId, itemData.itemId), eq(stock.warehouseId, fromWarehouseId))
 				});
 
 				if (!currentStock || currentStock.qty < itemData.quantity) {
-					throw new Error(`Insufficient stock for item ${itemData.itemId} in warehouse ${fromWarehouseId}`);
+					throw new Error(
+						`Insufficient stock for item ${itemData.itemId} in warehouse ${fromWarehouseId}`
+					);
 				}
 
-				await tx.update(stock)
+				await tx
+					.update(stock)
 					.set({ qty: currentStock.qty - itemData.quantity })
 					.where(eq(stock.id, currentStock.id));
 
@@ -288,7 +308,8 @@ export async function shipDistribution(distributionId: string, userId: string, f
 		}
 
 		// Update distribution status
-		await tx.update(distribution)
+		await tx
+			.update(distribution)
 			.set({ status: 'SHIPPED' })
 			.where(eq(distribution.id, distributionId));
 
@@ -321,7 +342,11 @@ export async function shipDistribution(distributionId: string, userId: string, f
 /**
  * 5. RECEIVING (SATUAN TUJUAN)
  */
-export async function receiveDistribution(distributionId: string, userId: string, toWarehouseId: string) {
+export async function receiveDistribution(
+	distributionId: string,
+	userId: string,
+	toWarehouseId: string
+) {
 	return await db.transaction(async (tx) => {
 		const dist = await tx.query.distribution.findFirst({
 			where: eq(distribution.id, distributionId),
@@ -336,11 +361,12 @@ export async function receiveDistribution(distributionId: string, userId: string
 		for (const itemData of dist.items) {
 			if (itemData.equipmentId) {
 				// Update equipment: warehouseId = tujuan, status = "READY"
-				await tx.update(equipment)
-					.set({ 
+				await tx
+					.update(equipment)
+					.set({
 						warehouseId: toWarehouseId,
 						organizationId: dist.toOrganizationId,
-						status: 'READY' 
+						status: 'READY'
 					})
 					.where(eq(equipment.id, itemData.equipmentId));
 
@@ -359,18 +385,15 @@ export async function receiveDistribution(distributionId: string, userId: string
 					notes: itemData.note,
 					createdAt: new Date()
 				});
-
 			} else if (itemData.itemId) {
 				// Increase stock for consumable
 				const existingStock = await tx.query.stock.findFirst({
-					where: and(
-						eq(stock.itemId, itemData.itemId),
-						eq(stock.warehouseId, toWarehouseId)
-					)
+					where: and(eq(stock.itemId, itemData.itemId), eq(stock.warehouseId, toWarehouseId))
 				});
 
 				if (existingStock) {
-					await tx.update(stock)
+					await tx
+						.update(stock)
 						.set({ qty: existingStock.qty + itemData.quantity })
 						.where(eq(stock.id, existingStock.id));
 				} else {
@@ -403,7 +426,8 @@ export async function receiveDistribution(distributionId: string, userId: string
 		}
 
 		// Update distribution status
-		await tx.update(distribution)
+		await tx
+			.update(distribution)
 			.set({ status: 'RECEIVED' })
 			.where(eq(distribution.id, distributionId));
 

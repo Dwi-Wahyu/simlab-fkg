@@ -1,19 +1,23 @@
 import { db } from '$lib/server/db';
-import { practicumSchedule, laboratorium, user } from '$lib/server/db/schema';
+import { practicumSchedule } from '$lib/server/db/schema';
 import { error, fail } from '@sveltejs/kit';
-import { eq, and, or, gte, lte } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { eq, and } from 'drizzle-orm';
+import { notDeleted } from '$lib/server/db/soft-delete';
+import { createAuditLog } from '$lib/server/audit';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
 
-	const labs = await db.query.laboratorium.findMany();
+	const labs = await db.query.laboratorium.findMany({
+		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false)
+	});
 	const instructors = await db.query.user.findMany({
-		where: eq(user.role, 'instruktur')
+		where: (user, { eq, and }) => and(eq(user.role, 'instruktur'), eq(user.isDeleted, false))
 	});
 
 	const schedules = await db.query.practicumSchedule.findMany({
+		where: (practicumSchedule, { eq }) => eq(practicumSchedule.isDeleted, false),
 		with: {
 			laboratorium: true,
 			block: {
@@ -48,15 +52,42 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	delete: async ({ request, locals }) => {
-		if (!locals.session) throw error(401, 'Unauthorized');
+		if (!locals.user) throw error(401, 'Unauthorized');
 
 		const formData = await request.formData();
 		const id = formData.get('id') as string;
 
 		if (!id) return fail(400, { message: 'ID is required' });
 
-		await db.delete(practicumSchedule).where(eq(practicumSchedule.id, id));
+		try {
+			const [sched] = await db
+				.select()
+				.from(practicumSchedule)
+				.where(and(eq(practicumSchedule.id, id), notDeleted(practicumSchedule)))
+				.limit(1);
+			if (!sched) return fail(404, { message: 'Jadwal tidak ditemukan' });
 
-		return { success: true };
+			await db
+				.update(practicumSchedule)
+				.set({
+					isDeleted: true,
+					deletedAt: new Date(),
+					deletedBy: locals.user.id
+				})
+				.where(eq(practicumSchedule.id, id));
+
+			await createAuditLog({
+				userId: locals.user.id,
+				action: 'SOFT_DELETE_PRACTICUM_SCHEDULE',
+				tableName: 'practicum_schedule',
+				recordId: id,
+				oldValue: sched
+			});
+
+			return { success: true };
+		} catch (err) {
+			console.error(err);
+			return fail(500, { message: 'Gagal menghapus jadwal praktikum' });
+		}
 	}
 };

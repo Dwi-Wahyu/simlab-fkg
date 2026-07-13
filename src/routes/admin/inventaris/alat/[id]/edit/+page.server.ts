@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,7 +12,11 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const { id } = params;
-	const [existingItem] = await db.select().from(item).where(eq(item.id, id)).limit(1);
+	const [existingItem] = await db
+		.select()
+		.from(item)
+		.where(and(eq(item.id, id), eq(item.isDeleted, false)))
+		.limit(1);
 
 	if (!existingItem) {
 		throw redirect(302, `${base}/admin/inventaris/alat`);
@@ -21,15 +25,25 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const equipmentId = url.searchParams.get('equipmentId');
 	let selectedEquipment = null;
 	if (equipmentId) {
-		const [foundEqp] = await db.select().from(equipment).where(eq(equipment.id, equipmentId)).limit(1);
+		const [foundEqp] = await db
+			.select()
+			.from(equipment)
+			.where(and(eq(equipment.id, equipmentId), eq(equipment.isDeleted, false)))
+			.limit(1);
 		selectedEquipment = foundEqp;
 	} else {
-		const [firstEqp] = await db.select().from(equipment).where(eq(equipment.itemId, id)).limit(1);
+		const [firstEqp] = await db
+			.select()
+			.from(equipment)
+			.where(and(eq(equipment.itemId, id), eq(equipment.isDeleted, false)))
+			.limit(1);
 		selectedEquipment = firstEqp;
 	}
 
 	const categories = await db.query.equipmentCategory.findMany();
-	const labs = await db.query.laboratorium.findMany();
+	const labs = await db.query.laboratorium.findMany({
+		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false)
+	});
 
 	return {
 		user: locals.user,
@@ -72,7 +86,11 @@ export const actions: Actions = {
 			});
 		}
 
-		const [existingItem] = await db.select().from(item).where(eq(item.id, id)).limit(1);
+		const [existingItem] = await db
+			.select()
+			.from(item)
+			.where(and(eq(item.id, id), eq(item.isDeleted, false)))
+			.limit(1);
 		if (!existingItem) {
 			return fail(404, { message: 'Item tidak ditemukan.' });
 		}
@@ -122,7 +140,8 @@ export const actions: Actions = {
 
 		try {
 			await db.transaction(async (tx) => {
-				await tx.update(item)
+				await tx
+					.update(item)
 					.set({
 						name,
 						categoryId: categoryId || null,
@@ -134,11 +153,20 @@ export const actions: Actions = {
 					.where(eq(item.id, id));
 
 				const [existingEquipment] = equipmentId
-					? await tx.select().from(equipment).where(eq(equipment.id, equipmentId)).limit(1)
-					: await tx.select().from(equipment).where(eq(equipment.itemId, id)).limit(1);
+					? await tx
+							.select()
+							.from(equipment)
+							.where(and(eq(equipment.id, equipmentId), eq(equipment.isDeleted, false)))
+							.limit(1)
+					: await tx
+							.select()
+							.from(equipment)
+							.where(and(eq(equipment.itemId, id), eq(equipment.isDeleted, false)))
+							.limit(1);
 
 				if (existingEquipment) {
-					await tx.update(equipment)
+					await tx
+						.update(equipment)
 						.set({
 							serialNumber: serialNumber || null,
 							brand: brand || null,

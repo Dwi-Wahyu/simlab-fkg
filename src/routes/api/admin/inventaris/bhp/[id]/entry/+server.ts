@@ -13,12 +13,15 @@ export const GET: RequestHandler = async ({ url, params }) => {
 	const offset = (page - 1) * limit;
 
 	try {
-		const itemData = await db.select().from(item).where(eq(item.id, id));
+		const itemData = await db
+			.select()
+			.from(item)
+			.where(and(eq(item.id, id), eq(item.isDeleted, false)));
 		if (itemData.length === 0) {
 			throw new Error('BHP tidak ditemukan');
 		}
 
-		const baseCondition = eq(stock.itemId, id);
+		const baseCondition = and(eq(stock.itemId, id), eq(stockBatch.isDeleted, false));
 		const whereClause = search
 			? and(
 					baseCondition,

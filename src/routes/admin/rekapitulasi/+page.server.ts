@@ -18,7 +18,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const role = locals.user.role;
 	if (!['koordinator', 'superadmin', 'kepalaLab'].includes(role)) throw error(403, 'Forbidden');
 
-	const labId = ['koordinator', 'kepalaLab'].includes(role) ? locals.user.laboratorium?.id : undefined;
+	const labId = ['koordinator', 'kepalaLab'].includes(role)
+		? locals.user.laboratorium?.id
+		: undefined;
 
 	// 1. Instructor + series pickers, scoped to this koordinator/kepalaLab's lab.
 	const seriesOptions = await db.query.practicumSeries.findMany({

@@ -43,9 +43,7 @@ export const actions: Actions = {
 
 		if (!id || !name) return fail(400, { message: 'ID dan Nama harus diisi' });
 
-		await db.update(department)
-			.set({ name })
-			.where(eq(department.id, id));
+		await db.update(department).set({ name }).where(eq(department.id, id));
 
 		return { success: true };
 	},

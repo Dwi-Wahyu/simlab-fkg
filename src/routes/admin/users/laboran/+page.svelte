@@ -45,7 +45,9 @@
 		actionLabel="Hapus"
 		loading={isDeleting}
 		onAction={() => {
-			const formElement = document.getElementById('delete-form-' + userToDelete?.id) as HTMLFormElement;
+			const formElement = document.getElementById(
+				'delete-form-' + userToDelete?.id
+			) as HTMLFormElement;
 			if (formElement) {
 				isDeleting = true;
 				formElement.requestSubmit();

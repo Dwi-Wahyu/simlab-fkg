@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const { id } = params;
 
 	const schedule = await db.query.practicumSchedule.findFirst({
-		where: eq(practicumSchedule.id, id),
+		where: and(eq(practicumSchedule.id, id), eq(practicumSchedule.isDeleted, false)),
 		with: {
 			instructors: true,
 			modules: true
@@ -31,16 +31,20 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	if (!schedule) throw error(404, 'Jadwal tidak ditemukan');
 
-	const labs = await db.query.laboratorium.findMany();
+	const labs = await db.query.laboratorium.findMany({
+		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false)
+	});
 	const instructors = await db.query.user.findMany({
-		where: eq(user.role, 'instruktur')
+		where: (user, { eq, and }) => and(eq(user.role, 'instruktur'), eq(user.isDeleted, false))
 	});
 	const blocks = await db.query.block.findMany({
 		with: {
 			department: true
 		}
 	});
-	const modules = await db.query.practicumModule.findMany();
+	const modules = await db.query.practicumModule.findMany({
+		where: (practicumModule, { eq }) => eq(practicumModule.isDeleted, false)
+	});
 	const series = await db.query.practicumSeries.findMany({
 		orderBy: (ps, { asc }) => [asc(ps.name)]
 	});
@@ -51,6 +55,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		orderBy: (pc, { desc }) => [desc(pc.batch), pc.name]
 	});
 	const groups = await db.query.kelompokMahasiswa.findMany({
+		where: (km, { eq }) => eq(km.isDeleted, false),
 		orderBy: (km, { asc }) => [asc(km.name)]
 	});
 
@@ -126,7 +131,10 @@ export const actions: Actions = {
 				ne(practicumSchedule.id, id),
 				eq(practicumSchedule.laboratoriumId, labId),
 				or(
-					and(gte(practicumSchedule.startTime, startTime), lte(practicumSchedule.startTime, endTime)),
+					and(
+						gte(practicumSchedule.startTime, startTime),
+						lte(practicumSchedule.startTime, endTime)
+					),
 					and(gte(practicumSchedule.endTime, startTime), lte(practicumSchedule.endTime, endTime)),
 					and(lte(practicumSchedule.startTime, startTime), gte(practicumSchedule.endTime, endTime))
 				)
@@ -141,23 +149,28 @@ export const actions: Actions = {
 		}
 
 		await db.transaction(async (tx) => {
-			await tx.update(practicumSchedule).set({
-				seriesId: seriesId || null,
-				title,
-				type,
-				class: classEnum,
-				classId: classId,
-				laboratoriumId: labId,
-				blockId: blockId || null,
-				startTime,
-				endTime,
-				participantCount,
-				notes,
-				updatedAt: new Date()
-			}).where(eq(practicumSchedule.id, id));
+			await tx
+				.update(practicumSchedule)
+				.set({
+					seriesId: seriesId || null,
+					title,
+					type,
+					class: classEnum,
+					classId: classId,
+					laboratoriumId: labId,
+					blockId: blockId || null,
+					startTime,
+					endTime,
+					participantCount,
+					notes,
+					updatedAt: new Date()
+				})
+				.where(eq(practicumSchedule.id, id));
 
 			// Delete old instructors and insert new ones
-			await tx.delete(practicumScheduleInstructor).where(eq(practicumScheduleInstructor.scheduleId, id));
+			await tx
+				.delete(practicumScheduleInstructor)
+				.where(eq(practicumScheduleInstructor.scheduleId, id));
 			for (const assignment of assignments) {
 				await tx.insert(practicumScheduleInstructor).values({
 					id: uuidv4(),

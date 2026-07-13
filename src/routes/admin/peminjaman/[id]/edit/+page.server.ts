@@ -91,7 +91,8 @@ export const actions: Actions = {
 				if (surat.size > 10 * 1024 * 1024) {
 					return fail(400, { message: 'Ukuran file surat maksimal 10MB' });
 				}
-				const ext = path.extname(surat.name) || (surat.type === 'application/pdf' ? '.pdf' : '.docx');
+				const ext =
+					path.extname(surat.name) || (surat.type === 'application/pdf' ? '.pdf' : '.docx');
 				const fileName = `${uuidv4()}${ext}`;
 				const uploadDir = path.join(process.cwd(), 'static', 'uploads', 'letter');
 
@@ -119,7 +120,9 @@ export const actions: Actions = {
 					.where(eq(lending.id, id));
 
 				const originalItems = lendingData.items; // lendingItem array
-				const originalEquipIds = originalItems.map((item) => item.equipmentId).filter(Boolean) as string[];
+				const originalEquipIds = originalItems
+					.map((item) => item.equipmentId)
+					.filter(Boolean) as string[];
 
 				// 2. Identify equipment to remove
 				const equipIdsToRemove = originalEquipIds.filter((eqId) => !newEquipmentIds.includes(eqId));
@@ -129,10 +132,7 @@ export const actions: Actions = {
 						.delete(lendingItem)
 						.where(and(eq(lendingItem.lendingId, id), eq(lendingItem.equipmentId, eqId)));
 					// Mark equipment status back to READY
-					await tx
-						.update(equipment)
-						.set({ status: 'READY' })
-						.where(eq(equipment.id, eqId));
+					await tx.update(equipment).set({ status: 'READY' }).where(eq(equipment.id, eqId));
 				}
 
 				// 3. Identify new equipment to add
@@ -145,10 +145,7 @@ export const actions: Actions = {
 						qty: 1
 					});
 					// Mark equipment status to IN_USE
-					await tx
-						.update(equipment)
-						.set({ status: 'IN_USE' })
-						.where(eq(equipment.id, eqId));
+					await tx.update(equipment).set({ status: 'IN_USE' }).where(eq(equipment.id, eqId));
 				}
 			});
 

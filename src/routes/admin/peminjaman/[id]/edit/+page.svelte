@@ -204,7 +204,11 @@
 		class="grid gap-6"
 	>
 		<!-- hidden input to send equipment IDs -->
-		<input type="hidden" name="equipmentIds" value={JSON.stringify(currentEquipments.map(e => e.id))} />
+		<input
+			type="hidden"
+			name="equipmentIds"
+			value={JSON.stringify(currentEquipments.map((e) => e.id))}
+		/>
 
 		<Card.Root>
 			<Card.Header>
@@ -248,7 +252,8 @@
 							</Select.Trigger>
 							<Select.Content>
 								{#each purposeOptions as option (option.value)}
-									<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item>
+									<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item
+									>
 								{/each}
 							</Select.Content>
 						</Select.Root>
@@ -264,7 +269,7 @@
 				<div class="space-y-2">
 					<Label>Ganti Surat (PDF/DOCX) &lt; 10MB</Label>
 					{#if data.lending.surat}
-						<div class="mb-2 text-xs text-muted-foreground flex items-center gap-1.5">
+						<div class="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
 							<FileText class="size-3.5" />
 							Surat saat ini: <span class="font-medium text-slate-700">{data.lending.surat}</span>
 						</div>
@@ -307,7 +312,7 @@
 			</Card.Header>
 			<Card.Content>
 				{#if currentEquipments.length === 0}
-					<div class="text-center py-8 text-slate-500 text-sm italic">
+					<div class="py-8 text-center text-sm text-slate-500 italic">
 						Belum ada alat yang ditambahkan. Silakan klik "Tambah Alat".
 					</div>
 				{:else}
@@ -317,14 +322,14 @@
 								<div class="flex flex-col">
 									<span class="font-medium text-slate-900">{eq.item?.name || 'Tanpa Nama'}</span>
 									{#if eq.serialNumber}
-										<span class="text-xs text-slate-500 font-mono">SN: {eq.serialNumber}</span>
+										<span class="font-mono text-xs text-slate-500">SN: {eq.serialNumber}</span>
 									{/if}
 								</div>
 								<Button
 									type="button"
 									variant="ghost"
 									size="icon"
-									class="text-destructive hover:bg-red-50 hover:text-destructive h-8 w-8"
+									class="h-8 w-8 text-destructive hover:bg-red-50 hover:text-destructive"
 									onclick={() => removeEquipment(eq.id)}
 								>
 									<Trash2 class="size-4" />

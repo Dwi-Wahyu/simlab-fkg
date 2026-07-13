@@ -182,7 +182,8 @@ async function seedMahasiswa() {
 					}
 				} else {
 					const hashedPwd = await hashPassword(process.env.DEFAULT_PASSWORD ?? 'password');
-					await db.update(authSchema.account)
+					await db
+						.update(authSchema.account)
 						.set({ password: hashedPwd })
 						.where(eq(authSchema.account.userId, existingStudent.id));
 				}
@@ -255,7 +256,8 @@ async function seedTestingPeneliti() {
 	} else {
 		userId = existingUser.id;
 		const hashedPwd = await hashPassword(process.env.DEFAULT_PASSWORD ?? 'password');
-		await db.update(authSchema.account)
+		await db
+			.update(authSchema.account)
 			.set({ password: hashedPwd })
 			.where(eq(authSchema.account.userId, userId));
 		console.log(`- Akun testing peneliti (${username}) sudah ada, password di-reset`);
@@ -342,7 +344,9 @@ async function seedKelompokMahasiswa() {
 			}
 		}
 		if (addedCount > 0) {
-			console.log(`- Berhasil mendistribusikan ${addedCount} mahasiswa ke kelompok kelas ${cls.name}`);
+			console.log(
+				`- Berhasil mendistribusikan ${addedCount} mahasiswa ke kelompok kelas ${cls.name}`
+			);
 		}
 	}
 }

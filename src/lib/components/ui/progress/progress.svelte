@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -16,11 +16,14 @@
 
 <div
 	bind:this={ref}
-	class={cn("relative h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800", className)}
+	class={cn(
+		'relative h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800',
+		className
+	)}
 	{...restProps}
 >
 	<div
-		class="h-full w-full flex-1 bg-primary transition-all duration-300 animate-in fade-in"
+		class="h-full w-full flex-1 animate-in bg-primary transition-all duration-300 fade-in"
 		style="transform: translateX(-{100 - (Math.min(Math.max(value, 0), max) / max) * 100}%)"
 	></div>
 </div>

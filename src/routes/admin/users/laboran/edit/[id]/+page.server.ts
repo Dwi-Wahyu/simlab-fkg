@@ -92,12 +92,15 @@ export const actions: Actions = {
 
 		try {
 			// 1. Update User info
-			await db.update(user).set({
-				name,
-				email,
-				username,
-				updatedAt: new Date()
-			}).where(eq(user.id, params.id));
+			await db
+				.update(user)
+				.set({
+					name,
+					email,
+					username,
+					updatedAt: new Date()
+				})
+				.where(eq(user.id, params.id));
 
 			// 2. Update Laboratorium assignment
 			if (targetLabId) {
@@ -110,7 +113,8 @@ export const actions: Actions = {
 
 				if (existingMember) {
 					if (existingMember.laboratoriumId !== targetLabId) {
-						await db.update(laboratoriumMember)
+						await db
+							.update(laboratoriumMember)
 							.set({ laboratoriumId: targetLabId })
 							.where(eq(laboratoriumMember.id, existingMember.id));
 					}

@@ -488,7 +488,6 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-
 			</div>
 		</div>
 
@@ -529,7 +528,10 @@
 											<div class="flex items-center gap-2">
 												<span class="font-bold text-slate-900 md:font-medium">{item.name}</span>
 												{#if isNewItem(item.createdAt)}
-													<Badge class="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-[10px] px-1.5 py-0">Baru</Badge>
+													<Badge
+														class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
+														>Baru</Badge
+													>
 												{/if}
 												<Badge
 													variant={item.status === 'AMAN'

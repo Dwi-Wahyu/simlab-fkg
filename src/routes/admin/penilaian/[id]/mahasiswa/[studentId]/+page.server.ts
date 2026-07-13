@@ -40,7 +40,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	// Verify authorization: instructor, koordinator of matching lab, or superadmin
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === instructorId);
-	const isKoordinator = locals.user.role === 'koordinator' && (!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
+	const isKoordinator =
+		locals.user.role === 'koordinator' &&
+		(!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
 	const isAuthorized = isInstructor || locals.user.role === 'superadmin' || isKoordinator;
 	if (!isAuthorized) {
 		throw error(403, 'Forbidden: You are not authorized to view this schedule');
@@ -78,14 +80,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		})
 	);
 
-	const criteriaScores = assessments.length > 0
-		? await db.query.practicumAssessmentCriteriaScore.findMany({
-			where: inArray(
-				practicumAssessmentCriteriaScore.assessmentId,
-				assessments.map((a) => a.id)
-			)
-		})
-		: [];
+	const criteriaScores =
+		assessments.length > 0
+			? await db.query.practicumAssessmentCriteriaScore.findMany({
+					where: inArray(
+						practicumAssessmentCriteriaScore.assessmentId,
+						assessments.map((a) => a.id)
+					)
+				})
+			: [];
 
 	return {
 		schedule: {

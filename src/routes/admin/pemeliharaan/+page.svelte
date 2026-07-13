@@ -435,7 +435,11 @@
 														size="icon"
 														variant="ghost"
 														type="button"
-														onclick={(e) => confirmDelete((e.currentTarget as HTMLButtonElement).form!, 'pemeliharaan')}
+														onclick={(e) =>
+															confirmDelete(
+																(e.currentTarget as HTMLButtonElement).form!,
+																'pemeliharaan'
+															)}
 														class="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
 													>
 														<Trash2 size={16} />
@@ -597,7 +601,11 @@
 														size="icon"
 														variant="ghost"
 														type="button"
-														onclick={(e) => confirmDelete((e.currentTarget as HTMLButtonElement).form!, 'kalibrasi')}
+														onclick={(e) =>
+															confirmDelete(
+																(e.currentTarget as HTMLButtonElement).form!,
+																'kalibrasi'
+															)}
 														class="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
 													>
 														<Trash2 size={16} />
@@ -774,7 +782,8 @@
 														size="icon"
 														variant="ghost"
 														type="button"
-														onclick={(e) => confirmDelete((e.currentTarget as HTMLButtonElement).form!, 'biaya')}
+														onclick={(e) =>
+															confirmDelete((e.currentTarget as HTMLButtonElement).form!, 'biaya')}
 														class="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
 													>
 														<Trash2 size={16} />

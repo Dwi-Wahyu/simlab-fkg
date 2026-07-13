@@ -62,7 +62,7 @@
 	transition:fly={getTransition(toastItem.position)}
 	onmouseenter={() => toast.pause(toastItem.position, toastItem.id)}
 	onmouseleave={() => toast.resume(toastItem.position, toastItem.id)}
-	class="relative flex w-full sm:max-w-md overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-xl backdrop-blur-md transition-all duration-300 hover:shadow-2xl dark:border-zinc-800/80 dark:bg-zinc-950/95 dark:shadow-none"
+	class="relative flex w-full overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/95 p-4 shadow-xl backdrop-blur-md transition-all duration-300 hover:shadow-2xl sm:max-w-md dark:border-zinc-800/80 dark:bg-zinc-950/95 dark:shadow-none"
 	style="min-height: 80px;"
 >
 	<!-- Toast Content Layout -->

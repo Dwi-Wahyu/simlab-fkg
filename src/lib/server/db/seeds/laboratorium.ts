@@ -1,29 +1,33 @@
 import { config } from 'dotenv';
+
 config();
 
-import mysql from 'mysql2/promise';
-import * as schema from '../schema';
-import * as authSchema from '../auth.schema';
-import { drizzle } from 'drizzle-orm/mysql2';
-import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { organization, admin, username, customSession } from 'better-auth/plugins';
 import { hashPassword } from 'better-auth/crypto';
+import { betterAuth } from 'better-auth/minimal';
+import { admin, customSession, organization, username } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
 import {
 	accessControl,
-	superadmin,
-	koordinator,
-	kepalaLab,
 	instruktur,
+	kepalaLab,
+	koordinator,
+	laboran,
 	peneliti,
-	teknisi,
 	spmi,
-	laboran
+	superadmin,
+	teknisi
 } from '../../auth.roles';
-import { eq } from 'drizzle-orm';
+import * as authSchema from '../auth.schema';
+import * as schema from '../schema';
 
 const client = mysql.createPool(process.env.DATABASE_URL ?? '');
-const db = drizzle(client, { schema: { ...schema, ...authSchema }, mode: 'default' });
+const db = drizzle(client, {
+	schema: { ...schema, ...authSchema },
+	mode: 'default'
+});
 
 const allAuthRoles = {
 	superadmin,
@@ -51,7 +55,9 @@ export const auth = betterAuth({
 	emailAndPassword: { enabled: true, requireEmailVerification: false },
 	plugins: [
 		admin(),
-		username(),
+		username({
+			maxUsernameLength: 40
+		}),
 		organization({
 			ac: accessControl,
 			roles: allAuthRoles
@@ -97,15 +103,18 @@ export const auth = betterAuth({
 export const LABORATORIUM_SEEDS = [
 	{ name: 'Preparasi (lt 2)', slug: 'preparasi' },
 	{ name: 'Terpadu (lt 4)', slug: 'terpadu' },
-	{ name: 'Frontier Dental Lab Research (lt 4)', slug: 'frontier_dental_lab_research' }
+	{
+		name: 'Frontier Dental Lab Research (lt 4)',
+		slug: 'frontier_dental_lab_research'
+	}
 ];
 
-async function main() {
+export async function seedLaboratorium(db: any) {
 	console.log('Seeding 3 laboratorium + kepalaLab...');
 
 	for (const lab of LABORATORIUM_SEEDS) {
 		// 1. Upsert laboratorium by slug
-		let existingLab = await db.query.laboratorium.findFirst({
+		const existingLab = await db.query.laboratorium.findFirst({
 			where: eq(authSchema.laboratorium.slug, lab.slug)
 		});
 
@@ -130,7 +139,7 @@ async function main() {
 			.replace(/[^a-zA-Z0-9_.]/g, '_')
 			.replace(/[^a-zA-Z0-9]+$/, '');
 
-		let existingUser = await db.query.user.findFirst({
+		const existingUser = await db.query.user.findFirst({
 			where: eq(authSchema.user.email, email)
 		});
 
@@ -186,12 +195,17 @@ async function main() {
 			console.log(`  -> Ditambahkan sebagai kepalaLab member`);
 		}
 	}
+}
 
+async function main() {
+	await seedLaboratorium(db);
 	console.log('\nSeeding laboratorium selesai!');
 	process.exit(0);
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(1);
-});
+if (import.meta.main) {
+	main().catch((err) => {
+		console.error(err);
+		process.exit(1);
+	});
+}

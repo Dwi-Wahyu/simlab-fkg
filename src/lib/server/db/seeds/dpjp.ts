@@ -3,18 +3,13 @@ import { config } from 'dotenv';
 config();
 
 import { Faker, id_ID } from '@faker-js/faker';
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
-import * as authSchema from '../auth.schema';
-import * as schema from '../schema';
-
-const faker = new Faker({ locale: [id_ID] });
-
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { hashPassword } from 'better-auth/crypto';
 import { betterAuth } from 'better-auth/minimal';
 import { admin, customSession, organization, username } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
 import {
 	accessControl,
 	instruktur,
@@ -26,6 +21,8 @@ import {
 	superadmin,
 	teknisi
 } from '../../auth.roles';
+import * as authSchema from '../auth.schema';
+import * as schema from '../schema';
 
 const client = mysql.createPool(process.env.DATABASE_URL ?? '');
 const db = drizzle(client, {

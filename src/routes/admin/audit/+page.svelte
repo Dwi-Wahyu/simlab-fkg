@@ -77,11 +77,13 @@
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex flex-col gap-2">
 			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Quality & Audit</h1>
-			<p class="text-slate-500">Daftar rekaman checklist dan sertifikasi penjaminan mutu laboratorium.</p>
+			<p class="text-slate-500">
+				Daftar rekaman checklist dan sertifikasi penjaminan mutu laboratorium.
+			</p>
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
 			<Button href="/admin/audit/tambah">
-				<Plus class="size-4 mr-2" /> Tambah Audit
+				<Plus class="mr-2 size-4" /> Tambah Audit
 			</Button>
 		</div>
 	</div>
@@ -196,7 +198,9 @@
 									>
 										<div class="flex flex-col">
 											<span class="font-bold text-slate-900 md:font-medium">{item.nama}</span>
-											<span class="text-xs text-muted-foreground md:hidden mt-0.5">{item.institusi}</span>
+											<span class="mt-0.5 text-xs text-muted-foreground md:hidden"
+												>{item.institusi}</span
+											>
 										</div>
 										<Button
 											variant="ghost"
@@ -247,7 +251,7 @@
 									<Table.Cell
 										class={cn(
 											expandedItems[item.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 max-w-xs truncate'
+											'max-w-xs flex-col gap-1 truncate border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
 										)}
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Deskripsi</span>

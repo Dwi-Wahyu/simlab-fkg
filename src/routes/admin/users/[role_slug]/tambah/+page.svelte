@@ -101,7 +101,7 @@
 									<option value={lab.id}>{lab.name}</option>
 								{/each}
 							</select>
-							<p class="text-xs text-destructive italic font-medium">
+							<p class="text-xs font-medium text-destructive italic">
 								Wajib: Tentukan laboratorium penugasan.
 							</p>
 						</div>

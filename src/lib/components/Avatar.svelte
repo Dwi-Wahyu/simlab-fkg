@@ -6,7 +6,9 @@
 	{#if src}
 		<img {src} {alt} class="aspect-square h-full w-full object-cover" />
 	{:else}
-		<div class="flex h-full w-full items-center justify-center bg-[#E8F0ED] font-bold text-[#2D5A43]">
+		<div
+			class="flex h-full w-full items-center justify-center bg-[#E8F0ED] font-bold text-[#2D5A43]"
+		>
 			{initials}
 		</div>
 	{/if}

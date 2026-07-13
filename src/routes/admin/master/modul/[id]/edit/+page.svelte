@@ -8,6 +8,7 @@
 	import { ChevronLeft, Loader2, Save, Plus, Trash2 } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
+	import * as SearchableSelect from '$lib/components/ui/searchable-select/index.js';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 
 	let { data, form } = $props();
@@ -120,21 +121,21 @@
 
 					<div class="grid gap-2">
 						<Label for="block">Blok</Label>
-						<Select.Root type="single" name="blockId" bind:value={selectedBlockId} required>
-							<Select.Trigger class="w-full text-left">
+						<SearchableSelect.Root type="single" bind:value={selectedBlockId}>
+							<SearchableSelect.Trigger class="w-full text-left">
 								{blockTrigger}
-							</Select.Trigger>
-							<Select.Content>
+							</SearchableSelect.Trigger>
+							<SearchableSelect.Content searchPlaceholder="Cari blok...">
 								{#each data.blocks as block (block.id)}
-									<Select.Item value={block.id} label={block.name}>
+									<SearchableSelect.Item value={block.id} label={block.name}>
 										<div class="flex flex-col">
 											<span>{block.name}</span>
 											<span class="text-xs text-muted-foreground">{block.departmentName}</span>
 										</div>
-									</Select.Item>
+									</SearchableSelect.Item>
 								{/each}
-							</Select.Content>
-						</Select.Root>
+							</SearchableSelect.Content>
+						</SearchableSelect.Root>
 						<input type="hidden" name="blockId" value={selectedBlockId} />
 					</div>
 
@@ -154,7 +155,11 @@
 						</Select.Root>
 						<input type="hidden" name="component" value={selectedComponent} />
 						<p class="text-xs text-muted-foreground">
-							<i>Pilih Preparasi/Restorasi jika modul ini merepresentasikan salah satu tahap penilaian pada suatu jadwal. Biarkan kosong untuk modul dengan nilai tunggal (tanpa pemisahan).</i>
+							<i
+								>Pilih Preparasi/Restorasi jika modul ini merepresentasikan salah satu tahap
+								penilaian pada suatu jadwal. Biarkan kosong untuk modul dengan nilai tunggal (tanpa
+								pemisahan).</i
+							>
 						</p>
 					</div>
 
@@ -174,14 +179,19 @@
 						</Select.Root>
 						<input type="hidden" name="scoringMode" value={selectedScoringMode} />
 						<p class="text-xs text-muted-foreground">
-							<i>Total: DPJP mengisi satu nilai akhir langsung. Rubrik: nilai akhir dihitung otomatis dari beberapa kriteria/tugas di bawah.</i>
+							<i
+								>Total: DPJP mengisi satu nilai akhir langsung. Rubrik: nilai akhir dihitung
+								otomatis dari beberapa kriteria/tugas di bawah.</i
+							>
 						</p>
 					</div>
 
 					{#if selectedScoringMode === 'RUBRIK'}
 						<div class="space-y-4 border-t pt-4">
 							<div class="flex items-center justify-between">
-								<h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Kriteria Rubrik</h3>
+								<h3 class="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+									Kriteria Rubrik
+								</h3>
 								<Button type="button" variant="outline" size="sm" onclick={addCriterion}>
 									<Plus class="mr-2 h-4 w-4" />
 									Tambah Kriteria
@@ -189,11 +199,15 @@
 							</div>
 
 							{#each criteriaList as criterion, idx (criterion.id)}
-								<div class="flex flex-col gap-2 rounded-lg border p-4 bg-muted/10 relative">
+								<div class="relative flex flex-col gap-2 rounded-lg border bg-muted/10 p-4">
 									<div class="flex items-start gap-4">
 										<!-- Hidden input to submit the criterion ID if it exists -->
-										<input type="hidden" name="criteriaId[]" value={criterion.id.startsWith('0.') ? '' : criterion.id} />
-										<div class="flex-1 grid gap-2">
+										<input
+											type="hidden"
+											name="criteriaId[]"
+											value={criterion.id.startsWith('0.') ? '' : criterion.id}
+										/>
+										<div class="grid flex-1 gap-2">
 											<Label for="criteria-name-{idx}">Nama Kriteria / Tugas</Label>
 											<Input
 												id="criteria-name-{idx}"
@@ -203,7 +217,7 @@
 												required
 											/>
 										</div>
-										<div class="w-28 grid gap-2">
+										<div class="grid w-28 gap-2">
 											<Label for="criteria-score-{idx}">Skor Maks</Label>
 											<Input
 												id="criteria-score-{idx}"
@@ -219,7 +233,7 @@
 												type="button"
 												variant="ghost"
 												size="icon"
-												class="mt-8 text-destructive hover:bg-destructive/10 animate-fade-in"
+												class="animate-fade-in mt-8 text-destructive hover:bg-destructive/10"
 												onclick={() => removeCriterion(idx)}
 											>
 												<Trash2 class="h-4 w-4" />
@@ -229,9 +243,15 @@
 								</div>
 							{/each}
 
-							<div class="rounded-lg bg-blue-50/50 border border-blue-100 p-4 text-xs text-blue-800">
-								<p class="font-semibold mb-1">Catatan Pengaturan Skor:</p>
-								<p>Sistem akan menghitung nilai total akhir sebagai rata-rata (jumlah skor dibagi dengan jumlah kriteria/tugas), dibulatkan ke bilangan bulat terdekat. Sangat disarankan untuk mengatur nilai maksimum setiap kriteria ke 100 agar konsisten.</p>
+							<div
+								class="rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-xs text-blue-800"
+							>
+								<p class="mb-1 font-semibold">Catatan Pengaturan Skor:</p>
+								<p>
+									Sistem akan menghitung nilai total akhir sebagai rata-rata (jumlah skor dibagi
+									dengan jumlah kriteria/tugas), dibulatkan ke bilangan bulat terdekat. Sangat
+									disarankan untuk mengatur nilai maksimum setiap kriteria ke 100 agar konsisten.
+								</p>
 							</div>
 						</div>
 					{/if}

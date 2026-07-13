@@ -1,22 +1,43 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { mysqlTable, varchar, text, timestamp, boolean, index, int } from 'drizzle-orm/mysql-core';
 
-export const user = mysqlTable('user', {
-	id: varchar('id', { length: 36 }).primaryKey(),
-	name: varchar('name', { length: 255 }).notNull(),
-	username: varchar('username', { length: 255 }).notNull().unique(),
-	displayUsername: varchar('displayUsername', { length: 255 }),
-	email: varchar('email', { length: 255 }).notNull().unique(),
-	emailVerified: boolean('email_verified').default(false).notNull(),
-	role: varchar('role', { length: 255 }).notNull(),
-	image: text('image'),
-	banned: boolean('banned'),
-	createdAt: timestamp('created_at', { fsp: 3 }).defaultNow().notNull(),
-	updatedAt: timestamp('updated_at', { fsp: 3 })
-		.defaultNow()
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+export const softDeleteColumns = {
+	isDeleted: boolean('is_deleted').default(false).notNull(),
+	deletedAt: timestamp('deleted_at'),
+	deletedBy: varchar('deleted_by', { length: 36 })
+};
+
+export const user = mysqlTable(
+	'user',
+	{
+		id: varchar('id', { length: 36 }).primaryKey(),
+		name: varchar('name', { length: 255 }).notNull(),
+		username: varchar('username', { length: 255 }).notNull(),
+		// DB-managed generated column (see drizzle/0008_soft_delete_partial_unique.sql). Never write to this.
+		usernameActive: varchar('username_active', { length: 255 }).generatedAlwaysAs(
+			sql`IF(\`is_deleted\` = 0, \`username\`, NULL)`,
+			{ mode: 'stored' }
+		),
+		displayUsername: varchar('displayUsername', { length: 255 }),
+		email: varchar('email', { length: 255 }).notNull(),
+		// DB-managed generated column (see drizzle/0008_soft_delete_partial_unique.sql). Never write to this.
+		emailActive: varchar('email_active', { length: 255 }).generatedAlwaysAs(
+			sql`IF(\`is_deleted\` = 0, \`email\`, NULL)`,
+			{ mode: 'stored' }
+		),
+		emailVerified: boolean('email_verified').default(false).notNull(),
+		role: varchar('role', { length: 255 }).notNull(),
+		image: text('image'),
+		banned: boolean('banned'),
+		createdAt: timestamp('created_at', { fsp: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { fsp: 3 })
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+		...softDeleteColumns
+	},
+	(table) => [index('user_is_deleted_idx').on(table.isDeleted)]
+);
 
 export const session = mysqlTable(
 	'session',
@@ -98,15 +119,25 @@ export const verification = mysqlTable(
 );
 
 // Laboratorium as organization
-export const laboratorium = mysqlTable('laboratorium', {
-	id: varchar('id', { length: 36 }).primaryKey(),
-	name: text('name').notNull(),
-	slug: varchar('slug', { length: 255 }).unique(),
-	logo: text('logo'),
-	capacity: int('capacity').default(0),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	metadata: text('metadata')
-});
+export const laboratorium = mysqlTable(
+	'laboratorium',
+	{
+		id: varchar('id', { length: 36 }).primaryKey(),
+		name: text('name').notNull(),
+		slug: varchar('slug', { length: 255 }),
+		// DB-managed generated column (see drizzle/0008_soft_delete_partial_unique.sql). Never write to this.
+		slugActive: varchar('slug_active', { length: 255 }).generatedAlwaysAs(
+			sql`IF(\`is_deleted\` = 0, \`slug\`, NULL)`,
+			{ mode: 'stored' }
+		),
+		logo: text('logo'),
+		capacity: int('capacity').default(0),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		metadata: text('metadata'),
+		...softDeleteColumns
+	},
+	(table) => [index('laboratorium_is_deleted_idx').on(table.isDeleted)]
+);
 
 // Tabel Member Laboratorium
 export const laboratoriumMember = mysqlTable('laboratorium_member', {

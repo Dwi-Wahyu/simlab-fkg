@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { equipment, maintenance, user } from '$lib/server/db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { and } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
 const maintenanceSchema = z.object({
@@ -24,11 +25,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const isGlobalRole = ['superadmin', 'teknisi'].includes(currentUser.role);
 
 	const equipmentList = await db.query.equipment.findMany({
-		where: (table, { eq }) => {
+		where: (table, { eq, and }) => {
+			const conds = [eq(table.isDeleted, false)];
 			if (!isGlobalRole && labId) {
-				return eq(table.laboratoriumId, labId);
+				conds.push(eq(table.laboratoriumId, labId));
 			}
-			return undefined;
+			return and(...conds);
 		},
 		columns: {
 			id: true,
@@ -51,7 +53,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	);
 
 	const technicianList = await db.query.user.findMany({
-		where: (table, { eq }) => eq(table.role, 'teknisi'),
+		where: (table, { eq, and }) => and(eq(table.role, 'teknisi'), eq(table.isDeleted, false)),
 		columns: { id: true, name: true, email: true },
 		orderBy: (user, { asc }) => [asc(user.name)]
 	});
@@ -79,7 +81,12 @@ export const actions: Actions = {
 			const rawCost = formData.get('cost')?.toString();
 			const rawStatus = formData.get('status')?.toString();
 
-			console.log('[pemeliharaan/create] incoming status:', rawStatus, '| completionDate:', rawCompletionDate);
+			console.log(
+				'[pemeliharaan/create] incoming status:',
+				rawStatus,
+				'| completionDate:',
+				rawCompletionDate
+			);
 
 			let finalTechnicianId = rawTechnicianId && rawTechnicianId !== '' ? rawTechnicianId : null;
 			if (locals.user.role === 'teknisi') {
@@ -104,65 +111,64 @@ export const actions: Actions = {
 				completionDateIso = dateObj.toISOString();
 			}
 
-			const data = {
+			const costInt = rawCost ? parseInt(rawCost) : 0;
+			const statusVal = rawStatus as any;
+
+			const validated = maintenanceSchema.parse({
 				equipmentId: formData.get('equipmentId')?.toString(),
 				maintenanceType: formData.get('maintenanceType')?.toString(),
 				description: formData.get('description')?.toString(),
 				scheduledDate: scheduledDateIso,
 				completionDate: completionDateIso,
-				status: formData.get('status')?.toString() || 'PENDING',
+				status: statusVal || 'PENDING',
 				technicianId: finalTechnicianId,
-				cost: rawCost ? parseInt(rawCost) : 0
-			};
-
-			const notaFile = formData.get('nota') as File;
-			let notaFileName: string | null = null;
-
-			if (notaFile && notaFile.size > 0) {
-				try {
-					const ext = notaFile.name.split('.').pop();
-					const generatedName = `${uuidv4()}.${ext}`;
-					const uploadDir = join(process.cwd(), 'static', 'uploads', 'receipts');
-
-					await mkdir(uploadDir, { recursive: true });
-
-					const arrayBuffer = await notaFile.arrayBuffer();
-					await writeFile(join(uploadDir, generatedName), Buffer.from(arrayBuffer));
-
-					notaFileName = generatedName;
-				} catch (uploadErr) {
-					console.error('Failed to upload receipt:', uploadErr);
-				}
-			}
-
-			const validated = maintenanceSchema.parse(data);
-			const newId = uuidv4();
-
-			await db.insert(maintenance).values({
-				id: newId,
-				equipmentId: validated.equipmentId,
-				maintenanceType: validated.maintenanceType,
-				description: validated.description,
-				status: validated.status,
-				technicianId: validated.technicianId,
-				scheduledDate: new Date(validated.scheduledDate),
-				completionDate: validated.completionDate ? new Date(validated.completionDate) : null,
-				cost: validated.cost,
-				notaFileName
+				cost: isNaN(costInt) ? 0 : costInt
 			});
 
-			if (validated.status === 'COMPLETED') {
-				await submitMaintenanceForApproval(newId, locals.user.id);
+			const id = uuidv4();
+			const files = formData.getAll('receipts') as File[];
+			let notaFileName: string | null = null;
+
+			// Handle Receipt Uploads if any
+			if (files.length > 0 && files[0].size > 0) {
+				const uploadDir = join(process.cwd(), 'static', 'uploads', 'receipts');
+				await mkdir(uploadDir, { recursive: true });
+
+				// Standardize filename
+				const file = files[0];
+				const ext = file.name.split('.').pop();
+				const fileName = `${uuidv4()}.${ext}`;
+				notaFileName = fileName;
+
+				const arrayBuffer = await file.arrayBuffer();
+				await writeFile(join(uploadDir, fileName), Buffer.from(arrayBuffer));
 			}
 
+			await db.transaction(async (tx) => {
+				await tx.insert(maintenance).values({
+					id,
+					equipmentId: validated.equipmentId,
+					maintenanceType: validated.maintenanceType,
+					description: validated.description,
+					scheduledDate: new Date(validated.scheduledDate),
+					completionDate: validated.completionDate ? new Date(validated.completionDate) : null,
+					status: validated.status,
+					technicianId: validated.technicianId,
+					cost: validated.cost,
+					notaFileName,
+					createdAt: new Date()
+				});
+
+				// Auto-submit approval if cost is > 0 and status is COMPLETED
+				if (validated.cost > 0 && validated.status === 'COMPLETED') {
+					await submitMaintenanceForApproval(tx, id, locals.user.id);
+				}
+			});
+
 			return { success: true };
-		} catch (err) {
-			console.error(err);
-			if (err instanceof z.ZodError) {
-				const errorMessages = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-				return fail(400, { message: `Validasi gagal: ${errorMessages}` });
-			}
-			return fail(400, { message: err instanceof Error ? err.message : 'Gagal membuat pemeliharaan' });
+		} catch (e: any) {
+			console.error(e);
+			return fail(400, { message: e.message || 'Gagal menyimpan data pemeliharaan' });
 		}
 	}
 };

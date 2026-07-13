@@ -5,21 +5,21 @@ import { eq, and } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 const slugToRole: Record<string, string> = {
-	'koordinator': 'koordinator',
+	koordinator: 'koordinator',
 	'kepala-lab': 'kepalaLab',
-	'instruktur': 'instruktur',
-	'teknisi': 'teknisi',
-	'spmi': 'spmi',
-	'laboran': 'laboran'
+	instruktur: 'instruktur',
+	teknisi: 'teknisi',
+	spmi: 'spmi',
+	laboran: 'laboran'
 };
 
 const roleToLabel: Record<string, string> = {
-	'koordinator': 'PJ Mata Kuliah',
-	'kepalaLab': 'Kepala Lab',
-	'instruktur': 'Dosen',
-	'teknisi': 'Teknisi',
-	'spmi': 'SPMI',
-	'laboran': 'Laboran'
+	koordinator: 'PJ Mata Kuliah',
+	kepalaLab: 'Kepala Lab',
+	instruktur: 'Dosen',
+	teknisi: 'Teknisi',
+	spmi: 'SPMI',
+	laboran: 'Laboran'
 };
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -68,17 +68,22 @@ export const actions: Actions = {
 		}
 
 		if ((role === 'kepalaLab' || role === 'laboran') && !laboratoriumId) {
-			return fail(400, { message: 'Laboratorium penugasan wajib diisi untuk Kepala Lab atau Laboran' });
+			return fail(400, {
+				message: 'Laboratorium penugasan wajib diisi untuk Kepala Lab atau Laboran'
+			});
 		}
 
 		try {
 			// 1. Update User info
-			await db.update(user).set({
-				name,
-				email,
-				username,
-				updatedAt: new Date()
-			}).where(eq(user.id, params.id));
+			await db
+				.update(user)
+				.set({
+					name,
+					email,
+					username,
+					updatedAt: new Date()
+				})
+				.where(eq(user.id, params.id));
 
 			// 2. Update Laboratorium assignment
 			// For simplicity, we assume one assignment for these roles in this UI
@@ -93,7 +98,8 @@ export const actions: Actions = {
 
 				if (existingMember) {
 					if (existingMember.laboratoriumId !== laboratoriumId) {
-						await db.update(laboratoriumMember)
+						await db
+							.update(laboratoriumMember)
 							.set({ laboratoriumId, updatedAt: new Date() } as any) // updatedAt might not exist in schema.ts for this table
 							.where(eq(laboratoriumMember.id, existingMember.id));
 					}

@@ -2,8 +2,9 @@ import { db } from '$lib/server/db';
 import { user, laboratoriumMember } from '$lib/server/db/schema';
 import { error, fail } from '@sveltejs/kit';
 import { desc, eq, and } from 'drizzle-orm';
+import { notDeleted } from '$lib/server/db/soft-delete';
+import { createAuditLog } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
-import { auth } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user || (locals.user.role !== 'superadmin' && locals.user.role !== 'kepalaLab')) {
@@ -14,7 +15,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (locals.user.role === 'superadmin') {
 		users = await db.query.user.findMany({
-			where: eq(user.role, 'laboran'),
+			where: and(eq(user.role, 'laboran'), notDeleted(user)),
 			orderBy: [desc(user.createdAt)],
 			with: {
 				members: {
@@ -43,6 +44,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			),
 			with: {
 				user: {
+					where: (user, { eq }) => eq(user.isDeleted, false),
 					with: {
 						members: {
 							with: {
@@ -56,7 +58,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 		users = members
 			.map((m) => m.user)
-			.filter((u): u is NonNullable<typeof u> => u !== null)
+			.filter((u): u is NonNullable<typeof u> => u !== null && !u.isDeleted)
 			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 	}
 
@@ -100,25 +102,32 @@ export const actions: Actions = {
 		}
 
 		try {
-			if (locals.user.role === 'superadmin') {
-				try {
-					await auth.api.removeUser({
-						headers: request.headers,
-						body: {
-							userId
-						}
-					});
-					return { success: true, message: 'Laboran berhasil dihapus' };
-				} catch (e) {
-					// Fallback direct DB delete
-					await db.delete(user).where(eq(user.id, userId));
-					return { success: true, message: 'Laboran berhasil dihapus' };
-				}
-			} else {
-				// kepalaLab - direct DB delete to bypass Better Auth Admin API authorization check
-				await db.delete(user).where(eq(user.id, userId));
-				return { success: true, message: 'Laboran berhasil dihapus' };
-			}
+			const [usr] = await db
+				.select()
+				.from(user)
+				.where(and(eq(user.id, userId), notDeleted(user)))
+				.limit(1);
+			if (!usr) return fail(404, { message: 'User tidak ditemukan' });
+
+			await db
+				.update(user)
+				.set({
+					isDeleted: true,
+					deletedAt: new Date(),
+					deletedBy: locals.user.id,
+					banned: true
+				})
+				.where(eq(user.id, userId));
+
+			await createAuditLog({
+				userId: locals.user.id,
+				action: 'SOFT_DELETE_USER',
+				tableName: 'user',
+				recordId: userId,
+				oldValue: usr
+			});
+
+			return { success: true, message: 'Laboran berhasil dihapus' };
 		} catch (dbErr: any) {
 			console.error(dbErr);
 			return fail(500, { message: dbErr.message || 'Gagal menghapus user' });

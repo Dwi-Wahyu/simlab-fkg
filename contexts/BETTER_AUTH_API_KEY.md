@@ -209,9 +209,9 @@ type verifyApiKey = {
 
 ```ts
 type Result = {
-  valid: boolean;
-  error: { message: string; code: string } | null;
-  key: Omit<ApiKey, "key"> | null;
+	valid: boolean;
+	error: { message: string; code: string } | null;
+	key: Omit<ApiKey, 'key'> | null;
 };
 ```
 
@@ -247,7 +247,7 @@ You'll receive everything about the API key details, except for the `key` value 
 If it fails, it will throw an `APIError`.
 
 ```ts
-type Result = Omit<ApiKey, "key">;
+type Result = Omit<ApiKey, 'key'>;
 ```
 
 ---
@@ -367,7 +367,7 @@ Otherwise, you'll receive:
 
 ```ts
 type Result = {
-  success: boolean;
+	success: boolean;
 };
 ```
 
@@ -384,32 +384,32 @@ requireSession
 
 ```ts
 type listApiKeys = {
-    /**
-     * Filter by configuration ID. If not provided, returns keys from all configurations.
-     */
-    configId?: string
-    /**
-     * Organization ID to list keys for. If provided, returns organization-owned keys.
-     * If not provided, returns user-owned keys for the current session user.
-     */
-    organizationId?: string
-    /**
-     * The number of API keys to return.
-     */
-    limit?: number
-    /**
-     * The offset to start from (for pagination).
-     */
-    offset?: number
-    /**
-     * The field to sort by (e.g., "createdAt", "name", "expiresAt").
-     */
-    sortBy?: string
-    /**
-     * The direction to sort by.
-     */
-    sortDirection?: "asc" | "desc"
-}
+	/**
+	 * Filter by configuration ID. If not provided, returns keys from all configurations.
+	 */
+	configId?: string;
+	/**
+	 * Organization ID to list keys for. If provided, returns organization-owned keys.
+	 * If not provided, returns user-owned keys for the current session user.
+	 */
+	organizationId?: string;
+	/**
+	 * The number of API keys to return.
+	 */
+	limit?: number;
+	/**
+	 * The offset to start from (for pagination).
+	 */
+	offset?: number;
+	/**
+	 * The field to sort by (e.g., "createdAt", "name", "expiresAt").
+	 */
+	sortBy?: string;
+	/**
+	 * The direction to sort by.
+	 */
+	sortDirection?: 'asc' | 'desc';
+};
 ```
 
 </APIMethod>
@@ -421,10 +421,10 @@ Otherwise, you'll receive a paginated response:
 
 ```ts
 type Result = {
-  apiKeys: Omit<ApiKey, "key">[];
-  total: number;
-  limit?: number;
-  offset?: number;
+	apiKeys: Omit<ApiKey, 'key'>[];
+	total: number;
+	limit?: number;
+	offset?: number;
 };
 ```
 
@@ -433,40 +433,40 @@ type Result = {
 ```ts
 // Get first 10 API keys for the current user
 const result = await authClient.apiKey.list({
-  query: { limit: 10 }
+	query: { limit: 10 }
 });
 
 // Get second page (10 items per page)
 const page2 = await authClient.apiKey.list({
-  query: { limit: 10, offset: 10 }
+	query: { limit: 10, offset: 10 }
 });
 
 // Sort by creation date (newest first)
 const sorted = await authClient.apiKey.list({
-  query: { sortBy: "createdAt", sortDirection: "desc" }
+	query: { sortBy: 'createdAt', sortDirection: 'desc' }
 });
 
 // Combined pagination and sorting
 const combined = await authClient.apiKey.list({
-  query: {
-    limit: 20,
-    offset: 0,
-    sortBy: "name",
-    sortDirection: "asc"
-  }
+	query: {
+		limit: 20,
+		offset: 0,
+		sortBy: 'name',
+		sortDirection: 'asc'
+	}
 });
 
 // List organization-owned keys
 const orgKeys = await authClient.apiKey.list({
-  query: { organizationId: "org_123" }
+	query: { organizationId: 'org_123' }
 });
 
 // List organization keys with specific config
 const orgPublicKeys = await authClient.apiKey.list({
-  query: {
-    organizationId: "org_123",
-    configId: "public"
-  }
+	query: {
+		organizationId: 'org_123',
+		configId: 'public'
+	}
 });
 ```
 
@@ -484,8 +484,7 @@ isServerOnly
 >
 
 ```ts
-type deleteAllExpiredApiKeys = {
-}
+type deleteAllExpiredApiKeys = {};
 ```
 
 </APIMethod>

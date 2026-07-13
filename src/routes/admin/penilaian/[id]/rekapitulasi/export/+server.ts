@@ -132,7 +132,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 	const scheduleIds = allSchedules.map((s) => s.id);
 	const assessments = await db.query.practicumAssessment.findMany({
-		where: sql`${practicumAssessment.scheduleId} IN (${sql.join(scheduleIds.map((id) => sql`${id}`), sql`, `)})`
+		where: sql`${practicumAssessment.scheduleId} IN (${sql.join(
+			scheduleIds.map((id) => sql`${id}`),
+			sql`, `
+		)})`
 	});
 
 	const getScore = (studentId: string, scheduleId: string, moduleId: string) =>

@@ -70,7 +70,8 @@ export const actions: Actions = {
 			const newUserId = signUpResponse.user.id;
 
 			// 2. Update role to 'laboran'
-			await db.update(user)
+			await db
+				.update(user)
 				.set({ role: 'laboran', updatedAt: new Date() })
 				.where(eq(user.id, newUserId));
 

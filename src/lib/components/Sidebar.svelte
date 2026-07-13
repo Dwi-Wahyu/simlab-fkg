@@ -11,6 +11,8 @@
 		Package,
 		Settings,
 		ShieldCheck,
+		Tag,
+		ToolCase,
 		UserCog,
 		Wrench,
 		X
@@ -142,28 +144,20 @@
 			children: []
 		},
 		{
-			name: 'Inventaris',
-			path: `/admin/inventaris`,
-			icon: Package,
-			isDropdown: true,
+			name: 'Inventaris Alat',
+			path: `/admin/inventaris/alat`,
+			icon: ToolCase,
+			isDropdown: false,
 			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi', 'laboran'],
-			children: [
-				{
-					name: 'Alat',
-					path: `/admin/inventaris/alat`,
-					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi', 'laboran']
-				},
-				{
-					name: 'Bahan Habis Pakai',
-					path: `/admin/inventaris/bhp`,
-					role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi', 'laboran']
-				},
-				{
-					name: 'Kategori',
-					path: `/admin/inventaris/kategori`,
-					role: ['superadmin', 'kepalaLab', 'laboran']
-				}
-			]
+			children: []
+		},
+		{
+			name: 'Bahan Habis Pakai',
+			path: `/admin/inventaris/bhp`,
+			icon: FlaskConical,
+			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'teknisi', 'laboran'],
+			children: [],
+			isDropdown: false
 		},
 		{
 			name: 'Peminjaman',
@@ -195,6 +189,22 @@
 			icon: ShieldCheck,
 			isDropdown: false,
 			role: ['superadmin', 'koordinator', 'kepalaLab', 'spmi'],
+			children: []
+		},
+		{
+			name: 'Manajemen Laboran',
+			icon: UserCog,
+			isDropdown: true,
+			path: `/admin/users/laboran`,
+			role: ['kepalaLab'],
+			children: []
+		},
+		{
+			name: 'Kategori',
+			icon: Tag,
+			path: `/admin/inventaris/kategori`,
+			role: ['superadmin', 'kepalaLab', 'laboran'],
+			isDropdown: false,
 			children: []
 		}
 	]);
@@ -241,14 +251,6 @@
 					role: ['superadmin']
 				}
 			]
-		},
-		{
-			name: 'Manajemen Laboran',
-			icon: UserCog,
-			isDropdown: true,
-			path: `/admin/users/laboran`,
-			role: ['kepalaLab'],
-			children: []
 		},
 		{
 			name: 'Audit Log Sistem',

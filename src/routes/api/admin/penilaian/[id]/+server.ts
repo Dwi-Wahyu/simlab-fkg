@@ -1,5 +1,10 @@
 import { db } from '$lib/server/db';
-import { practicumSchedule, practicumClassMember, practicumAssessment, user } from '$lib/server/db/schema';
+import {
+	practicumSchedule,
+	practicumClassMember,
+	practicumAssessment,
+	user
+} from '$lib/server/db/schema';
 import { error, json } from '@sveltejs/kit';
 import { eq, and, or, ilike, sql, count, inArray } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
@@ -36,7 +41,9 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 	// Verify authorization: instructor, koordinator of matching lab, or superadmin
 	const isInstructor = schedule.instructors.some((i) => i.instructorId === locals.user?.id);
-	const isKoordinator = locals.user.role === 'koordinator' && (!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
+	const isKoordinator =
+		locals.user.role === 'koordinator' &&
+		(!locals.user.laboratorium || schedule.laboratoriumId === locals.user.laboratorium.id);
 	const isAuthorized = isInstructor || locals.user.role === 'superadmin' || isKoordinator;
 	if (!isAuthorized) {
 		throw error(403, 'Forbidden: You are not authorized to view this schedule');
@@ -61,19 +68,25 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 	if (search) {
 		whereClause = and(
 			whereClause,
-			or(
-				ilike(user.name, `%${search}%`),
-				ilike(user.username, `%${search}%`)
-			)
+			or(ilike(user.name, `%${search}%`), ilike(user.username, `%${search}%`))
 		);
 	}
 
 	// Build final where clause incorporating status filter before query construction
 	let finalWhere: any = whereClause;
 	if (status === 'completed') {
-		finalWhere = and(whereClause, eq(sql`COALESCE(${assessmentCountSubquery.count}, 0)`, modules.length));
+		finalWhere = and(
+			whereClause,
+			eq(sql`COALESCE(${assessmentCountSubquery.count}, 0)`, modules.length)
+		);
 	} else if (status === 'partial') {
-		finalWhere = and(whereClause, and(sql`COALESCE(${assessmentCountSubquery.count}, 0) > 0`, sql`COALESCE(${assessmentCountSubquery.count}, 0) < ${modules.length}`));
+		finalWhere = and(
+			whereClause,
+			and(
+				sql`COALESCE(${assessmentCountSubquery.count}, 0) > 0`,
+				sql`COALESCE(${assessmentCountSubquery.count}, 0) < ${modules.length}`
+			)
+		);
 	} else if (status === 'none') {
 		finalWhere = and(whereClause, eq(sql`COALESCE(${assessmentCountSubquery.count}, 0)`, 0));
 	}
@@ -86,7 +99,10 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		})
 		.from(practicumClassMember)
 		.innerJoin(user, eq(practicumClassMember.userId, user.id))
-		.leftJoin(assessmentCountSubquery, eq(practicumClassMember.userId, assessmentCountSubquery.studentId))
+		.leftJoin(
+			assessmentCountSubquery,
+			eq(practicumClassMember.userId, assessmentCountSubquery.studentId)
+		)
 		.where(finalWhere);
 
 	// Count total for pagination using same joins and where clause
@@ -94,18 +110,19 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		.select({ count: count() })
 		.from(practicumClassMember)
 		.innerJoin(user, eq(practicumClassMember.userId, user.id))
-		.leftJoin(assessmentCountSubquery, eq(practicumClassMember.userId, assessmentCountSubquery.studentId))
+		.leftJoin(
+			assessmentCountSubquery,
+			eq(practicumClassMember.userId, assessmentCountSubquery.studentId)
+		)
 		.where(finalWhere);
 
 	const totalItems = totalItemsResult[0].count;
 	const totalPages = Math.ceil(totalItems / limit);
 
-	const paginatedStudents = await studentsQuery
-		.limit(limit)
-		.offset(offset);
+	const paginatedStudents = await studentsQuery.limit(limit).offset(offset);
 
 	// Fetch detailed assessments for the paginated students
-	const studentIds = paginatedStudents.map(ps => ps.user.id);
+	const studentIds = paginatedStudents.map((ps) => ps.user.id);
 	let assessments: any[] = [];
 	if (studentIds.length > 0) {
 		assessments = await db.query.practicumAssessment.findMany({
@@ -121,7 +138,7 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 	return json({
 		schedule,
-		items: paginatedStudents.map(ps => ({
+		items: paginatedStudents.map((ps) => ({
 			...ps.member,
 			user: ps.user,
 			assessmentCount: ps.assessmentCount

@@ -106,7 +106,7 @@ export const auth = betterAuth({
 		}),
 		customSession(async ({ user, session }) => {
 			const userWithLab = await db.query.user.findFirst({
-				where: (u, { eq }) => eq(u.id, user.id),
+				where: (u, { eq, and }) => and(eq(u.id, user.id), eq(u.isDeleted, false)),
 				with: {
 					members: {
 						with: { laboratorium: true }

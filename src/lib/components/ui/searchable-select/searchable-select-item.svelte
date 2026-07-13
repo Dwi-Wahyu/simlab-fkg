@@ -18,7 +18,7 @@
 	const isVisible = $derived.by(() => {
 		if (!state?.searchValue) return true;
 		const search = state.searchValue.toLowerCase();
-		const l = (label || "").toLowerCase();
+		const l = (label || '').toLowerCase();
 		const v = String(value).toLowerCase();
 		return l.includes(search) || v.includes(search);
 	});

@@ -1,26 +1,27 @@
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { error, fail } from '@sveltejs/kit';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
+import { notDeleted } from '$lib/server/db/soft-delete';
+import { createAuditLog } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
-import { auth } from '$lib/server/auth';
 
 const slugToRole: Record<string, string> = {
-	'koordinator': 'koordinator',
+	koordinator: 'koordinator',
 	'kepala-lab': 'kepalaLab',
-	'instruktur': 'instruktur',
-	'teknisi': 'teknisi',
-	'spmi': 'spmi',
-	'laboran': 'laboran'
+	instruktur: 'instruktur',
+	teknisi: 'teknisi',
+	spmi: 'spmi',
+	laboran: 'laboran'
 };
 
 const roleToLabel: Record<string, string> = {
-	'koordinator': 'PJ Mata Kuliah',
-	'kepalaLab': 'Kepala Lab',
-	'instruktur': 'Dosen',
-	'teknisi': 'Teknisi',
-	'spmi': 'SPMI',
-	'laboran': 'Laboran'
+	koordinator: 'PJ Mata Kuliah',
+	kepalaLab: 'Kepala Lab',
+	instruktur: 'Dosen',
+	teknisi: 'Teknisi',
+	spmi: 'SPMI',
+	laboran: 'Laboran'
 };
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -34,7 +35,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const users = await db.query.user.findMany({
-		where: eq(user.role, role),
+		where: and(eq(user.role, role), notDeleted(user)),
 		orderBy: [desc(user.createdAt)],
 		with: {
 			members: {
@@ -67,20 +68,35 @@ export const actions: Actions = {
 		}
 
 		try {
-			await auth.api.removeUser({
-				headers: request.headers,
-				body: {
-					userId
-				}
+			const [usr] = await db
+				.select()
+				.from(user)
+				.where(and(eq(user.id, userId), notDeleted(user)))
+				.limit(1);
+			if (!usr) return fail(404, { message: 'User tidak ditemukan' });
+
+			await db
+				.update(user)
+				.set({
+					isDeleted: true,
+					deletedAt: new Date(),
+					deletedBy: locals.user.id,
+					banned: true
+				})
+				.where(eq(user.id, userId));
+
+			await createAuditLog({
+				userId: locals.user.id,
+				action: 'SOFT_DELETE_USER',
+				tableName: 'user',
+				recordId: userId,
+				oldValue: usr
 			});
+
 			return { success: true, message: 'User berhasil dihapus' };
 		} catch (e: any) {
-			try {
-				await db.delete(user).where(eq(user.id, userId));
-				return { success: true, message: 'User berhasil dihapus' };
-			} catch (dbErr) {
-				return fail(500, { message: e.message || 'Gagal menghapus user' });
-			}
+			console.error(e);
+			return fail(500, { message: e.message || 'Gagal menghapus user' });
 		}
 	}
 };

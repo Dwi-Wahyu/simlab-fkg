@@ -3,7 +3,9 @@ import { eq, and, ne, like, count } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { base } from '$app/paths';
 import { db } from '$lib/server/db';
-import { kelompokMahasiswa, practicumClass } from '$lib/server/db/schema';
+import { kelompokMahasiswa } from '$lib/server/db/schema';
+import { notDeleted } from '$lib/server/db/soft-delete';
+import { createAuditLog } from '$lib/server/audit';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -26,7 +28,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const fetchGroups = async () => {
 		const offset = (page - 1) * limit;
 
-		let conditions = [];
+		let conditions = [eq(kelompokMahasiswa.isDeleted, false)];
 		if (classIdParam) {
 			conditions.push(eq(kelompokMahasiswa.classId, classIdParam));
 		}
@@ -34,7 +36,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			conditions.push(like(kelompokMahasiswa.name, `%${search}%`));
 		}
 
-		const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+		const whereClause = and(...conditions);
 
 		const [totalCountResult] = await db
 			.select({ value: count() })
@@ -80,7 +82,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
-		const session = await locals.user;
+		const session = locals.user;
 		if (!session) return fail(401, { message: 'Unauthorized' });
 
 		const role = session.role;
@@ -102,7 +104,8 @@ export const actions: Actions = {
 			const existing = await db.query.kelompokMahasiswa.findFirst({
 				where: and(
 					eq(kelompokMahasiswa.classId, classId),
-					eq(kelompokMahasiswa.name, name)
+					eq(kelompokMahasiswa.name, name),
+					eq(kelompokMahasiswa.isDeleted, false)
 				)
 			});
 
@@ -136,7 +139,8 @@ export const actions: Actions = {
 				where: and(
 					eq(kelompokMahasiswa.classId, classId),
 					eq(kelompokMahasiswa.name, name),
-					ne(kelompokMahasiswa.id, id)
+					ne(kelompokMahasiswa.id, id),
+					eq(kelompokMahasiswa.isDeleted, false)
 				)
 			});
 
@@ -145,7 +149,8 @@ export const actions: Actions = {
 			}
 
 			try {
-				await db.update(kelompokMahasiswa)
+				await db
+					.update(kelompokMahasiswa)
 					.set({ name, classId })
 					.where(eq(kelompokMahasiswa.id, id));
 				return { success: true, message: 'Kelompok berhasil diperbarui.' };
@@ -163,7 +168,30 @@ export const actions: Actions = {
 			}
 
 			try {
-				await db.delete(kelompokMahasiswa).where(eq(kelompokMahasiswa.id, id));
+				const [km] = await db
+					.select()
+					.from(kelompokMahasiswa)
+					.where(and(eq(kelompokMahasiswa.id, id), notDeleted(kelompokMahasiswa)))
+					.limit(1);
+				if (!km) return fail(404, { message: 'Kelompok tidak ditemukan' });
+
+				await db
+					.update(kelompokMahasiswa)
+					.set({
+						isDeleted: true,
+						deletedAt: new Date(),
+						deletedBy: session.id
+					})
+					.where(eq(kelompokMahasiswa.id, id));
+
+				await createAuditLog({
+					userId: session.id,
+					action: 'SOFT_DELETE_KELOMPOK_MAHASISWA',
+					tableName: 'kelompok_mahasiswa',
+					recordId: id,
+					oldValue: km
+				});
+
 				return { success: true, message: 'Kelompok berhasil dihapus.' };
 			} catch (err) {
 				console.error(err);

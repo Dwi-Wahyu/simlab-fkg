@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { practicumScheduleInstructor, user } from '$lib/server/db/schema';
+import { practicumScheduleInstructor, user, practicumSchedule } from '$lib/server/db/schema';
 import { error } from '@sveltejs/kit';
 import { eq, and } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
@@ -17,24 +17,29 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const instructors =
 		role !== 'instruktur'
-			? await db.query.user.findMany({ where: eq(user.role, 'instruktur') })
+			? await db.query.user.findMany({
+					where: and(eq(user.role, 'instruktur'), eq(user.isDeleted, false))
+				})
 			: [];
 
 	let schedules;
 
 	if (role === 'instruktur') {
 		schedules = await db.query.practicumSchedule.findMany({
-			where: (table, { exists }) =>
-				exists(
-					db
-						.select()
-						.from(practicumScheduleInstructor)
-						.where(
-							and(
-								eq(practicumScheduleInstructor.scheduleId, table.id),
-								eq(practicumScheduleInstructor.instructorId, userId)
+			where: (table, { exists, and, eq }) =>
+				and(
+					eq(table.isDeleted, false),
+					exists(
+						db
+							.select()
+							.from(practicumScheduleInstructor)
+							.where(
+								and(
+									eq(practicumScheduleInstructor.scheduleId, table.id),
+									eq(practicumScheduleInstructor.instructorId, userId)
+								)
 							)
-						)
+					)
 				),
 			with: {
 				series: true,
@@ -45,6 +50,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		});
 	} else {
 		schedules = await db.query.practicumSchedule.findMany({
+			where: (table, { eq }) => eq(table.isDeleted, false),
 			with: {
 				series: true,
 				laboratorium: true,

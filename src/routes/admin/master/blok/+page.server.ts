@@ -33,7 +33,8 @@ export const actions: Actions = {
 		const name = formData.get('name') as string;
 		const departmentId = formData.get('departmentId') as string;
 
-		if (!name || !departmentId) return fail(400, { message: 'Nama blok dan departemen harus diisi' });
+		if (!name || !departmentId)
+			return fail(400, { message: 'Nama blok dan departemen harus diisi' });
 
 		await db.insert(block).values({
 			id: uuidv4(),
@@ -54,9 +55,7 @@ export const actions: Actions = {
 
 		if (!id || !name || !departmentId) return fail(400, { message: 'Semua field harus diisi' });
 
-		await db.update(block)
-			.set({ name, departmentId })
-			.where(eq(block.id, id));
+		await db.update(block).set({ name, departmentId }).where(eq(block.id, id));
 
 		return { success: true };
 	},

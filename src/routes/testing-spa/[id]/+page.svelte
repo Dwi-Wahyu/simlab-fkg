@@ -41,7 +41,10 @@
 					<h2>Kontak</h2>
 					<p><strong>Email:</strong> {user.email}</p>
 					<p><strong>Telepon:</strong> {user.phone}</p>
-					<p><strong>Website:</strong> <a href="https://{user.website}" target="_blank">{user.website}</a></p>
+					<p>
+						<strong>Website:</strong>
+						<a href="https://{user.website}" target="_blank">{user.website}</a>
+					</p>
 				</section>
 
 				<section class="info-section">
@@ -70,7 +73,10 @@
 		max-width: 800px;
 		margin: 0 auto;
 		padding: 2rem 1rem;
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
 	}
 
 	.back-link {
@@ -208,9 +214,15 @@
 	}
 
 	@keyframes pulse {
-		0% { opacity: 1; }
-		50% { opacity: 0.4; }
-		100% { opacity: 1; }
+		0% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
+		100% {
+			opacity: 1;
+		}
 	}
 
 	.error-box {
@@ -222,13 +234,15 @@
 	}
 
 	@media (max-width: 600px) {
-		.detail-grid, .skeleton-body {
+		.detail-grid,
+		.skeleton-body {
 			grid-template-columns: 1fr;
 		}
 		.full-width {
 			grid-column: span 1;
 		}
-		.detail-header, .skeleton-header {
+		.detail-header,
+		.skeleton-header {
 			flex-direction: column;
 			text-align: center;
 			gap: 1rem;

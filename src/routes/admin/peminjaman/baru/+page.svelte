@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { ChevronLeft, ChevronRight, Minus, Plus, Search } from '@lucide/svelte';
+	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { untrack } from 'svelte';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -248,12 +248,8 @@
 					</Card.Header>
 					<Card.Content>
 						<div class="relative mb-4">
-							<Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-							<Input
-								placeholder="Cari peminjam..."
-								class="pl-10"
-								bind:value={searchPeminjam}
-							/>
+							<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+							<Input placeholder="Cari peminjam..." class="pl-10" bind:value={searchPeminjam} />
 						</div>
 						<div class="grid content-start gap-2 overflow-y-auto p-1">
 							{#each paginatedPeminjam as requester (requester.id)}
@@ -320,12 +316,8 @@
 				</Card.Header>
 				<Card.Content>
 					<div class="relative mb-4">
-						<Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-						<Input
-							placeholder="Cari alat..."
-							class="pl-10"
-							bind:value={searchAlat}
-						/>
+						<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+						<Input placeholder="Cari alat..." class="pl-10" bind:value={searchAlat} />
 					</div>
 					<div class="grid content-start gap-4 overflow-y-auto p-1">
 						{#each paginatedAlat as item (item.id)}
@@ -487,10 +479,10 @@
 
 					<div class="space-y-2">
 						<Label>Surat (PDF/DOCX) &lt; 10MB</Label>
-						<Input 
-							type="file" 
-							name="surat" 
-							accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+						<Input
+							type="file"
+							name="surat"
+							accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 							onchange={(e) => {
 								const target = e.target as HTMLInputElement;
 								if (target.files && target.files.length > 0) {
@@ -514,7 +506,7 @@
 				</div>
 				<Button variant="outline" href="/admin/peminjaman">Batal</Button>
 				<Button type="submit" disabled={isSubmitting || stockWarnings.length > 0}>
-					{isSubmitting ? 'Memproses...' : 'Buat Peminjaman'}
+					{isSubmitting ? 'Memproses...' : 'Catat Peminjaman'}
 				</Button>
 			</Card.Footer>
 		</Card.Root>

@@ -102,6 +102,63 @@ export const auth = betterAuth({
 async function main() {
 	console.log('Sedang melakukan seeding user staff/admin...');
 
+	console.log('Mendaftarkan superadmin...');
+	const existingSuperadmin = await db.query.user.findFirst({
+		where: eq(authSchema.user.email, 'superadmin@gmail.com')
+	});
+
+	let globalSuperadminId: string;
+
+	if (!existingSuperadmin) {
+		const signUpResponse = await auth.api.signUpEmail({
+			body: {
+				email: 'superadmin@gmail.com',
+				username: 'superadmin',
+				password: process.env.DEFAULT_PASSWORD ?? 'password',
+				name: 'Global Superadmin'
+			}
+		});
+
+		if (!signUpResponse) throw new Error('Gagal mendaftarkan superadmin');
+		globalSuperadminId = signUpResponse.user.id;
+
+		await db
+			.update(authSchema.user)
+			.set({ role: 'superadmin' })
+			.where(eq(authSchema.user.id, globalSuperadminId));
+		console.log('- Superadmin baru berhasil dibuat.');
+	} else {
+		globalSuperadminId = existingSuperadmin.id;
+		const hashedPwd = await hashPassword(process.env.DEFAULT_PASSWORD ?? 'password');
+		await db
+			.update(authSchema.account)
+			.set({ password: hashedPwd })
+			.where(eq(authSchema.account.userId, globalSuperadminId));
+		console.log('- Password superadmin di-reset ke default.');
+	}
+
+	// Jadikan superadmin member di semua laboratorium
+	const allLabs = await db.query.laboratorium.findMany();
+	for (const lab of allLabs) {
+		const existingMember = await db.query.laboratoriumMember.findFirst({
+			where: and(
+				eq(authSchema.laboratoriumMember.laboratoriumId, lab.id),
+				eq(authSchema.laboratoriumMember.userId, globalSuperadminId)
+			)
+		});
+
+		if (!existingMember) {
+			await db.insert(authSchema.laboratoriumMember).values({
+				id: crypto.randomUUID(),
+				laboratoriumId: lab.id,
+				userId: globalSuperadminId,
+				createdAt: new Date(),
+				role: 'superadmin'
+			});
+			console.log(`  -> Superadmin ditambahkan ke lab: ${lab.name}`);
+		}
+	}
+
 	// Get Preparasi Lab for assignment
 	let labPreparasi = await db.query.laboratorium.findFirst({
 		where: eq(authSchema.laboratorium.slug, 'preparasi')
@@ -145,25 +202,23 @@ async function main() {
 			console.log(`- Berhasil membuat user baru: ${email} (${roleName})`);
 		} else {
 			userId = existingUser.id;
-			
+
 			// Jika user sudah ada, update password secara langsung melalui database
 			try {
 				const hashedPwd = await hashPassword(process.env.DEFAULT_PASSWORD ?? 'password');
-				
-				await db.update(authSchema.account)
+
+				await db
+					.update(authSchema.account)
 					.set({ password: hashedPwd })
 					.where(eq(authSchema.account.userId, userId));
-					
+
 				console.log(`- User sudah ada, password di-reset: ${email} (${roleName})`);
 			} catch (err) {
 				console.log(`- User sudah ada: ${email} (${roleName}) (Update password gagal: ${err})`);
 			}
 		}
 
-		await db
-			.update(authSchema.user)
-			.set({ role: roleName })
-			.where(eq(authSchema.user.id, userId));
+		await db.update(authSchema.user).set({ role: roleName }).where(eq(authSchema.user.id, userId));
 
 		if (roleName === 'teknisi' || roleName === 'laboran') {
 			// Tambahkan User ke Laboratorium dengan Role tersebut jika belum ada

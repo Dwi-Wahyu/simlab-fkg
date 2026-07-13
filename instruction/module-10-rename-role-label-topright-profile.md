@@ -12,13 +12,13 @@ user.**
 
 ### Target mapping (display label only)
 
-| Role slug (unchanged) | Old label shown | New label to show |
-|---|---|---|
-| `instruktur` | Instruktur | **DPJP** |
-| `koordinator` | Koordinator | **PJ Mata Kuliah** |
-| `peneliti` | Peneliti | **Mahasiswa** |
+| Role slug (unchanged) | Old label shown | New label to show  |
+| --------------------- | --------------- | ------------------ |
+| `instruktur`          | Instruktur      | **DPJP**           |
+| `koordinator`         | Koordinator     | **PJ Mata Kuliah** |
+| `peneliti`            | Peneliti        | **Mahasiswa**      |
 
-Note: `instruktur` → `DPJP` and `peneliti` → `Mahasiswa` were already applied to *other* files by
+Note: `instruktur` → `DPJP` and `peneliti` → `Mahasiswa` were already applied to _other_ files by
 module-08. This instruction is scoped to a **different location** module-08 didn't touch: the
 role text shown directly under the user's name in the top-right profile widget (desktop dropdown
 trigger + mobile dropdown menu) inside the shared admin layout. `koordinator` → `PJ Mata Kuliah`
@@ -82,6 +82,7 @@ desktop and once for the mobile dropdown:
 
    Roles not in the map (`superadmin`, `kepalaLab`, `teknisi`, `spmi`, `laboran`, `kakomlek`, etc.)
    fall through to the existing `toTitleCase` behavior unchanged.
+
 3. Replace **both** call sites with `{roleLabel}`:
    - ~line 135: `{toTitleCase(data.user.role)}` → `{roleLabel}`
    - ~line 169: `{toTitleCase(data.user.role)}` → `{roleLabel}`

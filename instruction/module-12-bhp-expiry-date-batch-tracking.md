@@ -231,7 +231,7 @@ body: JSON.stringify({
 	notes: stockNotes || undefined,
 	laboratoriumId: labId,
 	expiryDate: stockEventType === 'RECEIVE' ? stockExpiryDate || undefined : undefined
-})
+});
 ```
 
 **Do not** add a "Tanggal Masuk" / received-date input anywhere — that must always be the
@@ -490,9 +490,7 @@ Copy `alat/[id]/+page.svelte` as the starting point and adapt:
   ```ts
   function expiryStatus(expiryDate: string | null) {
   	if (!expiryDate) return { label: 'Tidak Kedaluwarsa', variant: 'secondary' as const };
-  	const days = Math.ceil(
-  		(new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  	);
+  	const days = Math.ceil((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   	if (days < 0) return { label: 'Kedaluwarsa', variant: 'destructive' as const };
   	if (days <= 3) return { label: `${days} hari lagi`, variant: 'destructive' as const };
   	if (days <= 14) return { label: `${days} hari lagi`, variant: 'default' as const };

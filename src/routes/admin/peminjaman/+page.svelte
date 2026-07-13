@@ -19,6 +19,8 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils.js';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -41,9 +43,39 @@
 	}
 
 	// --- ADMIN STATE & LOGIC ---
-	let activeTab = $state('semua');
-	let search = $state('');
+	let activeTab = $state($page.url.searchParams.get('status') || 'semua');
+	let search = $state($page.url.searchParams.get('q') || '');
 	let expandedLendingsAdmin = $state<Record<string, boolean>>({});
+
+	$effect(() => {
+		if (data.user.role !== 'peneliti' && data.user.role !== 'instruktur') {
+			const url = new URL(window.location.href);
+			let changed = false;
+			if (activeTab && activeTab !== 'semua') {
+				if (url.searchParams.get('status') !== activeTab) {
+					url.searchParams.set('status', activeTab);
+					changed = true;
+				}
+			} else if (url.searchParams.has('status')) {
+				url.searchParams.delete('status');
+				changed = true;
+			}
+
+			if (search) {
+				if (url.searchParams.get('q') !== search) {
+					url.searchParams.set('q', search);
+					changed = true;
+				}
+			} else if (url.searchParams.has('q')) {
+				url.searchParams.delete('q');
+				changed = true;
+			}
+
+			if (changed) {
+				goto(url, { replaceState: true, keepFocus: true, noScroll: true });
+			}
+		}
+	});
 
 	const filteredLendings = $derived(
 		data.lendings?.filter((l: any) => {
@@ -96,8 +128,38 @@
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 	let expandedLendingsStudent = $state<Record<string, boolean>>({});
-	let studentSearch = $state('');
-	let studentActiveTab = $state('semua');
+	let studentSearch = $state($page.url.searchParams.get('q') || '');
+	let studentActiveTab = $state($page.url.searchParams.get('status') || 'semua');
+
+	$effect(() => {
+		if (data.user.role === 'peneliti' || data.user.role === 'instruktur') {
+			const url = new URL(window.location.href);
+			let changed = false;
+			if (studentActiveTab && studentActiveTab !== 'semua') {
+				if (url.searchParams.get('status') !== studentActiveTab) {
+					url.searchParams.set('status', studentActiveTab);
+					changed = true;
+				}
+			} else if (url.searchParams.has('status')) {
+				url.searchParams.delete('status');
+				changed = true;
+			}
+
+			if (studentSearch) {
+				if (url.searchParams.get('q') !== studentSearch) {
+					url.searchParams.set('q', studentSearch);
+					changed = true;
+				}
+			} else if (url.searchParams.has('q')) {
+				url.searchParams.delete('q');
+				changed = true;
+			}
+
+			if (changed) {
+				goto(url, { replaceState: true, keepFocus: true, noScroll: true });
+			}
+		}
+	});
 
 	// Fetch data on mount if student
 	$effect(() => {
@@ -122,6 +184,21 @@
 			isLoading = false;
 		}
 	}
+
+	const statusOptions = [
+		{ value: 'semua', label: 'Semua Status' },
+		{ value: 'dipinjam', label: 'Sedang Dipinjam' },
+		{ value: 'menunggu', label: 'Menunggu / Disetujui' },
+		{ value: 'selesai', label: 'Selesai / Ditolak' }
+	];
+
+	const adminSelectedStatus = $derived(
+		statusOptions.find((c) => c.value === activeTab)?.label ?? 'Semua Status'
+	);
+
+	const studentSelectedStatus = $derived(
+		statusOptions.find((c) => c.value === studentActiveTab)?.label ?? 'Semua Status'
+	);
 
 	const studentFilteredLendings = $derived(
 		studentLendings.filter((l) => {
@@ -253,15 +330,14 @@
 						<div class="w-full sm:w-48">
 							<Select.Root type="single" bind:value={studentActiveTab}>
 								<Select.Trigger class="w-full">
-									<Select.Value placeholder="Pilih Status" />
+									{studentSelectedStatus}
 								</Select.Trigger>
 								<Select.Content>
-									<Select.Item value="semua" label="Semua Status">Semua Status</Select.Item>
-									<Select.Item value="dipinjam" label="Sedang Dipinjam">Sedang Dipinjam</Select.Item>
-									<Select.Item value="menunggu" label="Menunggu / Disetujui"
-										>Menunggu / Disetujui</Select.Item
-									>
-									<Select.Item value="selesai" label="Selesai / Ditolak">Selesai / Ditolak</Select.Item>
+									{#each statusOptions as option}
+										<Select.Item value={option.value} label={option.label}>
+											{option.label}
+										</Select.Item>
+									{/each}
 								</Select.Content>
 							</Select.Root>
 						</div>
@@ -278,7 +354,6 @@
 						<Table.Root class="block md:table">
 							<Table.Header class="hidden md:table-header-group">
 								<Table.Row class="md:table-row">
-									<Table.Head class="px-6 py-4">Laboratorium</Table.Head>
 									<Table.Head>Tujuan</Table.Head>
 									<Table.Head>Tanggal Pinjam</Table.Head>
 									<Table.Head>Batas Kembali</Table.Head>
@@ -290,9 +365,6 @@
 								{#if isLoading}
 									{#each Array(3) as _}
 										<Table.Row class="flex animate-pulse flex-col border-b md:table-row">
-											<Table.Cell class="p-4 md:px-6 md:py-4">
-												<div class="h-4 w-48 rounded bg-slate-200"></div>
-											</Table.Cell>
 											<Table.Cell class="p-4 md:px-6 md:py-4">
 												<div class="h-4 w-32 rounded bg-slate-200"></div>
 											</Table.Cell>
@@ -322,9 +394,6 @@
 											>
 												<div class="flex flex-col">
 													<div class="flex items-center gap-2">
-														<span class="font-bold text-slate-900 md:font-medium"
-															>{lending.laboratorium?.name || 'Unknown Lab'}</span
-														>
 														<Badge
 															variant="outline"
 															class={cn('px-1.5 py-0.5 text-[9px] md:hidden', statusInfo.class)}
@@ -627,13 +696,14 @@
 			<div class="w-full sm:w-48">
 				<Select.Root type="single" bind:value={activeTab}>
 					<Select.Trigger class="w-full">
-						<Select.Value placeholder="Pilih Status" />
+						{adminSelectedStatus}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="semua" label="Semua Status">Semua Status</Select.Item>
-						<Select.Item value="dipinjam" label="Sedang Dipinjam">Sedang Dipinjam</Select.Item>
-						<Select.Item value="menunggu" label="Disetujui">Disetujui</Select.Item>
-						<Select.Item value="selesai" label="Dikembalikan / Ditolak">Dikembalikan / Ditolak</Select.Item>
+						{#each statusOptions as option}
+							<Select.Item value={option.value} label={option.label}>
+								{option.label}
+							</Select.Item>
+						{/each}
 					</Select.Content>
 				</Select.Root>
 			</div>
@@ -646,7 +716,6 @@
 				<Table.Header class="hidden md:table-header-group">
 					<Table.Row class="md:table-row">
 						<Table.Head class="px-6 py-4">Peminjam</Table.Head>
-						<Table.Head>Laboratorium</Table.Head>
 						<Table.Head>Alat</Table.Head>
 						<Table.Head>Tanggal Pinjam</Table.Head>
 						<Table.Head>Batas Kembali</Table.Head>
@@ -694,17 +763,6 @@
 										<ChevronDown class="h-4 w-4" />
 									{/if}
 								</Button>
-							</Table.Cell>
-
-							<!-- Column 2: Laboratorium -->
-							<Table.Cell
-								class={cn(
-									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
-								)}
-							>
-								<span class="text-xs font-semibold text-slate-400 md:hidden">Laboratorium</span>
-								<span class="text-sm text-slate-600">{lending.laboratorium?.name || '-'}</span>
 							</Table.Cell>
 
 							<!-- Column 3: Alat -->

@@ -11,7 +11,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const categories = await db.query.equipmentCategory.findMany({
 		with: {
-			items: true
+			items: {
+				where: (item, { eq }) => eq(item.isDeleted, false)
+			}
 		},
 		orderBy: (ec, { desc }) => [desc(ec.createdAt)]
 	});
@@ -69,10 +71,7 @@ export const actions: Actions = {
 			}
 
 			const existing = await db.query.equipmentCategory.findFirst({
-				where: and(
-					eq(equipmentCategory.name, name),
-					ne(equipmentCategory.id, id)
-				)
+				where: and(eq(equipmentCategory.name, name), ne(equipmentCategory.id, id))
 			});
 
 			if (existing) {
@@ -80,7 +79,8 @@ export const actions: Actions = {
 			}
 
 			try {
-				await db.update(equipmentCategory)
+				await db
+					.update(equipmentCategory)
 					.set({
 						name,
 						description: description || null
@@ -101,7 +101,10 @@ export const actions: Actions = {
 			}
 
 			// Check linked items
-			const linkedItems = await db.select().from(item).where(eq(item.categoryId, id));
+			const linkedItems = await db
+				.select()
+				.from(item)
+				.where(and(eq(item.categoryId, id), eq(item.isDeleted, false)));
 			if (linkedItems.length > 0) {
 				return fail(400, {
 					message: `Kategori tidak dapat dihapus karena masih digunakan oleh ${linkedItems.length} item.`

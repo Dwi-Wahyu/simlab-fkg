@@ -250,8 +250,8 @@ If you have a single sidebar in your application, you can use the `SIDEBAR_WIDTH
 src/lib/components/ui/sidebar/constants.ts
 
 ```ts
-export const SIDEBAR_WIDTH = "16rem";
-export const SIDEBAR_WIDTH_MOBILE = "18rem";
+export const SIDEBAR_WIDTH = '16rem';
+export const SIDEBAR_WIDTH_MOBILE = '18rem';
 ```
 
 For multiple sidebars in your application, you can use the `style` prop to set the width of the sidebar.
@@ -277,7 +277,7 @@ You can change the keyboard shortcut by changing the value of the `SIDEBAR_KEYBO
 src/lib/components/ui/sidebar/constants.ts
 
 ```ts
-export const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+export const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 ```
 
 ## Sidebar.Root

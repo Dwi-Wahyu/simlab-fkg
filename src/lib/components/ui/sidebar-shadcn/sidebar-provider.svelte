@@ -1,7 +1,13 @@
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import { SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME, SIDEBAR_KEYBOARD_SHORTCUT, SIDEBAR_WIDTH, SIDEBAR_WIDTH_MOBILE } from "./constants.js";
-	import { setSidebarState } from "./context.svelte.js";
+	import { cn } from '$lib/utils.js';
+	import {
+		SIDEBAR_COOKIE_MAX_AGE,
+		SIDEBAR_COOKIE_NAME,
+		SIDEBAR_KEYBOARD_SHORTCUT,
+		SIDEBAR_WIDTH,
+		SIDEBAR_WIDTH_MOBILE
+	} from './constants.js';
+	import { setSidebarState } from './context.svelte.js';
 
 	let {
 		ref = $bindable(null),
@@ -41,7 +47,7 @@
 	bind:this={ref}
 	style="--sidebar-width: {SIDEBAR_WIDTH}; --sidebar-width-mobile: {SIDEBAR_WIDTH_MOBILE}; {style}"
 	class={cn(
-		"group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+		'group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar',
 		className
 	)}
 	{...restProps}

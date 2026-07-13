@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,7 +12,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const { id } = params;
-	const [existingItem] = await db.select().from(item).where(eq(item.id, id)).limit(1);
+	const [existingItem] = await db
+		.select()
+		.from(item)
+		.where(and(eq(item.id, id), eq(item.isDeleted, false)))
+		.limit(1);
 
 	if (!existingItem) {
 		throw redirect(302, `${base}/admin/inventaris/bhp`);
@@ -48,7 +52,11 @@ export const actions: Actions = {
 			});
 		}
 
-		const [existingItem] = await db.select().from(item).where(eq(item.id, id)).limit(1);
+		const [existingItem] = await db
+			.select()
+			.from(item)
+			.where(and(eq(item.id, id), eq(item.isDeleted, false)))
+			.limit(1);
 		if (!existingItem) {
 			return fail(404, { message: 'Bahan tidak ditemukan.' });
 		}
@@ -95,7 +103,8 @@ export const actions: Actions = {
 		}
 
 		try {
-			await db.update(item)
+			await db
+				.update(item)
 				.set({
 					name,
 					categoryId: categoryId || null,

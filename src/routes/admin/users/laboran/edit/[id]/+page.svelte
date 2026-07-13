@@ -14,7 +14,9 @@
 	let loading = $state(false);
 	let isSuccessOpen = $state(false);
 
-	const userLabId = $derived(data.targetUser?.members?.find((m: any) => m.role === 'laboran')?.laboratoriumId || '');
+	const userLabId = $derived(
+		data.targetUser?.members?.find((m: any) => m.role === 'laboran')?.laboratoriumId || ''
+	);
 
 	$effect(() => {
 		if (form?.success) {
@@ -92,7 +94,7 @@
 									<option value={lab.id} selected={lab.id === userLabId}>{lab.name}</option>
 								{/each}
 							</select>
-							<p class="text-xs text-destructive italic font-medium">
+							<p class="text-xs font-medium text-destructive italic">
 								Wajib: Tentukan laboratorium penugasan.
 							</p>
 						</div>

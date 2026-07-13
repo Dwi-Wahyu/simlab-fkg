@@ -47,7 +47,9 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const [summaryData] = await db
 		.select({
 			todayActivities: count(sql`CASE WHEN ${auditLog.createdAt} >= ${today} THEN 1 END`),
-			failedLogins: count(sql`CASE WHEN ${auditLog.action} = 'LOGIN' AND ${auditLog.status} = 'FAILED' THEN 1 END`),
+			failedLogins: count(
+				sql`CASE WHEN ${auditLog.action} = 'LOGIN' AND ${auditLog.status} = 'FAILED' THEN 1 END`
+			),
 			dataUpdates: count(sql`CASE WHEN ${auditLog.action} LIKE '%UPDATE%' THEN 1 END`),
 			highRiskActions: count(sql`CASE WHEN ${auditLog.action} LIKE '%DELETE%' THEN 1 END`)
 		})
@@ -87,9 +89,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		.offset(offset);
 
 	// Get unique menus (tables) for filter
-	const menus = await db
-		.selectDistinct({ tableName: auditLog.tableName })
-		.from(auditLog);
+	const menus = await db.selectDistinct({ tableName: auditLog.tableName }).from(auditLog);
 
 	return json({
 		logs,
