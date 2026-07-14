@@ -30,6 +30,7 @@
 		"db:seed-departemen": "bun run src/lib/server/db/seeds/departemen.ts",
 		"db:seed-blok": "bun run src/lib/server/db/seeds/blok.ts",
 		"db:seed-initial": "bun run db:seed && db:seed-laboratorium && db:seed-dpjp && db:seed-users && db:seed-logbook-templates && bun run db:seed-departemen && bun run db:seed-blok",
+		"db:seed-jarker-module": "bun run src/lib/server/db/seeds/jarker-module.ts",
 		"auth:schema": "better-auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"
 	},
 	"overrides": {
