@@ -98,7 +98,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		schedule.modules.map(async (sm) => {
 			const criteria = await db.query.practicumModuleCriteria.findMany({
 				where: eq(practicumModuleCriteria.moduleId, sm.moduleId),
-				orderBy: (c, { asc }) => [asc(c.sortOrder)]
+				orderBy: (c, { asc }) => [asc(c.sortOrder)],
+				with: {
+					bands: {
+						orderBy: (b, { desc }) => [desc(b.minScore)]
+					}
+				}
 			});
 			return {
 				...sm,

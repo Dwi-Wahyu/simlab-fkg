@@ -2,8 +2,9 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Package, BookOpen, History } from '@lucide/svelte';
+	import { Package, BookOpen, History, AlertTriangle, ArrowRight } from '@lucide/svelte';
 	import type { PenelitiDashboardData } from '$lib/types/dashboard';
+	import { cn } from '$lib/utils';
 
 	let { data }: { data: PenelitiDashboardData } = $props();
 
@@ -16,6 +17,59 @@
 </script>
 
 <div class="space-y-6">
+	{#if data.returnAlerts && data.returnAlerts.length > 0}
+		<div class="space-y-3">
+			{#each data.returnAlerts as alert}
+				{@const isOverdue = alert.dueDate ? new Date(alert.dueDate) < new Date() : false}
+				<div
+					class={cn(
+						'flex flex-col gap-3 rounded-lg border p-4 shadow-sm md:flex-row md:items-center md:justify-between',
+						isOverdue
+							? 'border-red-200 bg-red-50 text-red-900'
+							: 'border-yellow-200 bg-yellow-50 text-yellow-900'
+					)}
+				>
+					<div class="flex items-start gap-3">
+						<AlertTriangle
+							class={cn('mt-0.5 size-5 shrink-0', isOverdue ? 'text-red-600' : 'text-yellow-600')}
+						/>
+						<div>
+							<h4 class="text-sm font-semibold">
+								{isOverdue ? 'Peminjaman Alat Terlambat!' : 'Pengembalian Alat Besok!'}
+							</h4>
+							<p class="mt-0.5 text-xs opacity-90">
+								Alat: <span class="font-medium"
+									>{alert.items.map((i) => `${i.name} (${i.qty} pcs)`).join(', ')}</span
+								>. Jatuh tempo:
+								<span class="font-semibold"
+									>{alert.dueDate
+										? new Date(alert.dueDate).toLocaleDateString('id-ID', {
+												dateStyle: 'medium',
+												timeStyle: 'short'
+											})
+										: '-'}</span
+								>.
+							</p>
+						</div>
+					</div>
+					<Button
+						variant="outline"
+						size="sm"
+						href="/admin/peminjaman/{alert.id}"
+						class={cn(
+							'w-full shrink-0 gap-1 border-current bg-transparent hover:bg-white md:w-auto',
+							isOverdue
+								? 'text-red-900 hover:text-red-900'
+								: 'text-yellow-900 hover:text-yellow-900'
+						)}
+					>
+						Kembalikan Sekarang
+						<ArrowRight class="size-4" />
+					</Button>
+				</div>
+			{/each}
+		</div>
+	{/if}
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 		<Card.Root>
 			<Card.Content>

@@ -1,27 +1,27 @@
-import {
-	mysqlTable,
-	varchar,
-	text,
-	timestamp,
-	int,
-	boolean,
-	mysqlEnum,
-	index,
-	uniqueIndex,
-	unique,
-	foreignKey,
-	json,
-	date
-} from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import {
-	laboratorium,
-	user,
-	laboratoriumMember,
-	session,
+	boolean,
+	date,
+	foreignKey,
+	index,
+	int,
+	json,
+	mysqlEnum,
+	mysqlTable,
+	text,
+	timestamp,
+	unique,
+	uniqueIndex,
+	varchar
+} from 'drizzle-orm/mysql-core';
+import {
 	account,
 	apiKey,
-	softDeleteColumns
+	laboratorium,
+	laboratoriumMember,
+	session,
+	softDeleteColumns,
+	user
 } from './auth.schema';
 
 export const auditLog = mysqlTable('audit_log', {
@@ -56,7 +56,9 @@ export const notification = mysqlTable(
 		id: varchar('id', { length: 36 }).primaryKey(),
 
 		// Target: can be specific user OR specific laboratorium
-		userId: varchar('user_id', { length: 36 }).references(() => user.id, { onDelete: 'cascade' }),
+		userId: varchar('user_id', { length: 36 }).references(() => user.id, {
+			onDelete: 'cascade'
+		}),
 		laboratoriumId: varchar('laboratorium_id', { length: 36 }).references(() => laboratorium.id, {
 			onDelete: 'cascade'
 		}),
@@ -105,10 +107,11 @@ export const equipment = mysqlTable(
 		id: varchar('id', { length: 36 }).primaryKey(),
 		serialNumber: varchar('serial_number', { length: 100 }),
 		// DB-managed generated column (see drizzle/0008_soft_delete_partial_unique.sql). Never write to this.
-		serialNumberActive: varchar('serial_number_active', { length: 100 }).generatedAlwaysAs(
-			sql`IF(\`is_deleted\` = 0, \`serial_number\`, NULL)`,
-			{ mode: 'stored' }
-		),
+		serialNumberActive: varchar('serial_number_active', {
+			length: 100
+		}).generatedAlwaysAs(sql`IF(\`is_deleted\` = 0, \`serial_number\`, NULL)`, {
+			mode: 'stored'
+		}),
 		brand: varchar('brand', { length: 100 }),
 		variant: varchar('variant', { length: 255 }),
 
@@ -179,7 +182,9 @@ export const itemUnitConversion = mysqlTable(
 	{
 		id: varchar('id', { length: 36 }).primaryKey(),
 
-		itemId: varchar('item_id', { length: 36 }).references(() => item.id, { onDelete: 'cascade' }),
+		itemId: varchar('item_id', { length: 36 }).references(() => item.id, {
+			onDelete: 'cascade'
+		}),
 
 		fromUnit: varchar('from_unit', { length: 20 }).notNull(), // BOX
 		toUnit: varchar('to_unit', { length: 20 }).notNull(), // PCS
@@ -194,7 +199,9 @@ export const stock = mysqlTable(
 	{
 		id: varchar('id', { length: 36 }).primaryKey(),
 
-		itemId: varchar('item_id', { length: 36 }).references(() => item.id, { onDelete: 'cascade' }),
+		itemId: varchar('item_id', { length: 36 }).references(() => item.id, {
+			onDelete: 'cascade'
+		}),
 
 		warehouseId: varchar('warehouse_id', { length: 36 }).references(() => warehouse.id, {
 			onDelete: 'cascade'
@@ -409,7 +416,10 @@ export const lending = mysqlTable('lending', {
 	purpose: mysqlEnum('purpose', [
 		'PRAKTIKUM',
 		'PENELITIAN_DOSEN',
-		'PENGABDIAN_MASYARAKAT'
+		'PENGABDIAN_MASYARAKAT',
+		'PENELITIAN_MAHASISWA',
+		'LOMBA',
+		'ORGANISASI_MAHASISWA'
 	]).notNull(),
 
 	surat: text('surat'),
@@ -431,7 +441,15 @@ export const lending = mysqlTable('lending', {
 	startDate: timestamp('start_date').notNull(),
 	endDate: timestamp('end_date'),
 
+	h1ReminderSentAt: timestamp('h1_reminder_sent_at'),
+	overdueReminderSentAt: timestamp('overdue_reminder_sent_at'),
+
 	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+export const schedulerState = mysqlTable('scheduler_state', {
+	key: varchar('key', { length: 100 }).primaryKey(),
+	lastRunAt: timestamp('last_run_at').notNull()
 });
 
 export const lendingItem = mysqlTable('lending_item', {
@@ -442,6 +460,7 @@ export const lendingItem = mysqlTable('lending_item', {
 	}),
 
 	equipmentId: varchar('equipment_id', { length: 36 }).references(() => equipment.id),
+	requestedItemId: varchar('requested_item_id', { length: 36 }).references(() => item.id),
 
 	qty: int('qty').default(1),
 
@@ -708,7 +727,7 @@ export const practicumModuleCriteria = mysqlTable(
 			.primaryKey()
 			.$defaultFn(() => crypto.randomUUID()),
 		moduleId: varchar('module_id', { length: 36 }).notNull(),
-		name: varchar('name', { length: 255 }).notNull(), // e.g. "Ketepatan preparasi kavitas"
+		name: varchar('name', { length: 255 }).notNull(), // e.g. "Prosedur Cuci Tangan Bedah"
 		description: text('description'),
 		maxScore: int('max_score').notNull().default(100),
 		sortOrder: int('sort_order').default(0).notNull(),
@@ -723,6 +742,31 @@ export const practicumModuleCriteria = mysqlTable(
 			name: 'pm_criteria_module_fk',
 			columns: [table.moduleId],
 			foreignColumns: [practicumModule.id]
+		}).onDelete('cascade')
+	]
+);
+
+export const practicumCriteriaBand = mysqlTable(
+	'practicum_criteria_band',
+	{
+		id: varchar('id', { length: 36 })
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		criteriaId: varchar('criteria_id', { length: 36 }).notNull(),
+		minScore: int('min_score').notNull(), // contoh: 80
+		maxScore: int('max_score').notNull(), // contoh: 94
+		label: varchar('label', { length: 100 }), // opsional, contoh: "Baik"
+		description: text('description').notNull(), // "Persiapan cukup lengkap, ada kekurangan minor"
+		sortOrder: int('sort_order').default(0).notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').onUpdateNow()
+	},
+	(table) => [
+		index('practicum_criteria_band_criteria_idx').on(table.criteriaId),
+		foreignKey({
+			name: 'pcb_criteria_fk',
+			columns: [table.criteriaId],
+			foreignColumns: [practicumModuleCriteria.id]
 		}).onDelete('cascade')
 	]
 );
@@ -776,10 +820,6 @@ export const practicumSeries = mysqlTable('practicum_series', {
 	id: varchar('id', { length: 36 }).primaryKey(),
 	name: varchar('name', { length: 255 }).notNull(), // "Clinical Skill Lab"
 	description: text('description'),
-	blockId: varchar('block_id', { length: 36 }).references(() => block.id, { onDelete: 'cascade' }),
-	laboratoriumId: varchar('laboratorium_id', { length: 36 }).references(() => laboratorium.id, {
-		onDelete: 'cascade'
-	}),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -1065,7 +1105,10 @@ export const equipmentRelations = relations(equipment, ({ many, one }) => ({
 		fields: [equipment.itemId],
 		references: [item.id]
 	}),
-	warehouse: one(warehouse, { fields: [equipment.warehouseId], references: [warehouse.id] }),
+	warehouse: one(warehouse, {
+		fields: [equipment.warehouseId],
+		references: [warehouse.id]
+	}),
 	laboratorium: one(laboratorium, {
 		fields: [equipment.laboratoriumId],
 		references: [laboratorium.id]
@@ -1138,6 +1181,10 @@ export const lendingItemRelations = relations(lendingItem, ({ one }) => ({
 	equipment: one(equipment, {
 		fields: [lendingItem.equipmentId],
 		references: [equipment.id]
+	}),
+	requestedItem: one(item, {
+		fields: [lendingItem.requestedItemId],
+		references: [item.id]
 	})
 }));
 
@@ -1231,19 +1278,10 @@ export const blockRelations = relations(block, ({ one, many }) => ({
 		fields: [block.departmentId],
 		references: [department.id]
 	}),
-	practicumSchedules: many(practicumSchedule),
-	practicumSeries: many(practicumSeries)
+	practicumSchedules: many(practicumSchedule)
 }));
 
-export const practicumSeriesRelations = relations(practicumSeries, ({ one, many }) => ({
-	laboratorium: one(laboratorium, {
-		fields: [practicumSeries.laboratoriumId],
-		references: [laboratorium.id]
-	}),
-	block: one(block, {
-		fields: [practicumSeries.blockId],
-		references: [block.id]
-	}),
+export const practicumSeriesRelations = relations(practicumSeries, ({ many }) => ({
 	schedules: many(practicumSchedule)
 }));
 
@@ -1407,6 +1445,13 @@ export const practicumModuleRelations = relations(practicumModule, ({ one, many 
 	criteria: many(practicumModuleCriteria)
 }));
 
+export const practicumCriteriaBandRelations = relations(practicumCriteriaBand, ({ one }) => ({
+	criteria: one(practicumModuleCriteria, {
+		fields: [practicumCriteriaBand.criteriaId],
+		references: [practicumModuleCriteria.id]
+	})
+}));
+
 export const practicumModuleCriteriaRelations = relations(
 	practicumModuleCriteria,
 	({ one, many }) => ({
@@ -1414,7 +1459,8 @@ export const practicumModuleCriteriaRelations = relations(
 			fields: [practicumModuleCriteria.moduleId],
 			references: [practicumModule.id]
 		}),
-		scores: many(practicumAssessmentCriteriaScore)
+		scores: many(practicumAssessmentCriteriaScore),
+		bands: many(practicumCriteriaBand)
 	})
 );
 

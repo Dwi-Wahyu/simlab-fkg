@@ -1,15 +1,15 @@
 <script lang="ts">
+	import { ChevronLeft, Loader2, Plus, Save, Trash2 } from '@lucide/svelte';
+	import { enhance } from '$app/forms';
+	import { goto, invalidateAll } from '$app/navigation';
+	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { Textarea } from '$lib/components/ui/textarea/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { ChevronLeft, Loader2, Save, Plus, Trash2 } from '@lucide/svelte';
-	import { goto } from '$app/navigation';
-	import { enhance } from '$app/forms';
 	import * as SearchableSelect from '$lib/components/ui/searchable-select/index.js';
-	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 
 	let { data, form } = $props();
 
@@ -19,26 +19,54 @@
 	let isLoading = $state(false);
 	let showSuccessDialog = $state(false);
 
+	interface Band {
+		id: string;
+		minScore: number;
+		maxScore: number;
+		label: string;
+		description: string;
+	}
+
 	interface Criterion {
 		id: string;
 		name: string;
 		maxScore: number;
+		bands: Band[];
 	}
 
 	let criteriaList = $state<Criterion[]>([
-		{ id: Math.random().toString(), name: '', maxScore: 100 }
+		{ id: Math.random().toString(), name: '', maxScore: 100, bands: [] }
 	]);
 
 	function addCriterion() {
 		criteriaList.push({
 			id: Math.random().toString(),
 			name: '',
-			maxScore: 100
+			maxScore: 100,
+			bands: []
 		});
 	}
 
 	function removeCriterion(index: number) {
 		criteriaList.splice(index, 1);
+	}
+
+	function addBand(critId: string) {
+		const crit = criteriaList.find((c) => c.id === critId);
+		if (!crit) return;
+		crit.bands.push({
+			id: Math.random().toString(),
+			minScore: 80,
+			maxScore: 100,
+			label: '',
+			description: ''
+		});
+	}
+
+	function removeBand(critId: string, bandId: string) {
+		const crit = criteriaList.find((c) => c.id === critId);
+		if (!crit) return;
+		crit.bands = crit.bands.filter((b) => b.id !== bandId);
 	}
 
 	const blockTrigger = $derived(
@@ -70,8 +98,9 @@
 		}
 	});
 
-	function handleSuccessAction() {
+	async function handleSuccessAction() {
 		showSuccessDialog = false;
+		await invalidateAll();
 		goto(`/admin/master/modul`);
 	}
 </script>
@@ -181,6 +210,8 @@
 								</Button>
 							</div>
 
+							<input type="hidden" name="criteriaJson" value={JSON.stringify(criteriaList)} />
+
 							{#each criteriaList as criterion, idx (criterion.id)}
 								<div class="relative flex flex-col gap-2 rounded-lg border bg-muted/10 p-4">
 									<div class="flex items-start gap-4">
@@ -188,8 +219,7 @@
 											<Label for="criteria-name-{idx}">Nama Kriteria / Tugas</Label>
 											<Input
 												id="criteria-name-{idx}"
-												name="criteriaName[]"
-												placeholder="Misal: Ketepatan preparasi kavitas"
+												placeholder="Misal: Prosedur Cuci Tangan Bedah"
 												bind:value={criterion.name}
 												required
 											/>
@@ -199,7 +229,6 @@
 											<Input
 												id="criteria-score-{idx}"
 												type="number"
-												name="criteriaMaxScore[]"
 												min="1"
 												bind:value={criterion.maxScore}
 												required
@@ -215,6 +244,89 @@
 											>
 												<Trash2 class="h-4 w-4" />
 											</Button>
+										{/if}
+									</div>
+
+									<!-- Section for bands -->
+									<div class="mt-4 space-y-3 border-t pt-4">
+										<div class="flex items-center justify-between">
+											<Label
+												class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+											>
+												Rentang Skor Rubrik (Opsional)
+											</Label>
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												class="h-7 px-2 text-xs"
+												onclick={() => addBand(criterion.id)}
+											>
+												<Plus class="mr-1.5 h-3.5 w-3.5" />
+												Tambah Rentang
+											</Button>
+										</div>
+
+										{#if criterion.bands && criterion.bands.length > 0}
+											<div class="space-y-2.5">
+												{#each criterion.bands as band, bandIdx (band.id)}
+													<div
+														class="grid grid-cols-12 items-start gap-2 rounded-md border border-muted-foreground/10 bg-background p-2"
+													>
+														<div class="col-span-3 grid gap-1.5">
+															<Label class="text-[10px] text-muted-foreground">Min Skor</Label>
+															<Input
+																type="number"
+																min="0"
+																max={criterion.maxScore}
+																placeholder="Min"
+																class="h-8 font-mono text-xs"
+																bind:value={band.minScore}
+																required
+															/>
+														</div>
+														<div class="col-span-3 grid gap-1.5">
+															<Label class="text-[10px] text-muted-foreground">Max Skor</Label>
+															<Input
+																type="number"
+																min="0"
+																max={criterion.maxScore}
+																placeholder="Max"
+																class="h-8 font-mono text-xs"
+																bind:value={band.maxScore}
+																required
+															/>
+														</div>
+														<div class="col-span-5 grid gap-1.5">
+															<Label class="text-[10px] text-muted-foreground"
+																>Deskripsi Rentang</Label
+															>
+															<Textarea
+																placeholder="Deskripsi kemampuan di rentang ini..."
+																class="h-8 max-h-32 min-h-[32px] resize-y py-1.5 text-xs"
+																bind:value={band.description}
+																required
+															/>
+														</div>
+														<div class="col-span-1 flex items-center justify-center pt-5">
+															<Button
+																type="button"
+																variant="ghost"
+																size="icon"
+																class="h-8 w-8 text-destructive hover:bg-destructive/10"
+																onclick={() => removeBand(criterion.id, band.id)}
+															>
+																<Trash2 class="h-4 w-4" />
+															</Button>
+														</div>
+													</div>
+												{/each}
+											</div>
+										{:else}
+											<p class="pl-1 text-[11px] text-muted-foreground italic">
+												Belum ada rentang skor. Jika tidak diatur, input nilai menggunakan angka
+												bebas (0 - {criterion.maxScore}).
+											</p>
 										{/if}
 									</div>
 								</div>

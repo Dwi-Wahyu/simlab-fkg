@@ -12,9 +12,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Ambil semua seri yang memiliki jadwal dan penilaian untuk mahasiswa ini
 	const seriesList = await db.query.practicumSeries.findMany({
 		with: {
-			laboratorium: true,
-			block: true,
-			schedules: true
+			schedules: {
+				with: {
+					block: true,
+					laboratorium: true
+				}
+			}
 		},
 		orderBy: (s, { desc }) => [desc(s.createdAt)]
 	});
@@ -40,12 +43,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 			if (myAssessments.length === 0) return null; // mahasiswa tidak ada nilai di seri ini
 
 			const avgScore = myAssessments.reduce((sum, a) => sum + a.score, 0) / myAssessments.length;
+			const blockNameList = [...new Set(series.schedules.map((s) => s.block?.name).filter(Boolean))].join(', ') || '-';
+			const labNameList = [...new Set(series.schedules.map((s) => s.laboratorium?.name).filter(Boolean))].join(', ') || '-';
 
 			return {
 				id: series.id,
 				name: series.name,
-				laboratoriumName: series.laboratorium?.name ?? '-',
-				blockName: series.block?.name ?? '-',
+				laboratoriumName: labNameList,
+				blockName: blockNameList,
 				totalSchedules: series.schedules.length,
 				totalAssessed: myAssessments.length,
 				avgScore: Math.round(avgScore * 100) / 100

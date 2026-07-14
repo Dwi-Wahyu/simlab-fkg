@@ -12,7 +12,8 @@ import {
 	practicumLogbookTemplateField,
 	practicumSchedule,
 	practicumSeries,
-	practicumModule
+	practicumModule,
+	laboratorium
 } from '$lib/server/db/schema';
 
 const TEMPLATE_DIR = path.resolve('static/templates/logbook');
@@ -317,10 +318,9 @@ function resolvePath(obj: unknown, dotPath: string): unknown {
 		);
 }
 
-async function getSeriesWithLab(seriesId: string) {
+async function getSeriesById(seriesId: string) {
 	return db.query.practicumSeries.findFirst({
-		where: eq(practicumSeries.id, seriesId),
-		with: { laboratorium: true }
+		where: eq(practicumSeries.id, seriesId)
 	});
 }
 
@@ -358,13 +358,26 @@ export async function generateLogbookForSeries(
 	const student = await db.query.user.findFirst({ where: eq(user.id, studentId) });
 	if (!student) throw new Error('Mahasiswa tidak ditemukan');
 
-	// 2. Seri + laboratorium
-	const series = await getSeriesWithLab(seriesId);
+	// 2. Seri
+	const series = await getSeriesById(seriesId);
 	if (!series) throw new Error('Seri praktikum tidak ditemukan');
+
+	// 2b. Ambil jadwal-jadwal dalam seri ini lebih awal, untuk resolve blockId & laboratoriumId
+	//     (blok & lab sekarang melekat ke jadwal, bukan ke seri)
+	const schedules = await db.query.practicumSchedule.findMany({
+		where: eq(practicumSchedule.seriesId, seriesId),
+		orderBy: (s, { asc }) => [asc(s.startTime)]
+	});
+
+	const resolvedBlockId = schedules.find((s) => s.blockId)?.blockId ?? null;
+	const resolvedLabId = schedules.find((s) => s.laboratoriumId)?.laboratoriumId ?? null;
+	const resolvedLab = resolvedLabId
+		? await db.query.laboratorium.findFirst({ where: eq(laboratorium.id, resolvedLabId) })
+		: null;
 
 	// 3. Template file + metadata field
 	let templateRecord = null;
-	if (series.blockId) {
+	if (resolvedBlockId) {
 		templateRecord = await db.query.practicumLogbookTemplate.findFirst({
 			where: (t, { exists, eq: eqFn, and: andFn }) =>
 				exists(
@@ -374,7 +387,7 @@ export async function generateLogbookForSeries(
 						.where(
 							andFn(
 								eqFn(practicumModule.id, t.moduleId),
-								eqFn(practicumModule.blockId, series.blockId!)
+								eqFn(practicumModule.blockId, resolvedBlockId)
 							)
 						)
 				)
@@ -396,10 +409,7 @@ export async function generateLogbookForSeries(
 	const templateBuffer = await fs.readFile(path.join(TEMPLATE_DIR, finalTemplate.templateFilePath));
 
 	// 4. Jadwal dalam seri
-	const schedules = await db.query.practicumSchedule.findMany({
-		where: eq(practicumSchedule.seriesId, seriesId),
-		orderBy: (s, { asc }) => [asc(s.startTime)]
-	});
+	// (Schedules were already loaded in step 2b)
 
 	// 5. Penilaian per jadwal
 	const schedulesData: ScheduleData[] = await Promise.all(
@@ -450,7 +460,10 @@ export async function generateLogbookForSeries(
 	// 6. Resolusi context untuk auto-source path field
 	const resolveContext = {
 		student,
-		series,
+		series: {
+			...series,
+			laboratorium: resolvedLab
+		},
 		schedules: schedulesData
 	};
 

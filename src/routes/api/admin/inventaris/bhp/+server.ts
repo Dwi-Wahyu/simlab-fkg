@@ -1,7 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { item, stock } from '$lib/server/db/schema';
-import { sql, eq, count, and, desc } from 'drizzle-orm';
+import { sql, eq, count, and, desc, asc } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, locals }) => {
@@ -13,6 +13,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '10');
 	const search = url.searchParams.get('search') || '';
+	const sort = url.searchParams.get('sort') || '';
 	const offset = (page - 1) * limit;
 
 	const queryCategoryId = url.searchParams.get('categoryId');
@@ -28,7 +29,11 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			}
 			return and(...conditions);
 		},
-		orderBy: (fields, { desc }) => [desc(fields.createdAt)],
+		orderBy: (fields, { desc, asc }) => {
+			if (sort === 'asc') return [asc(fields.name)];
+			if (sort === 'desc') return [desc(fields.name)];
+			return [desc(fields.createdAt)];
+		},
 		with: {
 			stocks: true
 		}

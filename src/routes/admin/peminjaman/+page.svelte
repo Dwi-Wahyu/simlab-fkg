@@ -5,6 +5,8 @@
 		ChevronDown,
 		ChevronUp,
 		Clock,
+		Edit,
+		FileText,
 		FileDown,
 		Info,
 		Microscope,
@@ -33,6 +35,16 @@
 			minute: '2-digit'
 		});
 	};
+
+	function formatPurpose(p: string): string {
+		if (p === 'PENELITIAN_MAHASISWA') return 'Penelitian / Skripsi Mahasiswa';
+		if (p === 'LOMBA') return 'Lomba / Kompetisi';
+		if (p === 'ORGANISASI_MAHASISWA') return 'Kegiatan Organisasi Mahasiswa';
+		if (p === 'PRAKTIKUM') return 'Praktikum';
+		if (p === 'PENELITIAN_DOSEN') return 'Penelitian Dosen';
+		if (p === 'PENGABDIAN_MASYARAKAT') return 'Pengabdian Masyarakat';
+		return p ? p.replace(/_/g, ' ') : '';
+	}
 
 	function mapRole(role: string | null | undefined): string {
 		if (!role) return '';
@@ -260,6 +272,13 @@
 				<h1 class="text-3xl font-bold tracking-tight text-slate-900">Peminjaman Saya</h1>
 				<p class="text-slate-500">Ajukan dan pantau status peminjaman alat laboratorium Anda.</p>
 			</div>
+			<Button
+				href="/admin/peminjaman/ajukan"
+				class="w-full gap-2 bg-[#006a34] text-white hover:bg-[#268549] sm:w-fit"
+			>
+				<Plus class="size-4" />
+				Ajukan Peminjaman
+			</Button>
 		</div>
 
 		<!-- Summary Cards -->
@@ -388,21 +407,21 @@
 										<Table.Row
 											class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
 										>
-											<!-- Column 1: Laboratorium + mobile status badge + expand chevron -->
+											<!-- Column 1: Tujuan + mobile status badge + expand chevron -->
 											<Table.Cell
 												class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
 											>
 												<div class="flex flex-col">
 													<div class="flex items-center gap-2">
+														<span class="font-bold text-slate-900 md:font-medium">
+															{formatPurpose(lending.purpose)}
+														</span>
 														<Badge
 															variant="outline"
 															class={cn('px-1.5 py-0.5 text-[9px] md:hidden', statusInfo.class)}
 														>
 															{statusInfo.label}
 														</Badge>
-													</div>
-													<div class="mt-0.5 text-xs text-muted-foreground uppercase">
-														ID: {lending.id.slice(0, 8)}
 													</div>
 												</div>
 												<Button
@@ -422,46 +441,19 @@
 												</Button>
 											</Table.Cell>
 
-											<!-- Column 2: Tujuan -->
-											<Table.Cell
-												class={cn(
-													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
-												)}
-											>
-												<span class="text-xs font-semibold text-slate-400 md:hidden">Tujuan</span>
-												<span class="text-sm text-slate-600">{lending.purpose}</span>
-											</Table.Cell>
-
-											<!-- Column 3: Tanggal Pinjam -->
-											<Table.Cell
-												class={cn(
-													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
-												)}
-											>
-												<span class="text-xs font-semibold text-slate-400 md:hidden"
-													>Tanggal Pinjam</span
-												>
+											<!-- Column 2: Tanggal Pinjam -->
+											<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4 md:pl-2">
 												<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
 											</Table.Cell>
 
-											<!-- Column 4: Batas Kembali -->
-											<Table.Cell
-												class={cn(
-													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
-												)}
-											>
-												<span class="text-xs font-semibold text-slate-400 md:hidden"
-													>Batas Kembali</span
-												>
+											<!-- Column 3: Batas Kembali -->
+											<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4 md:pl-2">
 												<span class="text-sm text-slate-600"
 													>{lending.endDate ? formatDate(lending.endDate) : '-'}</span
 												>
 											</Table.Cell>
 
-											<!-- Column 5: Status (desktop only) -->
+											<!-- Column 4: Status (desktop only) -->
 											<Table.Cell
 												class="hidden text-center md:table-cell md:border-b md:px-6 md:py-4"
 											>
@@ -470,34 +462,45 @@
 												</Badge>
 											</Table.Cell>
 
-											<!-- Column 6: Aksi -->
+											<!-- Column 5: Aksi -->
 											<Table.Cell
-												class={cn(
-													expandedLendingsStudent[lending.id] ? 'flex' : 'hidden',
-													'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
-												)}
+												class="justify-end border-b-0 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right"
 											>
-												<Button
-													variant="outline"
-													size="sm"
-													onclick={() =>
-														(expandedLendingsStudent[lending.id] =
-															!expandedLendingsStudent[lending.id])}
-													class="w-full gap-1 sm:w-fit"
-												>
-													{#if expandedLendingsStudent[lending.id]}
-														<ChevronUp class="size-4" /> Tutup
-													{:else}
-														<ChevronDown class="size-4" /> Detail
+												<div class="flex items-center justify-end gap-2">
+													{#if lending.status === 'DRAFT'}
+														<Button
+															variant="outline"
+															size="sm"
+															href="/admin/peminjaman/{lending.id}/edit-mandiri"
+															class="gap-1 border-[#006a34] text-[#006a34] hover:bg-[#006a34]/10"
+														>
+															<Edit class="size-4" /> Edit
+														</Button>
 													{/if}
-												</Button>
+
+													<Button
+														variant="ghost"
+														size="icon"
+														onclick={() =>
+															(expandedLendingsStudent[lending.id] =
+																!expandedLendingsStudent[lending.id])}
+														class="hidden h-8 w-8 md:inline-flex"
+														aria-label="Toggle detail"
+													>
+														{#if expandedLendingsStudent[lending.id]}
+															<ChevronUp class="size-5" />
+														{:else}
+															<ChevronDown class="size-5" />
+														{/if}
+													</Button>
+												</div>
 											</Table.Cell>
 										</Table.Row>
 
 										<!-- Collapsible details row for Student (both desktop & mobile) -->
 										{#if expandedLendingsStudent[lending.id]}
 											<Table.Row class="bg-slate-50/30">
-												<Table.Cell colspan={6} class="border-b p-4 md:p-6">
+												<Table.Cell colspan={5} class="border-b p-4 md:p-6">
 													<div
 														class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300"
 													>
@@ -510,25 +513,75 @@
 																	<Info class="size-4 text-emerald-600" />
 																	Detail Informasi
 																</h4>
-																<div class="grid grid-cols-2 gap-y-3 text-sm">
-																	<span class="font-medium text-slate-500">Tujuan Peminjaman</span>
-																	<span class="font-semibold text-slate-900">{lending.purpose}</span
-																	>
+																<div class="space-y-3.5 text-sm">
+																	<div class="flex flex-col">
+																		<span
+																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																			>Tujuan Peminjaman</span
+																		>
+																		<span class="mt-0.5 font-semibold text-slate-950"
+																			>{formatPurpose(lending.purpose)}</span
+																		>
+																	</div>
 
-																	<span class="font-medium text-slate-500">Unit / Kelas</span>
-																	<span class="text-slate-900">{lending.unit}</span>
+																	<div class="flex flex-col">
+																		<span
+																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																			>Unit / Kelas</span
+																		>
+																		<span class="mt-0.5 text-slate-900">{lending.unit}</span>
+																	</div>
 
-																	<span class="font-medium text-slate-500">Tanggal Pinjam</span>
-																	<span class="flex items-center gap-1.5 text-slate-900">
-																		<Calendar class="size-3.5 text-slate-400" />
-																		{formatDate(lending.startDate)}
-																	</span>
+																	<div class="flex flex-col">
+																		<span
+																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																			>Tanggal Pinjam</span
+																		>
+																		<span class="mt-0.5 flex items-center gap-1.5 text-slate-900">
+																			<Calendar class="size-3.5 text-slate-400" />
+																			{formatDate(lending.startDate)}
+																		</span>
+																	</div>
 
-																	<span class="font-medium text-slate-500">Batas Pengembalian</span>
-																	<span class="flex items-center gap-1.5 text-slate-900">
-																		<Calendar class="size-3.5 text-slate-400" />
-																		{lending.endDate ? formatDate(lending.endDate) : '-'}
-																	</span>
+																	<div class="flex flex-col">
+																		<span
+																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																			>Rencana Pengembalian</span
+																		>
+																		<span class="mt-0.5 flex items-center gap-1.5 text-slate-900">
+																			<Calendar class="size-3.5 text-slate-400" />
+																			{lending.endDate ? formatDate(lending.endDate) : '-'}
+																		</span>
+																	</div>
+
+																	<div class="flex flex-col">
+																		<span
+																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																			>Nomor Surat</span
+																		>
+																		<span class="mt-0.5 text-slate-900"
+																			>{lending.nomorSurat || '-'}</span
+																		>
+																	</div>
+
+																	<div class="flex flex-col">
+																		<span
+																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																			>Surat Pengajuan</span
+																		>
+																		{#if lending.surat}
+																			<a
+																				href="/uploads/letter/{lending.surat}"
+																				target="_blank"
+																				class="mt-0.5 flex w-fit items-center gap-1 font-semibold text-[#006a34] hover:underline"
+																			>
+																				<FileText class="size-3.5" />
+																				Lihat Surat
+																			</a>
+																		{:else}
+																			<span class="mt-0.5 text-slate-400">-</span>
+																		{/if}
+																	</div>
 																</div>
 
 																{#if lending.status === 'REJECTED' && lending.rejectedReason}
@@ -573,7 +626,9 @@
 																			{#each lending.items as item (item.id)}
 																				<tr>
 																					<td class="px-4 py-2.5 font-medium"
-																						>{item.equipment?.item?.name || 'Alat'}</td
+																						>{item.equipment?.item?.name ||
+																							item.requestedItem?.name ||
+																							'Alat tidak diketahui'}</td
 																					>
 																					<td
 																						class="px-4 py-2.5 text-center font-bold text-slate-900"
@@ -776,7 +831,9 @@
 								<div class="flex flex-wrap gap-1">
 									{#each lending.items as item (item.id)}
 										<Badge variant="outline" class="px-1 py-0 text-[10px]">
-											{item.equipment?.item?.name}
+											{item.equipment?.item?.name ||
+												item.requestedItem?.name ||
+												'Alat tidak diketahui'}
 										</Badge>
 									{:else}
 										<span class="text-xs text-muted-foreground">Tidak ada alat</span>

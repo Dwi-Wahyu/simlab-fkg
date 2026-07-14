@@ -25,7 +25,6 @@
 	let { data } = $props();
 
 	let selectedDepartmentId = $state(data.filters.departmentId || '');
-	let selectedBlockId = $state(data.filters.blockId || '');
 	let showDeleteDialog = $state(false);
 	let moduleToDelete = $state<{ id: string; name: string } | null>(null);
 	let isDeleting = $state(false);
@@ -33,26 +32,17 @@
 
 	$effect(() => {
 		const deptId = data.filters.departmentId || '';
-		const blockId = data.filters.blockId || '';
 		if (selectedDepartmentId !== deptId) selectedDepartmentId = deptId;
-		if (selectedBlockId !== blockId) selectedBlockId = blockId;
 	});
 
 	const departmentTrigger = $derived(
 		data.departments.find((d) => d.id === selectedDepartmentId)?.name ?? 'Pilih Departemen'
 	);
 
-	const blockTrigger = $derived(
-		data.blocks.find((b) => b.id === selectedBlockId)?.name ?? 'Pilih Blok'
-	);
-
 	async function handleFilter() {
 		const url = new URL(page.url);
 		if (selectedDepartmentId) url.searchParams.set('departmentId', selectedDepartmentId);
 		else url.searchParams.delete('departmentId');
-
-		if (selectedBlockId) url.searchParams.set('blockId', selectedBlockId);
-		else url.searchParams.delete('blockId');
 
 		// Reset to first page when filtering
 		url.searchParams.set('page', '1');
@@ -68,7 +58,6 @@
 
 	async function resetFilter() {
 		selectedDepartmentId = '';
-		selectedBlockId = '';
 		const url = new URL(page.url);
 		url.searchParams.delete('departmentId');
 		url.searchParams.delete('blockId');
@@ -100,10 +89,7 @@
 				<Select.Root
 					type="single"
 					bind:value={selectedDepartmentId}
-					onValueChange={() => {
-						selectedBlockId = '';
-						handleFilter();
-					}}
+					onValueChange={handleFilter}
 				>
 					<Select.Trigger class="w-full text-left">
 						{departmentTrigger}
@@ -111,20 +97,6 @@
 					<Select.Content>
 						{#each data.departments as dept (dept.id)}
 							<Select.Item value={dept.id} label={dept.name}>{dept.name}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			</div>
-
-			<div class="grid w-full max-w-xs gap-1.5">
-				<label for="block" class="text-sm font-medium">Blok</label>
-				<Select.Root type="single" bind:value={selectedBlockId} onValueChange={handleFilter}>
-					<Select.Trigger class="w-full text-left">
-						{blockTrigger}
-					</Select.Trigger>
-					<Select.Content>
-						{#each data.blocks as block (block.id)}
-							<Select.Item value={block.id} label={block.name}>{block.name}</Select.Item>
 						{/each}
 					</Select.Content>
 				</Select.Root>

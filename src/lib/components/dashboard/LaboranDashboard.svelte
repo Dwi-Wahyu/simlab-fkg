@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { LaboranDashboardData } from '$lib/types/dashboard';
+	import { AlertTriangle } from '@lucide/svelte';
 
 	let { data }: { data: LaboranDashboardData } = $props();
 
@@ -51,6 +52,85 @@
 			</Card.Root>
 		{/each}
 	</div>
+
+	{#if data.returnAlerts && data.returnAlerts.length > 0}
+		<Card.Root>
+			<Card.Header>
+				<Card.Title class="flex items-center gap-2 text-red-700">
+					<AlertTriangle class="size-5 text-red-600" />
+					Peringatan Pengembalian Alat
+				</Card.Title>
+				<Card.Description
+					>Daftar peminjaman alat yang jatuh tempo besok atau sudah terlambat dikembalikan.</Card.Description
+				>
+			</Card.Header>
+			<Card.Content>
+				<div class="overflow-x-auto rounded-lg border">
+					<table class="w-full text-left text-xs">
+						<thead class="bg-slate-50 font-semibold text-slate-700 uppercase">
+							<tr>
+								<th class="px-4 py-3">Nama Peminjam</th>
+								<th class="px-4 py-3">Daftar Alat</th>
+								<th class="px-4 py-3">Tanggal Jatuh Tempo</th>
+								<th class="px-4 py-3 text-center">Status</th>
+								<th class="px-4 py-3 text-right">Aksi</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-100 bg-white text-slate-600">
+							{#each data.returnAlerts as alert}
+								{@const isOverdue = alert.dueDate ? new Date(alert.dueDate) < new Date() : false}
+								<tr class="hover:bg-slate-50/50">
+									<td class="px-4 py-3.5 font-medium text-slate-900">{alert.borrowerName}</td>
+									<td class="px-4 py-3.5 whitespace-normal">
+										<div class="flex flex-wrap gap-1">
+											{#each alert.items as item}
+												<Badge variant="outline" class="text-[10px]"
+													>{item.name} ({item.qty} pcs)</Badge
+												>
+											{/each}
+										</div>
+									</td>
+									<td class="px-4 py-3.5">
+										{alert.dueDate
+											? new Date(alert.dueDate).toLocaleDateString('id-ID', {
+													dateStyle: 'medium',
+													timeStyle: 'short'
+												})
+											: '-'}
+									</td>
+									<td class="px-4 py-3.5 text-center">
+										{#if isOverdue}
+											<span
+												class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800"
+											>
+												Terlambat
+											</span>
+										{:else}
+											<span
+												class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-800"
+											>
+												H-1 Kembali
+											</span>
+										{/if}
+									</td>
+									<td class="px-4 py-3.5 text-right">
+										<Button
+											variant="outline"
+											size="xs"
+											href="/admin/peminjaman/{alert.id}"
+											class="border-[#006a34] text-[#006a34] hover:bg-[#006a34]/10"
+										>
+											Proses Pengembalian
+										</Button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</Card.Content>
+		</Card.Root>
+	{/if}
 
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 		<Card.Root>

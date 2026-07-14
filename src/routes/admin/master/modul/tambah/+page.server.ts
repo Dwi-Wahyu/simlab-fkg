@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { practicumModule, block, department, practicumModuleCriteria } from '$lib/server/db/schema';
+import { practicumModule, block, department, practicumModuleCriteria, practicumCriteriaBand } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -31,11 +31,30 @@ export const actions: Actions = {
 			componentRaw === 'PREPARASI' || componentRaw === 'RESTORASI' ? componentRaw : null;
 		const scoringMode = (formData.get('scoringMode') as 'TOTAL' | 'RUBRIK') || 'TOTAL';
 
-		const criteriaNames = formData.getAll('criteriaName[]') as string[];
-		const criteriaMaxScores = formData.getAll('criteriaMaxScore[]').map(Number);
+		const criteriaJson = formData.get('criteriaJson') as string;
 
 		if (!name || !blockId) {
 			return fail(400, { message: 'Nama dan Blok wajib diisi' });
+		}
+
+		let parsedCriteria: {
+			name: string;
+			maxScore: number;
+			bands: {
+				minScore: number;
+				maxScore: number;
+				label?: string;
+				description: string;
+			}[];
+		}[] = [];
+
+		if (scoringMode === 'RUBRIK' && criteriaJson) {
+			try {
+				parsedCriteria = JSON.parse(criteriaJson);
+			} catch (e) {
+				console.error('Failed to parse criteriaJson', e);
+				return fail(400, { message: 'Format data kriteria tidak valid' });
+			}
 		}
 
 		try {
@@ -51,17 +70,34 @@ export const actions: Actions = {
 				});
 
 				if (scoringMode === 'RUBRIK') {
-					for (let i = 0; i < criteriaNames.length; i++) {
-						const cName = criteriaNames[i];
-						const cMaxScore = isNaN(criteriaMaxScores[i]) ? 100 : criteriaMaxScores[i];
-						if (cName.trim()) {
+					for (let i = 0; i < parsedCriteria.length; i++) {
+						const crit = parsedCriteria[i];
+						if (crit.name.trim()) {
+							const criteriaId = crypto.randomUUID();
 							await tx.insert(practicumModuleCriteria).values({
-								id: crypto.randomUUID(),
+								id: criteriaId,
 								moduleId,
-								name: cName.trim(),
-								maxScore: cMaxScore,
+								name: crit.name.trim(),
+								maxScore: isNaN(Number(crit.maxScore)) ? 100 : Number(crit.maxScore),
 								sortOrder: i
 							});
+
+							if (crit.bands && crit.bands.length > 0) {
+								for (let j = 0; j < crit.bands.length; j++) {
+									const band = crit.bands[j];
+									if (band.description.trim()) {
+										await tx.insert(practicumCriteriaBand).values({
+											id: crypto.randomUUID(),
+											criteriaId,
+											minScore: Number(band.minScore),
+											maxScore: Number(band.maxScore),
+											label: band.label?.trim() || null,
+											description: band.description.trim(),
+											sortOrder: j
+										});
+									}
+								}
+							}
 						}
 					}
 				}

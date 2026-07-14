@@ -1,5 +1,5 @@
 import { error, json } from '@sveltejs/kit';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, asc, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { equipment, item, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
@@ -13,6 +13,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '10');
 	const search = url.searchParams.get('search') || '';
+	const sort = url.searchParams.get('sort') || '';
 	const offset = (page - 1) * limit;
 
 	// Enforce laboratory filtering based on user role
@@ -90,7 +91,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.leftJoin(warehouse, eq(equipment.warehouseId, warehouse.id))
 		.where(whereClause)
 		.groupBy(item.id)
-		.orderBy(desc(item.createdAt))
+		.orderBy(
+			...(sort === 'asc'
+				? [asc(item.name)]
+				: sort === 'desc'
+					? [desc(item.name)]
+					: [desc(item.createdAt)])
+		)
 		.limit(limit)
 		.offset(offset);
 

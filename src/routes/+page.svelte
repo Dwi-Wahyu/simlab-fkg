@@ -276,8 +276,16 @@
 					</Dialog.Content>
 				</Dialog.Root>
 
+				<div class="mt-6 text-center text-sm text-muted-foreground">
+					Mahasiswa yang ingin meminjam alat untuk penelitian, lomba, atau kegiatan organisasi?
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+					<a href="/daftar" class="font-semibold text-[#006a34] hover:underline">
+						Daftar di sini
+					</a>
+				</div>
+
 				<footer class="mt-16 text-center">
-					<p class="text-xs text-[#6f7a6f]">© 2024 Laboratorium Keterampilan Klinik FKG</p>
+					<p class="text-xs text-[#6f7a6f]">© 2026 Laboratorium Keterampilan Klinik FKG</p>
 				</footer>
 			</div>
 		</section>

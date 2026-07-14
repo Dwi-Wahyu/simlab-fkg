@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpen, Edit, FlaskConical, Plus, Search, Trash2 } from '@lucide/svelte';
+	import { Edit, Plus, Search, Trash2 } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
@@ -8,7 +8,6 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as SearchableSelect from '$lib/components/ui/searchable-select';
 	import * as Table from '$lib/components/ui/table';
 	import { invalidateAll } from '$app/navigation';
 
@@ -24,8 +23,6 @@
 	// Form State for Create/Edit
 	let formName = $state('');
 	let formDescription = $state('');
-	let formBlockId = $state('');
-	let formLabId = $state('');
 
 	// Notification State
 	let showNotification = $state(false);
@@ -34,19 +31,14 @@
 	let notificationDescription = $state('');
 
 	const filteredSeries = $derived(
-		data.series.filter(
-			(s: any) =>
-				s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				(s.block?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-				(s.laboratorium?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+		data.series.filter((s: any) =>
+			s.name.toLowerCase().includes(searchQuery.toLowerCase())
 		)
 	);
 
 	function openCreate() {
 		formName = '';
 		formDescription = '';
-		formBlockId = '';
-		formLabId = '';
 		isDialogOpen = true;
 	}
 
@@ -54,8 +46,6 @@
 		selectedSeriesId = series.id;
 		formName = series.name;
 		formDescription = series.description || '';
-		formBlockId = series.blockId || '';
-		formLabId = series.laboratoriumId || '';
 		isEditDialogOpen = true;
 	}
 
@@ -63,13 +53,6 @@
 		selectedSeriesId = id;
 		isDeleteDialogOpen = true;
 	}
-
-	const blockTrigger = $derived(
-		data.blocks.find((b: any) => b.id === formBlockId)?.name ?? 'Pilih Blok (Opsional)'
-	);
-	const labTrigger = $derived(
-		data.labs.find((l: any) => l.id === formLabId)?.name ?? 'Pilih Laboratorium (Opsional)'
-	);
 </script>
 
 <NotificationDialog
@@ -82,32 +65,46 @@
 <ConfirmationDialog
 	bind:open={isDeleteDialogOpen}
 	title="Hapus Seri Praktikum?"
-	description="Tindakan ini tidak dapat dibatalkan. Jadwal yang menggunakan seri ini akan kehilangan referensi serinya."
+	description="Tindakan ini tidak dapat dibatalkan. Seri praktikum tidak dapat dihapus jika masih digunakan oleh jadwal praktikum atau riwayat logbook."
 	onAction={() => {
 		const formData = new FormData();
 		formData.append('id', selectedSeriesId);
-		// Manual form submission for confirmation dialog
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.action = '?/delete';
-		const input = document.createElement('input');
-		input.type = 'hidden';
-		input.name = 'id';
-		input.value = selectedSeriesId;
-		form.appendChild(input);
-		document.body.appendChild(form);
 
-		// Use enhance-like behavior but simpler for this manual trigger
 		fetch('?/delete', {
 			method: 'POST',
 			body: formData
 		}).then(async (res) => {
+			const result = await res.json();
 			isDeleteDialogOpen = false;
-			notificationType = 'success';
-			notificationTitle = 'Berhasil';
-			notificationDescription = 'Seri praktikum telah dihapus.';
+			
+			let isSuccess = true;
+			let errMsg = 'Terjadi kesalahan saat menghapus.';
+			
+			if (result && typeof result === 'object') {
+				if (result.type === 'failure' || result.type === 'error') {
+					isSuccess = false;
+					const dataObj = result.data ? JSON.parse(result.data) : null;
+					errMsg = dataObj?.message || 'Gagal menghapus seri.';
+				}
+			}
+
+			if (isSuccess) {
+				notificationType = 'success';
+				notificationTitle = 'Berhasil';
+				notificationDescription = 'Seri praktikum telah dihapus.';
+				await invalidateAll();
+			} else {
+				notificationType = 'error';
+				notificationTitle = 'Gagal';
+				notificationDescription = errMsg;
+			}
 			showNotification = true;
-			await invalidateAll();
+		}).catch((err) => {
+			isDeleteDialogOpen = false;
+			notificationType = 'error';
+			notificationTitle = 'Gagal';
+			notificationDescription = 'Koneksi bermasalah.';
+			showNotification = true;
 		});
 	}}
 />
@@ -129,7 +126,7 @@
 		<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
 		<Input
 			type="search"
-			placeholder="Cari nama seri, blok, atau lab..."
+			placeholder="Cari nama seri..."
 			class="pl-9"
 			bind:value={searchQuery}
 		/>
@@ -140,8 +137,6 @@
 			<Table.Header>
 				<Table.Row>
 					<Table.Head>Nama Seri</Table.Head>
-					<Table.Head>Blok</Table.Head>
-					<Table.Head>Laboratorium</Table.Head>
 					<Table.Head>Keterangan</Table.Head>
 					<Table.Head class="text-right">Aksi</Table.Head>
 				</Table.Row>
@@ -150,26 +145,6 @@
 				{#each filteredSeries as series (series.id)}
 					<Table.Row>
 						<Table.Cell class="font-bold">{series.name}</Table.Cell>
-						<Table.Cell>
-							{#if series.block}
-								<div class="flex items-center gap-2">
-									<BookOpen class="h-4 w-4 text-muted-foreground" />
-									{series.block.name}
-								</div>
-							{:else}
-								<span class="text-xs text-muted-foreground italic">-</span>
-							{/if}
-						</Table.Cell>
-						<Table.Cell>
-							{#if series.laboratorium}
-								<div class="flex items-center gap-2">
-									<FlaskConical class="h-4 w-4 text-muted-foreground" />
-									{series.laboratorium.name}
-								</div>
-							{:else}
-								<span class="text-xs text-muted-foreground italic">-</span>
-							{/if}
-						</Table.Cell>
 						<Table.Cell class="truncate">
 							<span class="text-xs text-muted-foreground">
 								{series.description || '-'}
@@ -198,7 +173,7 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={5} class="h-24 text-center">
+						<Table.Cell colspan={3} class="h-24 text-center">
 							Tidak ada data seri praktikum ditemukan.
 						</Table.Cell>
 					</Table.Row>
@@ -213,7 +188,7 @@
 	<Dialog.Content>
 		<Dialog.Header>
 			<Dialog.Title>Tambah Seri Baru</Dialog.Title>
-			<Dialog.Description>Buat grup untuk jadwal praktikum.</Dialog.Description>
+			<Dialog.Description>Buat grup untuk jadwal praktikum generik.</Dialog.Description>
 		</Dialog.Header>
 		<form
 			method="POST"
@@ -241,6 +216,9 @@
 					required
 					bind:value={formName}
 				/>
+				<p class="text-[10px] text-muted-foreground italic">
+					Bisa dipakai untuk jadwal di blok dan laboratorium mana pun.
+				</p>
 			</div>
 
 			<div class="space-y-2">
@@ -251,40 +229,6 @@
 					placeholder="Deskripsi singkat..."
 					bind:value={formDescription}
 				/>
-			</div>
-
-			<div class="space-y-2">
-				<Label for="blockId">Blok</Label>
-				<SearchableSelect.Root type="single" bind:value={formBlockId}>
-					<SearchableSelect.Trigger class="w-full">
-						{blockTrigger}
-					</SearchableSelect.Trigger>
-					<SearchableSelect.Content searchPlaceholder="Cari blok...">
-						<SearchableSelect.Item value="" label="Tanpa Blok">Tanpa Blok</SearchableSelect.Item>
-						{#each data.blocks as b (b.id)}
-							<SearchableSelect.Item value={b.id} label={b.name}>{b.name}</SearchableSelect.Item>
-						{/each}
-					</SearchableSelect.Content>
-				</SearchableSelect.Root>
-				<input type="hidden" name="blockId" value={formBlockId} />
-			</div>
-
-			<div class="space-y-2">
-				<Label for="labId">Laboratorium</Label>
-				<SearchableSelect.Root type="single" bind:value={formLabId}>
-					<SearchableSelect.Trigger class="w-full">
-						{labTrigger}
-					</SearchableSelect.Trigger>
-					<SearchableSelect.Content searchPlaceholder="Cari laboratorium...">
-						<SearchableSelect.Item value="" label="Tanpa Laboratorium"
-							>Tanpa Lab</SearchableSelect.Item
-						>
-						{#each data.labs as l (l.id)}
-							<SearchableSelect.Item value={l.id} label={l.name}>{l.name}</SearchableSelect.Item>
-						{/each}
-					</SearchableSelect.Content>
-				</SearchableSelect.Root>
-				<input type="hidden" name="labId" value={formLabId} />
 			</div>
 
 			<Dialog.Footer>
@@ -330,44 +274,8 @@
 				<Input id="description-edit" name="description" bind:value={formDescription} />
 			</div>
 
-			<div class="space-y-2">
-				<Label for="blockId-edit">Blok</Label>
-				<SearchableSelect.Root type="single" bind:value={formBlockId}>
-					<SearchableSelect.Trigger class="w-full">
-						{blockTrigger}
-					</SearchableSelect.Trigger>
-					<SearchableSelect.Content searchPlaceholder="Cari blok...">
-						<SearchableSelect.Item value="" label="Tanpa Blok">Tanpa Blok</SearchableSelect.Item>
-						{#each data.blocks as b (b.id)}
-							<SearchableSelect.Item value={b.id} label={b.name}>{b.name}</SearchableSelect.Item>
-						{/each}
-					</SearchableSelect.Content>
-				</SearchableSelect.Root>
-				<input type="hidden" name="blockId" value={formBlockId} />
-			</div>
-
-			<div class="space-y-2">
-				<Label for="labId-edit">Laboratorium</Label>
-				<SearchableSelect.Root type="single" bind:value={formLabId}>
-					<SearchableSelect.Trigger class="w-full">
-						{labTrigger}
-					</SearchableSelect.Trigger>
-					<SearchableSelect.Content searchPlaceholder="Cari laboratorium...">
-						<SearchableSelect.Item value="" label="Tanpa Laboratorium"
-							>Tanpa Lab</SearchableSelect.Item
-						>
-						{#each data.labs as l (l.id)}
-							<SearchableSelect.Item value={l.id} label={l.name}>{l.name}</SearchableSelect.Item>
-						{/each}
-					</SearchableSelect.Content>
-				</SearchableSelect.Root>
-				<input type="hidden" name="labId" value={formLabId} />
-			</div>
-
 			<Dialog.Footer>
-				<Button type="button" variant="ghost" onclick={() => (isEditDialogOpen = false)}
-					>Batal</Button
-				>
+				<Button type="button" variant="ghost" onclick={() => (isEditDialogOpen = false)}>Batal</Button>
 				<Button type="submit">Simpan Perubahan</Button>
 			</Dialog.Footer>
 		</form>

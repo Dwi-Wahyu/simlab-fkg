@@ -116,11 +116,11 @@
 				<div class="hidden items-center gap-6 md:flex">
 					<PWAInstallButton />
 
-					<!-- <NotificationBell
+					<NotificationBell
 						notifications={data.notifications}
 						unreadCount={data.unreadCount}
 						organizationId={data.user.laboratorium?.id}
-					/> -->
+					/>
 
 					<div class="h-8 w-px bg-slate-200"></div>
 
@@ -187,7 +187,7 @@
 									<User class="size-5 text-slate-500" />
 									<span>Profil Saya</span>
 								</a>
-								<!-- <a
+								<a
 									href="/admin/notifikasi"
 									class="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-slate-100 focus:bg-slate-100"
 								>
@@ -200,7 +200,7 @@
 											{data.unreadCount}
 										</span>
 									{/if}
-								</a> -->
+								</a>
 								<a
 									href="/admin/pengaturan"
 									class="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-slate-100 focus:bg-slate-100"

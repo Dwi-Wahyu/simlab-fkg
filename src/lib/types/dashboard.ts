@@ -118,6 +118,14 @@ export interface PenelitiDashboardData {
 		laboratoriumName: string;
 	}[];
 	totalBorrowedThisMonth: number;
+	returnAlerts?: {
+		id: string;
+		dueDate: Date | null;
+		items: {
+			name: string;
+			qty: number;
+		}[];
+	}[];
 }
 
 // --- Teknisi ---
@@ -186,6 +194,15 @@ export interface LaboranDashboardData {
 		status: string;
 		createdAt: Date;
 	} | null;
+	returnAlerts?: {
+		id: string;
+		dueDate: Date | null;
+		borrowerName: string;
+		items: {
+			name: string;
+			qty: number;
+		}[];
+	}[];
 }
 
 // Union type untuk semua dashboard

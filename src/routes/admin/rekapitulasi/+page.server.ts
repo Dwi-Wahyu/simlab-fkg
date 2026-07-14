@@ -24,9 +24,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	// 1. Instructor + series pickers, scoped to this koordinator/kepalaLab's lab.
 	const seriesOptions = await db.query.practicumSeries.findMany({
-		where: labId
-			? or(eq(practicumSeries.laboratoriumId, labId), isNull(practicumSeries.laboratoriumId))
-			: undefined,
 		orderBy: (s, { asc }) => [asc(s.name)]
 	});
 

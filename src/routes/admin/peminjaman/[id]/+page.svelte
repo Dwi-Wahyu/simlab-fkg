@@ -27,8 +27,26 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { cn } from '$lib/utils';
+	import { toast } from '$lib/components/toast';
 
 	let { data } = $props();
+
+	let approveForm = $state<HTMLFormElement | null>(null);
+	let rejectForm = $state<HTMLFormElement | null>(null);
+	let isApproving = $state(false);
+	let isRejecting = $state(false);
+
+	let showApproveDialog = $state(false);
+	let showRejectDialog = $state(false);
+	let rejectReason = $state('');
+	let selectedLabId = $state('');
+	$effect(() => {
+		selectedLabId = data.user?.laboratorium?.id || '';
+	});
+
+	const labTriggerContent = $derived(
+		data.labs?.find((l: any) => l.id === selectedLabId)?.name ?? 'Pilih laboratorium'
+	);
 
 	// State for return mode
 	let isReturnMode = $state(false);
@@ -122,6 +140,11 @@
 					label: 'Ditolak',
 					class: 'bg-red-100 text-red-700 border-red-200'
 				};
+			case 'DRAFT':
+				return {
+					label: 'Menunggu Verifikasi',
+					class: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+				};
 			default:
 				return { label: status, class: '' };
 		}
@@ -164,7 +187,11 @@
 							<div class="flex items-start justify-between gap-4">
 								<div class="flex items-center gap-4">
 									<div>
-										<h4 class="font-bold text-slate-900">{item.equipment?.item?.name}</h4>
+										<h4 class="font-bold text-slate-900">
+											{item.equipment?.item?.name ||
+												item.requestedItem?.name ||
+												'Alat tidak diketahui'}
+										</h4>
 										<p class="text-xs tracking-wider text-muted-foreground uppercase">
 											SN: {item.equipment?.serialNumber || '-'}
 										</p>
@@ -172,11 +199,17 @@
 								</div>
 								<div class="text-right">
 									<div class="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-										Kondisi Awal
+										Kondisi Awal / Qty
 									</div>
-									<Badge variant="outline" class="mt-1 text-[10px] uppercase"
-										>{item.equipment?.condition}</Badge
-									>
+									{#if item.equipment}
+										<Badge variant="outline" class="mt-1 text-[10px] uppercase"
+											>{item.equipment.condition}</Badge
+										>
+									{:else}
+										<Badge variant="outline" class="mt-1 text-[10px] uppercase"
+											>{item.qty} Unit</Badge
+										>
+									{/if}
 								</div>
 							</div>
 
@@ -496,6 +529,17 @@
 								</div>
 							</div>
 
+							{#if data.lending.status === 'REJECTED' && data.lending.rejectedReason}
+								<div
+									class="space-y-1 rounded-lg border border-red-100 bg-red-50/50 p-3 text-red-900 sm:col-span-2"
+								>
+									<Label class="text-[10px] font-bold text-red-700 uppercase"
+										>Alasan Penolakan</Label
+									>
+									<p class="text-sm font-medium">{data.lending.rejectedReason}</p>
+								</div>
+							{/if}
+
 							{#if data.lending.nomorSurat || data.lending.surat}
 								<div class="grid gap-4 sm:grid-cols-2">
 									{#if data.lending.nomorSurat}
@@ -537,7 +581,29 @@
 					<Card.Title class="text-sm font-bold text-slate-500 uppercase">Aksi Peminjaman</Card.Title
 					>
 				</Card.Header>
-				<Card.Content class="flex flex-col gap-3"></Card.Content>
+				<Card.Content class="flex flex-col gap-3">
+					{#if ['kepalaLab', 'superadmin'].includes(data.user?.role) && data.lending.status === 'DRAFT'}
+						<Button
+							class="w-full gap-2 rounded-xl bg-green-600 text-white hover:bg-green-700"
+							onclick={() => (showApproveDialog = true)}
+						>
+							<CheckCircle2 class="size-4" />
+							Setujui Pengajuan
+						</Button>
+						<Button
+							variant="destructive"
+							class="w-full gap-2 rounded-xl"
+							onclick={() => (showRejectDialog = true)}
+						>
+							<XCircle class="size-4" />
+							Tolak Pengajuan
+						</Button>
+					{:else}
+						<div class="py-4 text-center text-xs text-muted-foreground">
+							Tidak ada aksi yang tersedia
+						</div>
+					{/if}
+				</Card.Content>
 				<Card.Footer class="bg-slate-50/50 pt-4">
 					<div class="w-full text-center">
 						<p class="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
@@ -579,3 +645,123 @@
 	}}
 	onCancel={() => (showDeleteDialog = false)}
 />
+
+<form
+	bind:this={approveForm}
+	method="POST"
+	action="?/approveLending"
+	use:enhance={() => {
+		isApproving = true;
+		return async ({ result }) => {
+			isApproving = false;
+			if (result.type === 'success') {
+				notificationType = 'success';
+				notificationTitle = 'Peminjaman Disetujui';
+				notificationDescription = 'Pengajuan peminjaman berhasil disetujui.';
+				showNotification = true;
+				await invalidateAll();
+			} else {
+				notificationType = 'error';
+				notificationTitle = 'Gagal';
+				notificationDescription =
+					(result as any).data?.message || 'Terjadi kesalahan saat menyetujui.';
+				showNotification = true;
+			}
+		};
+	}}
+>
+	<input type="hidden" name="laboratoriumId" value={selectedLabId} />
+</form>
+
+<form
+	bind:this={rejectForm}
+	method="POST"
+	action="?/rejectLending"
+	use:enhance={() => {
+		isRejecting = true;
+		return async ({ result }) => {
+			isRejecting = false;
+			if (result.type === 'success') {
+				notificationType = 'success';
+				notificationTitle = 'Peminjaman Ditolak';
+				notificationDescription = 'Pengajuan peminjaman telah ditolak.';
+				showNotification = true;
+				await invalidateAll();
+			} else {
+				notificationType = 'error';
+				notificationTitle = 'Gagal';
+				notificationDescription =
+					(result as any).data?.message || 'Terjadi kesalahan saat menolak.';
+				showNotification = true;
+			}
+		};
+	}}
+>
+	<input type="hidden" name="reason" value={rejectReason} />
+</form>
+
+<ConfirmationDialog
+	bind:open={showApproveDialog}
+	type="success"
+	title="Setujui Peminjaman"
+	description={data.user?.role === 'superadmin'
+		? 'Silakan pilih laboratorium yang akan melayani peminjaman ini sebelum menyetujui.'
+		: 'Apakah Anda yakin ingin menyetujui pengajuan peminjaman ini?'}
+	cancelLabel="Batal"
+	actionLabel="Setujui"
+	loading={isApproving}
+	onAction={() => {
+		if (data.user?.role === 'superadmin' && !selectedLabId) {
+			toast.destructive('Laboratorium wajib dipilih');
+			return;
+		}
+		showApproveDialog = false;
+		if (approveForm) approveForm.requestSubmit();
+	}}
+>
+	{#if data.user?.role === 'superadmin'}
+		<div class="space-y-2">
+			<Label class="text-xs font-bold text-slate-500 uppercase">Laboratorium Tujuan</Label>
+			<Select.Root type="single" bind:value={selectedLabId}>
+				<Select.Trigger class="w-full">
+					{labTriggerContent}
+				</Select.Trigger>
+				<Select.Content>
+					{#each data.labs || [] as lab}
+						<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+		</div>
+	{/if}
+</ConfirmationDialog>
+
+<ConfirmationDialog
+	bind:open={showRejectDialog}
+	type="error"
+	title="Tolak Peminjaman"
+	description="Silakan masukkan alasan penolakan pengajuan peminjaman ini."
+	cancelLabel="Batal"
+	actionLabel="Tolak"
+	loading={isRejecting}
+	onAction={() => {
+		if (!rejectReason.trim()) {
+			toast.destructive('Alasan penolakan wajib diisi');
+			return;
+		}
+		showRejectDialog = false;
+		if (rejectForm) rejectForm.requestSubmit();
+	}}
+>
+	<div class="space-y-2">
+		<Label for="reject-reason" class="text-xs font-bold text-slate-500 uppercase"
+			>Alasan Penolakan</Label
+		>
+		<Textarea
+			id="reject-reason"
+			bind:value={rejectReason}
+			placeholder="Alasan wajib diisi..."
+			class="min-h-24"
+		/>
+	</div>
+</ConfirmationDialog>

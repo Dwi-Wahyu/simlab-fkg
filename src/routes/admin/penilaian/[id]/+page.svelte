@@ -6,6 +6,7 @@
 		ClipboardEdit,
 		FileText,
 		Filter,
+		Info,
 		Search,
 		Users
 	} from '@lucide/svelte';
@@ -19,6 +20,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import * as Popover from '$lib/components/ui/popover/index.js';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -436,7 +438,54 @@
 										rowspan={hasGroupedColumns ? 2 : 1}
 										class="max-w-[200px] min-w-[120px] px-4 py-3 text-center align-middle font-semibold break-words whitespace-normal text-slate-900"
 									>
-										{col.module.name}
+										<div class="flex items-center justify-center gap-1">
+											<span>{col.module.name}</span>
+											{#if col.module.criteria && col.module.criteria.length > 0}
+												<Popover.Root>
+													<Popover.Trigger>
+														<Button
+															variant="ghost"
+															size="icon"
+															class="flex h-5 w-5 items-center justify-center rounded-full p-0 hover:bg-slate-200/50"
+														>
+															<Info class="h-3.5 w-3.5 text-slate-500" />
+														</Button>
+													</Popover.Trigger>
+													<Popover.Content
+														class="max-h-[350px] w-80 space-y-3 overflow-y-auto rounded-lg border bg-white p-4 text-left text-slate-900 shadow-lg"
+													>
+														<div class="space-y-2">
+															<h4 class="border-b pb-1 text-xs font-bold text-slate-800">
+																Panduan Rubrik: {col.module.name}
+															</h4>
+															{#each col.module.criteria as crit}
+																<div class="space-y-1">
+																	<p class="text-[11px] font-semibold text-slate-800">
+																		{crit.name} (Max: {crit.maxScore})
+																	</p>
+																	{#if crit.description}
+																		<p class="text-[10px] text-slate-500 italic">
+																			{crit.description}
+																		</p>
+																	{/if}
+																	{#if crit.bands && crit.bands.length > 0}
+																		<div class="mt-0.5 space-y-1 border-l border-slate-200 pl-2">
+																			{#each crit.bands as band}
+																				<p class="text-[10px] text-slate-600">
+																					<span class="font-mono font-semibold text-primary"
+																						>{band.minScore}-{band.maxScore}</span
+																					>: {band.description}
+																				</p>
+																			{/each}
+																		</div>
+																	{/if}
+																</div>
+															{/each}
+														</div>
+													</Popover.Content>
+												</Popover.Root>
+											{/if}
+										</div>
 									</Table.Head>
 								{:else}
 									<Table.Head
@@ -470,7 +519,56 @@
 											<Table.Head
 												class="w-[100px] border-l px-3 py-1.5 text-center text-xs font-semibold text-slate-600"
 											>
-												{sub.component === 'PREPARASI' ? 'PREP' : 'RESTO'}
+												<div class="flex items-center justify-center gap-1">
+													<span>{sub.component === 'PREPARASI' ? 'PREP' : 'RESTO'}</span>
+													{#if sub.module.criteria && sub.module.criteria.length > 0}
+														<Popover.Root>
+															<Popover.Trigger>
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	class="flex h-4 w-4 items-center justify-center rounded-full p-0 hover:bg-slate-200/50"
+																>
+																	<Info class="h-3 w-3 text-slate-400" />
+																</Button>
+															</Popover.Trigger>
+															<Popover.Content
+																class="max-h-[350px] w-80 space-y-3 overflow-y-auto rounded-lg border bg-white p-4 text-left text-slate-900 shadow-lg"
+															>
+																<div class="space-y-2">
+																	<h4 class="border-b pb-1 text-xs font-bold text-slate-800">
+																		Panduan Rubrik: {col.label} ({sub.component})
+																	</h4>
+																	{#each sub.module.criteria as crit}
+																		<div class="space-y-1">
+																			<p class="text-[11px] font-semibold text-slate-800">
+																				{crit.name} (Max: {crit.maxScore})
+																			</p>
+																			{#if crit.description}
+																				<p class="text-[10px] text-slate-500 italic">
+																					{crit.description}
+																				</p>
+																			{/if}
+																			{#if crit.bands && crit.bands.length > 0}
+																				<div
+																					class="mt-0.5 space-y-1 border-l border-slate-200 pl-2"
+																				>
+																					{#each crit.bands as band}
+																						<p class="text-[10px] text-slate-600">
+																							<span class="font-mono font-semibold text-primary"
+																								>{band.minScore}-{band.maxScore}</span
+																							>: {band.description}
+																						</p>
+																					{/each}
+																				</div>
+																			{/if}
+																		</div>
+																	{/each}
+																</div>
+															</Popover.Content>
+														</Popover.Root>
+													{/if}
+												</div>
 											</Table.Head>
 										{/each}
 									{/if}
@@ -799,31 +897,31 @@
 				<div
 					class="flex items-center justify-between rounded-xl border border-[#2D5A43]/10 bg-[#2D5A43]/5 p-3"
 				>
-					<span class="text-xs font-bold text-slate-700 uppercase">Live Nilai Akhir:</span>
+					<span class="text-xs font-bold text-slate-700 uppercase">Nilai Akhir:</span>
 					<span class="text-2xl font-black text-[#2D5A43]">
 						{activeModule.scoringMode === 'CHECKLIST' ? `${liveChecklistScore}%` : liveRubrikScore}
 					</span>
 				</div>
-			</div>
 
-			<Dialog.Footer class="border-t pt-4">
-				<Button
-					type="button"
-					variant="outline"
-					disabled={isSubmittingDialog}
-					onclick={() => (isScoringDialogOpen = false)}
-				>
-					Batal
-				</Button>
-				<Button
-					type="button"
-					disabled={isSubmittingDialog}
-					onclick={submitDialogScore}
-					class="bg-[#2D5A43] text-white hover:bg-[#234735]"
-				>
-					{isSubmittingDialog ? 'Menyimpan...' : 'Simpan Penilaian'}
-				</Button>
-			</Dialog.Footer>
+				<div>
+					<Button
+						type="button"
+						variant="outline"
+						disabled={isSubmittingDialog}
+						onclick={() => (isScoringDialogOpen = false)}
+					>
+						Batal
+					</Button>
+					<Button
+						type="button"
+						disabled={isSubmittingDialog}
+						onclick={submitDialogScore}
+						class="bg-[#2D5A43] text-white hover:bg-[#234735]"
+					>
+						{isSubmittingDialog ? 'Menyimpan...' : 'Simpan Penilaian'}
+					</Button>
+				</div>
+			</div>
 		{/if}
 	</Dialog.Content>
 </Dialog.Root>

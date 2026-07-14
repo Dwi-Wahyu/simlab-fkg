@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { ArrowLeft, FileQuestion, Home, RefreshCw, ShieldAlert } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { FileQuestion, ShieldAlert, ArrowLeft, Home, RefreshCw } from '@lucide/svelte';
 
 	const status = $derived(page.status);
 	const message = $derived(page.error?.message || 'Terjadi kesalahan sistem.');
@@ -114,7 +114,7 @@
 		</div>
 
 		<footer class="pt-8 text-xs text-slate-400">
-			<p>© 2024 Laboratorium Keterampilan Klinik FKG</p>
+			<p>© 2026 Laboratorium Keterampilan Klinik FKG</p>
 		</footer>
 	</div>
 </div>

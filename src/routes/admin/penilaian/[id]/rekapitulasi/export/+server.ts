@@ -6,7 +6,8 @@ import {
 	practicumAssessment,
 	user,
 	kelompokMahasiswa,
-	kelompokMahasiswaMember
+	kelompokMahasiswaMember,
+	practicumModuleCriteria
 } from '$lib/server/db/schema';
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { buildRekapColumns } from '$lib/rekap/buildRekapMatrix';
@@ -143,10 +144,37 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			(a) => a.studentId === studentId && a.scheduleId === scheduleId && a.moduleId === moduleId
 		)?.score ?? null;
 
+	const moduleIds = [...new Set(allSchedules.flatMap((s) => s.modules.map((m) => m.moduleId)))];
+
+	let rubricRows: (string | number)[][] = [];
+	if (moduleIds.length > 0) {
+		const criteriaWithBands = await db.query.practicumModuleCriteria.findMany({
+			where: inArray(practicumModuleCriteria.moduleId, moduleIds),
+			orderBy: (c, { asc }) => [asc(c.sortOrder)],
+			with: {
+				bands: {
+					orderBy: (b, { desc }) => [desc(b.minScore)]
+				}
+			}
+		});
+
+		rubricRows = criteriaWithBands.flatMap((crit, i) => {
+			const code = String.fromCharCode(65 + i); // A, B, C...
+			if (crit.bands.length === 0) return [];
+			return crit.bands.map((band, bi) => [
+				bi === 0 ? code : '',
+				bi === 0 ? crit.name : '',
+				`${band.minScore}-${band.maxScore}`,
+				band.description
+			]);
+		});
+	}
+
 	const buffer = buildRekapWorkbookBuffer({
 		groups,
 		sheets,
-		getScore
+		getScore,
+		rubricRows
 	});
 
 	const fileName = `rekapitulasi-nilai-${(schedule.series?.name ?? schedule.title).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.xlsx`;

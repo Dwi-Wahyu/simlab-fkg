@@ -3,11 +3,16 @@ import { notification } from '$lib/server/db/schema';
 import { and, desc, eq, or, count } from 'drizzle-orm';
 import type { LayoutServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
+import { maybeRunLendingReminderScan } from '$lib/server/reminder';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user) {
 		return redirect(302, `/`);
 	}
+
+	maybeRunLendingReminderScan().catch((err) =>
+		console.error('[reminder-scan] gagal menjalankan scan:', err)
+	);
 
 	const latestNotifications = await db.query.notification.findMany({
 		where: (notif, { eq, or }) =>

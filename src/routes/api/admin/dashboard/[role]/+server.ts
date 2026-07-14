@@ -293,6 +293,20 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				orderBy: [desc(inventoryReport.createdAt)]
 			});
 
+			const returnAlerts = labId
+				? await db.query.lending.findMany({
+						where: and(
+							eq(lending.laboratoriumId, labId),
+							eq(lending.status, 'DIPINJAM'),
+							sql`${lending.endDate} IS NOT NULL AND DATE(${lending.endDate}) <= DATE(DATE_ADD(NOW(), INTERVAL 1 DAY))`
+						),
+						with: {
+							requestedByUser: { columns: { name: true, username: true } },
+							items: { with: { equipment: { with: { item: true } } } }
+						}
+					})
+				: [];
+
 			return json({
 				role: 'laboran',
 				data: {
@@ -310,7 +324,16 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 								status: latestReport.status,
 								createdAt: latestReport.createdAt
 							}
-						: null
+						: null,
+					returnAlerts: returnAlerts.map((l) => ({
+						id: l.id,
+						dueDate: l.endDate,
+						borrowerName: l.requestedByUser?.name || l.requestedByUser?.username || 'Peminjam',
+						items: l.items.map((i) => ({
+							name: i.equipment?.item?.name || 'Alat',
+							qty: i.qty
+						}))
+					}))
 				}
 			});
 		}
@@ -402,6 +425,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				.from(lending)
 				.where(and(eq(lending.requestedBy, userId), gte(lending.createdAt, startOfMonth)));
 
+			const dueSoonOrOverdue = await db.query.lending.findMany({
+				where: and(
+					eq(lending.requestedBy, userId),
+					eq(lending.status, 'DIPINJAM'),
+					sql`${lending.endDate} IS NOT NULL AND DATE(${lending.endDate}) <= DATE(DATE_ADD(NOW(), INTERVAL 1 DAY))`
+				),
+				with: { items: { with: { equipment: { with: { item: true } } } } }
+			});
+
 			return json({
 				role: 'peneliti',
 				data: {
@@ -418,7 +450,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 						status: 'COMPLETED'
 					})),
 					upcomingPracticum: [], // TODO: join ke practicumClassMember → practicumSchedule jika diperlukan
-					totalBorrowedThisMonth: Number(totalBorrowed.value)
+					totalBorrowedThisMonth: Number(totalBorrowed.value),
+					returnAlerts: dueSoonOrOverdue.map((l) => ({
+						id: l.id,
+						dueDate: l.endDate,
+						items: l.items.map((i) => ({
+							name: i.equipment?.item?.name || 'Alat',
+							qty: i.qty
+						}))
+					}))
 				}
 			});
 		}

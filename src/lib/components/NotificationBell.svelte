@@ -190,7 +190,7 @@
 					variant="ghost"
 					class="h-8 w-full text-xs font-medium"
 					size="sm"
-					href="/{organizationId}/notifikasi"
+					href="/admin/notifikasi"
 				>
 					Tampilkan Semua
 				</Button>

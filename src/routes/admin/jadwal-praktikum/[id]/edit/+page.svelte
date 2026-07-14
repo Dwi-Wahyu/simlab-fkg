@@ -244,8 +244,6 @@
 								onValueChange={(v) => {
 									const seri = data.series.find((s: any) => s.id === v);
 									if (seri) {
-										if (seri.laboratoriumId) selectedLab = seri.laboratoriumId;
-										if (seri.blockId) selectedBlock = seri.blockId;
 										selectedModules = [];
 									}
 								}}
@@ -515,7 +513,7 @@
 						<p class="text-center text-sm text-muted-foreground py-8">DPJP tidak ditemukan.</p>
 					{/each}
 				</Card.Content>
-				<Card.Footer class="flex flex-col items-stretch gap-2 border-t bg-muted/20 p-4">
+				<Card.Footer class="flex flex-col items-stretch gap-2 border-t bg-muted/20 p-4 pb-0">
 					<div class="flex items-center justify-between">
 						<span class="text-sm text-muted-foreground">
 							{selectedInstructorIds.length} DPJP dipilih

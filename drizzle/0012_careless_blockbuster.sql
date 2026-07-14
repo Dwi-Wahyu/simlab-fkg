@@ -1,0 +1,3 @@
+ALTER TABLE `lending` MODIFY COLUMN `purpose` enum('PRAKTIKUM','PENELITIAN_DOSEN','PENGABDIAN_MASYARAKAT','PENELITIAN_MAHASISWA','LOMBA','ORGANISASI_MAHASISWA') NOT NULL;--> statement-breakpoint
+ALTER TABLE `lending_item` ADD `requested_item_id` varchar(36);--> statement-breakpoint
+ALTER TABLE `lending_item` ADD CONSTRAINT `lending_item_requested_item_id_item_id_fk` FOREIGN KEY (`requested_item_id`) REFERENCES `item`(`id`) ON DELETE no action ON UPDATE no action;

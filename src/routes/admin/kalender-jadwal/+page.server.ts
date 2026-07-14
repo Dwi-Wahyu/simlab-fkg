@@ -11,9 +11,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const role = currentUser.role;
 	const userId = currentUser.id;
 
-	const series = await db.query.practicumSeries.findMany({
-		with: { laboratorium: true }
-	});
+	const series = await db.query.practicumSeries.findMany();
 
 	const instructors =
 		role !== 'instruktur'

@@ -21,7 +21,8 @@ export const GET: RequestHandler = async ({ locals }) => {
 							with: {
 								item: true
 							}
-						}
+						},
+						requestedItem: true
 					}
 				}
 			},

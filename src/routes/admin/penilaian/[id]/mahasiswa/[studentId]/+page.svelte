@@ -211,38 +211,58 @@
 										>
 										<div class="space-y-4 rounded-xl border bg-muted/5 p-4">
 											{#each criteria as criterion (criterion.id)}
-												<div
-													class="flex items-center justify-between gap-4 border-b pb-4 last:border-0 last:pb-0"
-												>
-													<div class="flex flex-col">
-														<span class="text-sm font-semibold">{criterion.name}</span>
-														{#if criterion.description}
-															<span class="text-xs text-muted-foreground"
-																>{criterion.description}</span
+												<div class="flex flex-col gap-3 border-b pb-4 last:border-0 last:pb-0">
+													<div class="flex items-center justify-between gap-4">
+														<div class="flex flex-col">
+															<span class="text-sm font-semibold">{criterion.name}</span>
+															{#if criterion.description}
+																<span class="text-xs text-muted-foreground"
+																	>{criterion.description}</span
+																>
+															{/if}
+														</div>
+														<div class="flex items-center gap-2">
+															<Input
+																type="number"
+																name="criteriaScore_{criterion.id}"
+																min="0"
+																max={criterion.maxScore}
+																class="w-24 text-right font-mono font-bold"
+																bind:value={criteriaValues[criterion.id]}
+																disabled={!isOriginalInstructor}
+																required
+															/>
+															<span class="text-xs font-semibold text-muted-foreground"
+																>/ {criterion.maxScore}</span
 															>
-														{/if}
+														</div>
 													</div>
-													<div class="flex items-center gap-2">
-														<Input
-															type="number"
-															name="criteriaScore_{criterion.id}"
-															min="0"
-															max={criterion.maxScore}
-															class="w-24 text-right font-mono font-bold"
-															bind:value={criteriaValues[criterion.id]}
-															disabled={!isOriginalInstructor}
-															required
-														/>
-														<span class="text-xs font-semibold text-muted-foreground"
-															>/ {criterion.maxScore}</span
-														>
-													</div>
+
+													{#if criterion.bands && criterion.bands.length > 0}
+														<div class="ml-1 space-y-1 rounded-lg border bg-muted/5 p-2 text-xs">
+															{#each criterion.bands as band (band.id)}
+																{@const active =
+																	criteriaValues[criterion.id] >= band.minScore &&
+																	criteriaValues[criterion.id] <= band.maxScore}
+																<div
+																	class="flex gap-2 rounded px-2 py-1 transition-all duration-200 {active
+																		? 'border border-primary/20 bg-primary/10 font-medium text-primary'
+																		: 'border border-transparent text-muted-foreground'}"
+																>
+																	<span class="w-16 shrink-0 font-mono font-semibold"
+																		>{band.minScore}-{band.maxScore}</span
+																	>
+																	<span>{band.description}</span>
+																</div>
+															{/each}
+														</div>
+													{/if}
 												</div>
 											{/each}
 											<div
 												class="flex items-center justify-between border-t border-dashed pt-4 font-bold"
 											>
-												<span class="text-sm">Nilai Total Akhir (Otomatis)</span>
+												<span class="text-sm">Nilai Total Akhir</span>
 												<span class="text-lg text-primary">{totalFor(mod.id, criteria)}</span>
 											</div>
 										</div>

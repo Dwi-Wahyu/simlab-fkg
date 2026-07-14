@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
-import { practicumSeries, block, laboratorium } from '$lib/server/db/schema';
+import { practicumSeries, practicumSchedule, practicumLogbookGeneration } from '$lib/server/db/schema';
 import { error, fail } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -9,25 +9,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
 
 	const series = await db.query.practicumSeries.findMany({
-		with: {
-			block: true,
-			laboratorium: true
-		},
 		orderBy: (ps, { desc }) => [desc(ps.createdAt)]
 	});
 
-	const blocks = await db.query.block.findMany({
-		with: {
-			department: true
-		}
-	});
-
-	const labs = await db.query.laboratorium.findMany();
-
 	return {
-		series,
-		blocks,
-		labs
+		series
 	};
 };
 
@@ -38,8 +24,6 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const name = formData.get('name') as string;
 		const description = formData.get('description') as string;
-		const blockId = formData.get('blockId') as string;
-		const labId = formData.get('labId') as string;
 
 		if (!name) {
 			return fail(400, { message: 'Nama seri harus diisi' });
@@ -49,9 +33,7 @@ export const actions: Actions = {
 			await db.insert(practicumSeries).values({
 				id: uuidv4(),
 				name,
-				description,
-				blockId: blockId || null,
-				laboratoriumId: labId || null
+				description
 			});
 
 			return { success: true };
@@ -68,8 +50,6 @@ export const actions: Actions = {
 		const id = formData.get('id') as string;
 		const name = formData.get('name') as string;
 		const description = formData.get('description') as string;
-		const blockId = formData.get('blockId') as string;
-		const labId = formData.get('labId') as string;
 
 		if (!id || !name) {
 			return fail(400, { message: 'Data tidak lengkap' });
@@ -80,9 +60,7 @@ export const actions: Actions = {
 				.update(practicumSeries)
 				.set({
 					name,
-					description,
-					blockId: blockId || null,
-					laboratoriumId: labId || null
+					description
 				})
 				.where(eq(practicumSeries.id, id));
 
@@ -100,6 +78,22 @@ export const actions: Actions = {
 		const id = formData.get('id') as string;
 
 		if (!id) return fail(400, { message: 'ID tidak ditemukan' });
+
+		const [{ scheduleCount }] = await db
+			.select({ scheduleCount: count() })
+			.from(practicumSchedule)
+			.where(eq(practicumSchedule.seriesId, id));
+
+		const [{ logbookCount }] = await db
+			.select({ logbookCount: count() })
+			.from(practicumLogbookGeneration)
+			.where(eq(practicumLogbookGeneration.seriesId, id));
+
+		if (scheduleCount > 0 || logbookCount > 0) {
+			return fail(400, {
+				message: `Seri ini tidak bisa dihapus karena masih dipakai oleh ${scheduleCount} jadwal dan ${logbookCount} riwayat logbook. Hapus atau pindahkan jadwal terkait terlebih dahulu.`
+			});
+		}
 
 		try {
 			await db.delete(practicumSeries).where(eq(practicumSeries.id, id));

@@ -5,7 +5,9 @@ import {
 	practicumLogbookGeneration,
 	practicumLogbookTemplate,
 	practicumLogbookTemplateField,
-	practicumModule
+	practicumModule,
+	block,
+	laboratorium
 } from '$lib/server/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { error, redirect } from '@sveltejs/kit';
@@ -24,8 +26,6 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const series = await db.query.practicumSeries.findFirst({
 		where: eq(practicumSeries.id, seriesId),
 		with: {
-			laboratorium: true,
-			block: { with: { department: true } },
 			schedules: {
 				orderBy: (s, { asc }) => [asc(s.startTime)]
 			}
@@ -34,9 +34,24 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	if (!series) throw error(404, 'Seri praktikum tidak ditemukan');
 
+	const resolvedBlockId = series.schedules.find((s) => s.blockId)?.blockId ?? null;
+	const resolvedBlock = resolvedBlockId
+		? await db.query.block.findFirst({
+				where: eq(block.id, resolvedBlockId),
+				with: { department: true }
+			})
+		: null;
+
+	const resolvedLabId = series.schedules.find((s) => s.laboratoriumId)?.laboratoriumId ?? null;
+	const resolvedLab = resolvedLabId
+		? await db.query.laboratorium.findFirst({
+				where: eq(laboratorium.id, resolvedLabId)
+			})
+		: null;
+
 	// Ambil template & field manual
 	let templateRecord = null;
-	if (series.blockId) {
+	if (resolvedBlockId) {
 		templateRecord = await db.query.practicumLogbookTemplate.findFirst({
 			where: (t, { exists, eq: eqFn, and: andFn }) =>
 				exists(
@@ -46,7 +61,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 						.where(
 							andFn(
 								eqFn(practicumModule.id, t.moduleId),
-								eqFn(practicumModule.blockId, series.blockId!)
+								eqFn(practicumModule.blockId, resolvedBlockId)
 							)
 						)
 				)
@@ -134,9 +149,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		series: {
 			id: series.id,
 			name: series.name,
-			laboratoriumName: series.laboratorium?.name ?? '-',
-			blockName: series.block?.name ?? '-',
-			departmentName: series.block?.department?.name ?? '-'
+			laboratoriumName: resolvedLab?.name ?? '-',
+			blockName: resolvedBlock?.name ?? '-',
+			departmentName: resolvedBlock?.department?.name ?? '-'
 		},
 		scheduleDetails,
 		stats: {

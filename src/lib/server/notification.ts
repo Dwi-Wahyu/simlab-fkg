@@ -33,7 +33,7 @@ export async function createNotification(params: CreateNotificationParams) {
 	return await db.insert(notification).values({
 		id: uuidv4(),
 		userId: userId || null,
-		organizationId: organizationId || null,
+		laboratoriumId: organizationId || null,
 		title,
 		body,
 		priority,

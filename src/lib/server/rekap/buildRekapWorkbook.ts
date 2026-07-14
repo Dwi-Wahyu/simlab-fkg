@@ -28,6 +28,7 @@ interface Params {
 	groups: Group[];
 	sheets: RekapSheet[];
 	getScore: (studentId: string, scheduleId: string, moduleId: string) => number | string | null;
+	rubricRows?: (string | number)[][]; // <-- tambahan
 }
 
 function buildHeaderRows(groups: Group[]): {
@@ -79,7 +80,7 @@ function sanitizeSheetName(name: string, used: Set<string>): string {
 	return candidate;
 }
 
-export function buildRekapWorkbookBuffer({ groups, sheets, getScore }: Params): Buffer {
+export function buildRekapWorkbookBuffer({ groups, sheets, getScore, rubricRows }: Params): Buffer {
 	const wb = XLSX.utils.book_new();
 	const columns = groups.flatMap((g) => g.columns);
 
@@ -112,7 +113,36 @@ export function buildRekapWorkbookBuffer({ groups, sheets, getScore }: Params): 
 				studentRows.push([i + 1, s.username, s.name, ...scores.map((v) => v ?? ''), avg]);
 			});
 
-			const ws = XLSX.utils.aoa_to_sheet([titleRow, headerRow1, headerRow2, ...studentRows]);
+			const rubricBlock: (string | number)[][] = [];
+			if (rubricRows && rubricRows.length > 0) {
+				rubricBlock.push([]); // spacer row
+				rubricBlock.push(['Kode', 'Kriteria Penilaian', 'Rentang Skor', 'Deskripsi Kemampuan']);
+				rubricBlock.push(...rubricRows);
+
+				const startRubricRow = 3 + studentRows.length; // 3 rows before studentRows (title, headerRow1, headerRow2)
+				if (headerRow1.length - 1 > 3) {
+					// Merge header 'Deskripsi Kemampuan'
+					shiftedMerges.push({
+						s: { r: startRubricRow + 1, c: 3 },
+						e: { r: startRubricRow + 1, c: headerRow1.length - 1 }
+					});
+					// Merge each rubric row's description
+					rubricRows.forEach((_, idx) => {
+						shiftedMerges.push({
+							s: { r: startRubricRow + 2 + idx, c: 3 },
+							e: { r: startRubricRow + 2 + idx, c: headerRow1.length - 1 }
+						});
+					});
+				}
+			}
+
+			const ws = XLSX.utils.aoa_to_sheet([
+				titleRow,
+				headerRow1,
+				headerRow2,
+				...studentRows,
+				...rubricBlock
+			]);
 			ws['!merges'] = shiftedMerges;
 
 			const sanitizedName = sanitizeSheetName(sheet.sheetName, usedNames);

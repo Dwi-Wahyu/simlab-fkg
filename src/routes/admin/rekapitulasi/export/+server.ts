@@ -40,10 +40,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		throw error(404, 'Data tidak ditemukan');
 	}
 
-	// Scoping check for coordinators/kepalaLabs
-	if (labId && series.laboratoriumId !== labId) {
-		throw error(403, 'Forbidden: Anda tidak memiliki akses ke seri ini');
-	}
+
 
 	const scheduleFilter = labId ? eq(practicumSchedule.laboratoriumId, labId) : undefined;
 

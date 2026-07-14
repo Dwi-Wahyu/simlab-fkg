@@ -3,6 +3,8 @@
 		Activity,
 		AlertCircle,
 		AlertTriangle,
+		ArrowDownWideNarrow,
+		ArrowUpNarrowWide,
 		CheckCircle,
 		ChevronDown,
 		ChevronLeft,
@@ -33,6 +35,7 @@
 	import * as SearchableSelect from '$lib/components/ui/searchable-select';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { cn } from '$lib/utils';
 
 	let { data } = $props();
@@ -85,15 +88,34 @@
 		});
 	}
 
+	let currentSort = $state(pageStore.url.searchParams.get('sort') || '');
+
+	function toggleSort() {
+		let nextSort = '';
+		if (currentSort === '') {
+			nextSort = 'asc';
+		} else if (currentSort === 'asc') {
+			nextSort = 'desc';
+		} else {
+			nextSort = '';
+		}
+		currentSort = nextSort;
+		updateUrl({ sort: nextSort, page: 1 });
+	}
+
 	$effect(() => {
 		const urlLab = pageStore.url.searchParams.get('laboratoriumId') || 'all';
 		const urlCat = pageStore.url.searchParams.get('categoryId') || 'all';
+		const urlSort = pageStore.url.searchParams.get('sort') || '';
 		untrack(() => {
 			if (selectedLabId !== urlLab) {
 				selectedLabId = urlLab;
 			}
 			if (selectedCategoryId !== urlCat) {
 				selectedCategoryId = urlCat;
+			}
+			if (currentSort !== urlSort) {
+				currentSort = urlSort;
 			}
 		});
 	});
@@ -341,7 +363,35 @@
 				<Table.Root class="block md:table">
 					<Table.Header class="hidden md:table-header-group">
 						<Table.Row class="md:table-row">
-							<Table.Head class="px-6 py-4">Nama</Table.Head>
+							<Table.Head class="px-6 py-4">
+								<div class="flex items-center gap-1">
+									<span>Nama</span>
+									<Tooltip.Provider>
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												<Button
+													variant="ghost"
+													size="icon"
+													class="h-6 w-6 p-0 hover:bg-slate-100"
+													onclick={toggleSort}
+													title="Sortir berdasarkan abjad"
+												>
+													{#if currentSort === 'asc'}
+														<ArrowUpNarrowWide class="h-4 w-4 text-blue-600 font-bold" />
+													{:else if currentSort === 'desc'}
+														<ArrowDownWideNarrow class="h-4 w-4 text-blue-600 font-bold" />
+													{:else}
+														<ArrowUpNarrowWide class="h-4 w-4 text-slate-400 opacity-50" />
+													{/if}
+												</Button>
+											</Tooltip.Trigger>
+											<Tooltip.Content side="top">
+												Sortir berdasarkan abjad {currentSort === 'asc' ? '(A-Z)' : currentSort === 'desc' ? '(Z-A)' : ''}
+											</Tooltip.Content>
+										</Tooltip.Root>
+									</Tooltip.Provider>
+								</div>
+							</Table.Head>
 							<Table.Head>Total</Table.Head>
 							<Table.Head>Rusak</Table.Head>
 							<Table.Head>Baik</Table.Head>
