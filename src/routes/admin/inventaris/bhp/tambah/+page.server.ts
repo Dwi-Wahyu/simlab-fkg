@@ -17,6 +17,9 @@ import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, `${base}/`);
+	if (locals.user.role === 'koordinator') {
+		throw redirect(302, `${base}/admin/inventaris/bhp`);
+	}
 
 	const categories = await db.query.equipmentCategory.findMany();
 	const labs = await db.query.laboratorium.findMany({
@@ -40,6 +43,9 @@ export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		const session = await locals.user;
 		if (!session) return fail(401, { message: 'Unauthorized' });
+		if (session.role === 'koordinator') {
+			return fail(403, { message: 'Anda tidak memiliki wewenang.' });
+		}
 
 		const formData = await request.formData();
 		const name = formData.get('name') as string;
@@ -48,6 +54,7 @@ export const actions: Actions = {
 		const description = formData.get('description') as string;
 		const qrCodeFile = formData.get('qrCode') as File;
 		const minStock = parseInt((formData.get('minStock') as string) || '0');
+		const hideNewBadge = formData.get('hideNewBadge') === 'true';
 
 		// Stock specific fields
 		const brand = formData.get('brand') as string;
@@ -111,20 +118,21 @@ export const actions: Actions = {
 						baseUnit,
 						description,
 						minStock,
-						qrCodePath
+						qrCodePath,
+						hideNewBadge
 					});
 				} else if (existingItem) {
 					// update categoryId or minStock if not set
-					const updates: any = {};
+					const updates: any = {
+						hideNewBadge
+					};
 					if (categoryId && !existingItem.categoryId) {
 						updates.categoryId = categoryId;
 					}
 					if (minStock > 0 && !existingItem.minStock) {
 						updates.minStock = minStock;
 					}
-					if (Object.keys(updates).length > 0) {
-						await tx.update(item).set(updates).where(eq(item.id, itemId));
-					}
+					await tx.update(item).set(updates).where(eq(item.id, itemId));
 				}
 
 				// Look if stock entry with same item, brand, and variant already exists in this lab

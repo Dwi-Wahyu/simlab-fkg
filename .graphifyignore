@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.svelte-kit
+.gemini
+.qwen
+.vscode
+instruction
+instruction-report
+.git/
+graphify-out/
+\*.lock
+\_\_snapshot.json
+\*.json
+deploy.sh
+contexts
+docs

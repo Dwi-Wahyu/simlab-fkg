@@ -1,17 +1,17 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-navigation-without-resolve */
-	import Sidebar from '$lib/components/Sidebar.svelte';
-	import NotificationBell from '$lib/components/NotificationBell.svelte';
-	import PWAInstallButton from '$lib/components/PWAInstallButton.svelte';
-	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
-	import { LogOut, PanelLeft, Bell, User, Settings } from '@lucide/svelte';
-	import Avatar from '$lib/components/Avatar.svelte';
+
+	import { Bell, LogOut, PanelLeft, Settings, User } from '@lucide/svelte';
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import Avatar from '$lib/components/Avatar.svelte';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import NotificationBell from '$lib/components/NotificationBell.svelte';
+	import PWAInstallButton from '$lib/components/PWAInstallButton.svelte';
+	import Sidebar from '$lib/components/Sidebar.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-
 	import { setSidebarState } from '$lib/components/ui/sidebar/context.svelte.js';
-	import { onMount } from 'svelte';
 
 	let { data, children } = $props();
 
@@ -106,9 +106,9 @@
 					<PanelLeft />
 				</button>
 
-				<div class="flex flex-col">
+				<!-- <div class="flex flex-col">
 					<h1 class="hidden text-lg font-bold text-slate-800 md:block">{pageTitle}</h1>
-				</div>
+				</div> -->
 			</div>
 
 			<div class="flex items-center gap-2 md:gap-6">

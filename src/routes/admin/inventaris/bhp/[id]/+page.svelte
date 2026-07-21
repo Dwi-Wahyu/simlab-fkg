@@ -6,6 +6,7 @@
 		ChevronsLeft,
 		ChevronsRight,
 		ChevronUp,
+		Plus,
 		Search,
 		Trash2,
 		ArrowDownWideNarrow,
@@ -24,6 +25,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
+	import { shouldShowNewBadge } from '$lib/utils/item-badge';
 
 	let { data } = $props();
 
@@ -68,14 +70,11 @@
 				url.searchParams.set(key, value.toString());
 			}
 		});
-		goto(url.toString(), { keepFocus: true, noScroll: true });
+		goto(url.toString(), { keepFocus: true });
 	}
 
 	function handleSearch() {
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => {
-			updateUrl({ search: searchQuery, page: 1 });
-		}, 300);
+		updateUrl({ search: searchQuery, page: 1 });
 	}
 
 	function handlePageChange(newPage: number) {
@@ -87,7 +86,9 @@
 	}
 
 	function toggleSort() {
-		updateUrl({ sortExp: sortExp === 'asc' ? 'desc' : 'asc', page: 1 });
+		const nextSort = sortExp === 'asc' ? 'desc' : 'asc';
+		sortExp = nextSort;
+		updateUrl({ sortExp: nextSort, page: 1 });
 	}
 
 	// Sync searchQuery with URL if it changes externally
@@ -103,14 +104,6 @@
 			}
 		});
 	});
-
-	function isNewItem(createdAt: string | Date | null | undefined): boolean {
-		if (!createdAt) return false;
-		const createdDate = new Date(createdAt);
-		const now = new Date();
-		const diffTime = now.getTime() - createdDate.getTime();
-		return diffTime > 0 && diffTime <= 24 * 60 * 60 * 1000;
-	}
 
 	function expiryStatus(expiryDate: string | null) {
 		if (!expiryDate) return { label: 'Tidak Kedaluwarsa', variant: 'secondary' as const };
@@ -151,19 +144,29 @@
 					<ChevronLeft class="size-5" />
 				</Button>
 				<div>
-					<h1 class="text-2xl font-bold text-slate-900">{res.item.name ?? '...'}</h1>
+					<div class="flex items-center gap-2">
+						<h1 class="text-2xl font-bold text-slate-900">{res.item.name ?? '...'}</h1>
+						{#if shouldShowNewBadge(res.item?.createdAt, res.item?.hideNewBadge)}
+							<Badge class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600">Baru</Badge>
+						{/if}
+					</div>
 					<p class="text-sm text-slate-500">{res.item.id}</p>
 				</div>
 			</div>
-			{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
-				<Button
-					variant="destructive"
-					class="gap-2"
-					onclick={() => (isDeleteItemConfirmOpen = true)}
-				>
-					<Trash2 class="size-4" /> Hapus Item
+			<div class="flex items-center gap-2">
+				<Button href="/admin/inventaris/bhp/tambah?itemId={res.item.id}" class="gap-2">
+					<Plus class="size-4" /> Tambah Stok
 				</Button>
-			{/if}
+				{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
+					<Button
+						variant="destructive"
+						class="gap-2"
+						onclick={() => (isDeleteItemConfirmOpen = true)}
+					>
+						<Trash2 class="size-4" /> Hapus Item
+					</Button>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Table Controls -->
@@ -250,7 +253,7 @@
 														-
 													{/if}
 												</span>
-												{#if isNewItem(batch.createdAt)}
+												{#if shouldShowNewBadge(batch.createdAt, res.item?.hideNewBadge)}
 													<Badge
 														class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
 														>Baru</Badge

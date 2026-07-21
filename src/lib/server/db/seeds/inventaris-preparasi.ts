@@ -490,6 +490,9 @@ async function upsertItem(
 	let itemId: string;
 	if (existing) {
 		itemId = existing.id;
+		if (!DRY_RUN) {
+			await db.update(schema.item).set({ hideNewBadge: true }).where(eq(schema.item.id, itemId));
+		}
 	} else {
 		itemId = crypto.randomUUID();
 		if (!DRY_RUN) {
@@ -497,8 +500,9 @@ async function upsertItem(
 				id: itemId,
 				name,
 				type,
-				baseUnit,
-				minStock: 0
+ baseUnit,
+				minStock: 0,
+				hideNewBadge: true
 			});
 		}
 	}

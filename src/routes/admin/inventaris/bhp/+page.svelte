@@ -38,14 +38,22 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { cn } from '$lib/utils';
+	import { shouldShowNewBadge } from '$lib/utils/item-badge';
 
 	let { data } = $props();
 
-	let selectedExportLabId = $state('');
 	let laboratories = $state<any[]>([]);
-	const exportLabName = $derived(
-		laboratories.find((l) => l.id === selectedExportLabId)?.name ?? 'Pilih Laboratorium'
+
+	let selectedLabId = $state(pageStore.url.searchParams.get('laboratoriumId') || 'all');
+	const selectedLabName = $derived(
+		laboratories.find((l) => l.id === selectedLabId)?.name ?? 'Semua Laboratorium'
 	);
+
+	function handleLabChange(newLabId: string | undefined) {
+		if (newLabId === undefined) return;
+		selectedLabId = newLabId;
+		updateUrl({ laboratoriumId: newLabId === 'all' ? '' : newLabId, page: 1 });
+	}
 
 	let categories = $state<any[]>([]);
 	let selectedCategoryId = $state(pageStore.url.searchParams.get('categoryId') || 'all');
@@ -54,8 +62,8 @@
 	);
 
 	onMount(async () => {
-		const promises = [fetch('/api/admin/equipment-category')];
-		if (data.user?.role === 'superadmin') {
+		const promises: Promise<Response>[] = [fetch('/api/admin/equipment-category')];
+		if (!['kepalaLab', 'laboran'].includes(data.user?.role)) {
 			promises.push(fetch('/api/admin/laboratorium'));
 		}
 		const [catRes, labRes] = await Promise.all(promises);
@@ -64,9 +72,6 @@
 		}
 		if (labRes && labRes.ok) {
 			laboratories = await labRes.json();
-			if (laboratories.length > 0) {
-				selectedExportLabId = laboratories[0].id;
-			}
 		}
 	});
 
@@ -124,6 +129,7 @@
 	$effect(() => {
 		const urlSearch = pageStore.url.searchParams.get('search') || '';
 		const urlCat = pageStore.url.searchParams.get('categoryId') || 'all';
+		const urlLab = pageStore.url.searchParams.get('laboratoriumId') || 'all';
 		const urlSort = pageStore.url.searchParams.get('sort') || '';
 		untrack(() => {
 			if (searchQuery !== urlSearch) {
@@ -131,6 +137,9 @@
 			}
 			if (selectedCategoryId !== urlCat) {
 				selectedCategoryId = urlCat;
+			}
+			if (selectedLabId !== urlLab) {
+				selectedLabId = urlLab;
 			}
 			if (currentSort !== urlSort) {
 				currentSort = urlSort;
@@ -338,13 +347,6 @@
 		}
 	}
 
-	function isNewItem(createdAt: string | Date | null | undefined): boolean {
-		if (!createdAt) return false;
-		const createdDate = new Date(createdAt);
-		const now = new Date();
-		const diffTime = now.getTime() - createdDate.getTime();
-		return diffTime > 0 && diffTime <= 24 * 60 * 60 * 1000;
-	}
 </script>
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
@@ -355,35 +357,25 @@
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
 			{#if data.user?.role === 'superadmin'}
-				<div class="flex items-center gap-2">
-					<Select.Root type="single" bind:value={selectedExportLabId}>
-						<Select.Trigger class="h-10 w-40 bg-white">
-							{exportLabName}
-						</Select.Trigger>
-						<Select.Content>
-							{#each laboratories as lab}
-								<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-					<Button
-						href="/admin/laporan/inventaris/export?labId={selectedExportLabId}"
-						variant="outline"
-						class="gap-2"
-						disabled={!selectedExportLabId}
-					>
-						<Download class="size-4" /> Export
-					</Button>
-				</div>
+				<Button
+					href="/admin/laporan/inventaris/export?labId={selectedLabId === 'all' ? '' : selectedLabId}"
+					variant="outline"
+					class="gap-2"
+					disabled={!selectedLabId || selectedLabId === 'all'}
+				>
+					<Download class="size-4" /> Export
+				</Button>
 			{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 				<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
 					<Download class="size-4" /> Export
 				</Button>
 			{/if}
 
-			<Button href="/admin/inventaris/bhp/tambah">
-				<Plus /> Tambah BHP
-			</Button>
+			{#if data.user?.role !== 'koordinator'}
+				<Button href="/admin/inventaris/bhp/tambah">
+					<Plus /> Tambah BHP
+				</Button>
+			{/if}
 		</div>
 	</div>
 
@@ -495,6 +487,20 @@
 					</SearchableSelect.Content>
 				</SearchableSelect.Root>
 
+				{#if !['kepalaLab', 'laboran'].includes(data.user?.role)}
+					<Select.Root type="single" value={selectedLabId} onValueChange={handleLabChange}>
+						<Select.Trigger class="h-10 w-fit bg-white">
+							{selectedLabName}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="all" label="Semua Laboratorium">Semua Laboratorium</Select.Item>
+							{#each laboratories as lab}
+								<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				{/if}
+
 				<Select.Root
 					type="single"
 					value={res.pagination.limit.toString()}
@@ -577,7 +583,7 @@
 										<div class="flex flex-col">
 											<div class="flex items-center gap-2">
 												<span class="font-bold text-slate-900 md:font-medium">{item.name}</span>
-												{#if isNewItem(item.createdAt)}
+												{#if shouldShowNewBadge(item.createdAt, item.hideNewBadge)}
 													<Badge
 														class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
 														>Baru</Badge

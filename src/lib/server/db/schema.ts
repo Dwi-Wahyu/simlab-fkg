@@ -167,6 +167,7 @@ export const item = mysqlTable(
 
 		description: text('description'),
 
+		hideNewBadge: boolean('hide_new_badge').default(false).notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		...softDeleteColumns
 	},

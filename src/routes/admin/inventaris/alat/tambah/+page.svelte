@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { ChevronLeft, Search, Upload, X } from '@lucide/svelte';
+	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
+	import { page as pageStore } from '$app/state';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -22,7 +24,13 @@
 	let variant = $state('');
 	let storageLocation = $state('');
 	let description = $state('');
-	let createdAt = $state(new Date().toISOString().slice(0, 16));
+	function getLocalDatetimeString(d = new Date()) {
+		const pad = (n: number) => n.toString().padStart(2, '0');
+		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+	}
+
+	let createdAt = $state(getLocalDatetimeString());
+	let hideNewBadge = $state(false);
 
 	// State untuk binding Select (Svelte 5 bind:value)
 	let selectedCategory = $state(''); // Kategori alat (equipmentCategory)
@@ -72,6 +80,14 @@
 		selectedAssetId = asset.id;
 		isDialogOpen = false;
 	}
+
+	onMount(() => {
+		const refItemId = pageStore.url.searchParams.get('itemId');
+		if (refItemId) {
+			const asset = data.existingAssets.find((a: any) => a.id === refItemId);
+			if (asset) selectAsset(asset);
+		}
+	});
 
 	function clearAssetSelection() {
 		selectedAssetId = null;
@@ -241,7 +257,7 @@
 									class="h-8 text-xs text-destructive"
 									onclick={clearAssetSelection}
 								>
-									Hapus Pilihan Template
+									Hapus Pilihan Referensi
 								</Button>
 							{/if}
 							<Button
@@ -459,6 +475,23 @@
 						</Select.Content>
 					</Select.Root>
 					<input type="hidden" name="status" value={selectedStatus} />
+				</div>
+
+				<!-- Opsi Badge Baru -->
+				<div class="flex flex-col gap-1.5 md:col-span-2">
+					<div class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							id="hideNewBadge"
+							name="hideNewBadge"
+							bind:checked={hideNewBadge}
+							value="true"
+							class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+						/>
+						<Label for="hideNewBadge" class="cursor-pointer text-sm font-medium text-slate-700"
+							>Jangan tandai sebagai barang baru</Label
+						>
+					</div>
 				</div>
 
 				<!-- QR Code Upload -->

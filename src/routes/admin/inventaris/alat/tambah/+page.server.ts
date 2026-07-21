@@ -18,7 +18,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Fetch unique ASSET items for templates / auto-complete
 	const existingAssets = await db.query.item.findMany({
-		where: and(eq(item.type, 'ASSET'), eq(item.isDeleted, false))
+		where: and(eq(item.type, 'ASSET'), eq(item.isDeleted, false)),
+		with: { equipments: true }
 	});
 
 	return {
@@ -43,6 +44,7 @@ export const actions: Actions = {
 		const description = formData.get('description') as string;
 		const qrCodeFile = formData.get('qrCode') as File;
 		const createdAt = formData.get('createdAt') as string;
+		const hideNewBadge = formData.get('hideNewBadge') === 'true';
 
 		// ASSET specific fields
 		const serialNumber = formData.get('serialNumber') as string;
@@ -105,13 +107,18 @@ export const actions: Actions = {
 						baseUnit,
 						description,
 						minStock: 0,
-						qrCodePath
+						qrCodePath,
+						hideNewBadge,
+						createdAt: parsedCreatedAt
 					});
-				} else {
-					// update categoryId if not set
+				} else if (existingItem) {
+					const updates: any = {
+						hideNewBadge
+					};
 					if (categoryId && !existingItem.categoryId) {
-						await tx.update(item).set({ categoryId }).where(eq(item.id, itemId));
+						updates.categoryId = categoryId;
 					}
+					await tx.update(item).set(updates).where(eq(item.id, itemId));
 				}
 
 				// Create Equipment Entry

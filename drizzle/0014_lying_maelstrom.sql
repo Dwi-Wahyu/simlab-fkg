@@ -1,0 +1,1 @@
+ALTER TABLE `item` ADD `hide_new_badge` boolean DEFAULT false NOT NULL;

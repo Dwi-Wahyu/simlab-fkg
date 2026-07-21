@@ -402,6 +402,9 @@ async function upsertItem(
 	if (existing) {
 		itemId = existing.id;
 		itemDescriptionCache.set(itemId, existing.description ?? null);
+		if (!DRY_RUN) {
+			await db.update(schema.item).set({ hideNewBadge: true }).where(eq(schema.item.id, itemId));
+		}
 		if (existing.categoryId && categoryId && existing.categoryId !== categoryId) {
 			logReview(
 				sheet,
@@ -423,7 +426,8 @@ async function upsertItem(
 				baseUnit,
 				minStock: 0,
 				categoryId,
-				description
+				description,
+				hideNewBadge: true
 			});
 		}
 	}

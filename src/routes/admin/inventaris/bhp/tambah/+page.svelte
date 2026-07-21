@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { ChevronLeft, Search, Upload, X } from '@lucide/svelte';
+	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
+	import { page as pageStore } from '$app/state';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -22,6 +24,7 @@
 	let variant = $state('');
 	let condition = $state('baik');
 	let description = $state('');
+	let hideNewBadge = $state(false);
 
 	// State untuk binding Select (Svelte 5 bind:value)
 	let selectedCategory = $state(''); // Kategori BHP (equipmentCategory)
@@ -58,6 +61,14 @@
 		selectedBhpId = bhp.id;
 		isDialogOpen = false;
 	}
+
+	onMount(() => {
+		const refItemId = pageStore.url.searchParams.get('itemId');
+		if (refItemId) {
+			const bhp = data.existingBhp.find((b: any) => b.id === refItemId);
+			if (bhp) selectBhp(bhp);
+		}
+	});
 
 	function clearBhpSelection() {
 		selectedBhpId = null;
@@ -201,7 +212,7 @@
 									class="h-8 text-xs text-destructive"
 									onclick={clearBhpSelection}
 								>
-									Hapus Pilihan Template
+									Hapus Pilihan Referensi
 								</Button>
 							{/if}
 							<Button
@@ -373,6 +384,23 @@
 				<div class="flex flex-col gap-2">
 					<Label for="minStock">Batas Stok Minimum</Label>
 					<Input type="number" name="minStock" id="minStock" min="0" placeholder="0" />
+				</div>
+
+				<!-- Opsi Badge Baru -->
+				<div class="flex flex-col gap-1.5 md:col-span-2">
+					<div class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							id="hideNewBadge"
+							name="hideNewBadge"
+							bind:checked={hideNewBadge}
+							value="true"
+							class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+						/>
+						<Label for="hideNewBadge" class="cursor-pointer text-sm font-medium text-slate-700"
+							>Jangan tandai sebagai barang baru</Label
+						>
+					</div>
 				</div>
 
 				<!-- QR Code Upload -->

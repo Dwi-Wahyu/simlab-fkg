@@ -31,6 +31,7 @@
 	import { cn } from '$lib/utils';
 	import { toast } from '$lib/components/toast';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import { shouldShowNewBadge } from '$lib/utils/item-badge';
 
 	let { data } = $props();
 
@@ -47,10 +48,7 @@
 	};
 
 	let searchQuery = $state(pageStore.url.searchParams.get('search') || '');
-	let debounceTimer: any;
 	let expandedItems = $state<Record<string, boolean>>({});
-	let isDeleteConfirmOpen = $state(false);
-	let equipmentIdToDelete = $state('');
 
 	let isDeleteItemConfirmOpen = $state(false);
 	let isDeletingItem = $state(false);
@@ -64,19 +62,14 @@
 			isDeletingItem = false;
 			isDeleteItemConfirmOpen = false;
 			if (res.ok) {
-				toast.success('Berhasil', { description: 'Item berhasil dihapus.' });
+				toast.success('Berhasil', { description: 'Alat berhasil dihapus.' });
 				goto('/admin/inventaris/alat');
 			} else {
 				toast.destructive('Gagal', {
-					description: 'Gagal menghapus item. Item ini mungkin masih memiliki data unit aktif.'
+					description: 'Gagal menghapus Alat. Item ini mungkin masih memiliki unit aktif.'
 				});
 			}
 		});
-	}
-
-	function openDeleteDialog(id: string) {
-		equipmentIdToDelete = id;
-		isDeleteConfirmOpen = true;
 	}
 
 	function updateUrl(params: Record<string, string | number | undefined>) {
@@ -92,10 +85,7 @@
 	}
 
 	function handleSearch() {
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => {
-			updateUrl({ search: searchQuery, page: 1 });
-		}, 300);
+		updateUrl({ search: searchQuery, page: 1 });
 	}
 
 	function handlePageChange(newPage: number) {
@@ -115,14 +105,6 @@
 			}
 		});
 	});
-
-	function isNewItem(createdAt: string | Date | null | undefined): boolean {
-		if (!createdAt) return false;
-		const createdDate = new Date(createdAt);
-		const now = new Date();
-		const diffTime = now.getTime() - createdDate.getTime();
-		return diffTime > 0 && diffTime <= 24 * 60 * 60 * 1000;
-	}
 </script>
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
@@ -154,19 +136,29 @@
 					<ChevronLeft class="size-5" />
 				</Button>
 				<div>
-					<h1 class="text-2xl font-bold text-slate-900">{res.equipment.name ?? '...'}</h1>
+					<div class="flex items-center gap-2">
+						<h1 class="text-2xl font-bold text-slate-900">{res.equipment.name ?? '...'}</h1>
+						{#if shouldShowNewBadge(res.equipment?.createdAt, res.equipment?.hideNewBadge)}
+							<Badge class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600">Baru</Badge>
+						{/if}
+					</div>
 					<p class="text-sm text-slate-500">{res.equipment.id}</p>
 				</div>
 			</div>
-			{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
-				<Button
-					variant="destructive"
-					class="gap-2"
-					onclick={() => (isDeleteItemConfirmOpen = true)}
-				>
-					<Trash2 class="size-4" /> Hapus Item
-				</Button>
-			{/if}
+			<div class="flex items-center gap-2">
+				{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
+					<Button href="/admin/inventaris/alat/tambah?itemId={res.equipment.id}" class="gap-2">
+						<Plus class="size-4" /> Tambah Alat
+					</Button>
+					<Button
+						variant="destructive"
+						class="gap-2"
+						onclick={() => (isDeleteItemConfirmOpen = true)}
+					>
+						<Trash2 class="size-4" /> Hapus Item
+					</Button>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Table Controls -->
@@ -196,11 +188,6 @@
 						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
-				{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
-					<Button href="/admin/inventaris/alat/tambah">
-						<Plus /> Tambah Alat
-					</Button>
-				{/if}
 			</div>
 		</div>
 
@@ -241,7 +228,7 @@
 												<span class="font-bold text-slate-900 md:font-medium"
 													>{equipment.serialNumber}</span
 												>
-												{#if isNewItem(equipment.createdAt)}
+												{#if shouldShowNewBadge(equipment.createdAt, res.equipment?.hideNewBadge)}
 													<Badge
 														class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
 														>Baru</Badge
@@ -268,12 +255,6 @@
 									<Table.Cell class="hidden md:table-cell md:border-b md:py-4 md:pl-2">
 										<div class="flex items-center gap-2">
 											<span>{equipment.brand || '-'}</span>
-											{#if isNewItem(equipment.createdAt)}
-												<Badge
-													class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
-													>Baru</Badge
-												>
-											{/if}
 										</div>
 									</Table.Cell>
 
@@ -403,31 +384,6 @@
 		{error.message}
 	{/await}
 </div>
-
-<ConfirmationDialog
-	bind:open={isDeleteConfirmOpen}
-	title="Hapus Alat?"
-	description="Tindakan ini tidak dapat dibatalkan. Menghapus spesifik alat ini akan menghapusnya dari data inventaris."
-	onAction={() => {
-		const formData = new FormData();
-		formData.append('id', equipmentIdToDelete);
-
-		fetch('?/delete', {
-			method: 'POST',
-			body: formData
-		}).then(async (res) => {
-			isDeleteConfirmOpen = false;
-			if (res.ok) {
-				toast.success('Berhasil', { description: 'Alat berhasil dihapus.' });
-				await invalidateAll();
-			} else {
-				toast.destructive('Gagal', {
-					description: 'Gagal menghapus alat. Alat mungkin sudah digunakan di modul lain.'
-				});
-			}
-		});
-	}}
-/>
 
 <ConfirmationDialog
 	bind:open={isDeleteItemConfirmOpen}

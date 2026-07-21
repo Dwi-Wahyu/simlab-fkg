@@ -81,6 +81,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			name: item.name,
 			equipmentType: item.equipmentType,
 			createdAt: item.createdAt,
+			hideNewBadge: item.hideNewBadge,
 			total: count(),
 			baik: count(sql`CASE WHEN ${equipment.condition} = 'BAIK' THEN 1 END`),
 			rusak: count(sql`CASE WHEN ${equipment.condition} = 'RUSAK' THEN 1 END`),
@@ -90,13 +91,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.innerJoin(item, eq(equipment.itemId, item.id))
 		.leftJoin(warehouse, eq(equipment.warehouseId, warehouse.id))
 		.where(whereClause)
-		.groupBy(item.id)
+		.groupBy(item.id, item.name, item.equipmentType, item.createdAt, item.hideNewBadge)
 		.orderBy(
 			...(sort === 'asc'
 				? [asc(item.name)]
 				: sort === 'desc'
 					? [desc(item.name)]
-					: [desc(item.createdAt)])
+					: [desc(sql`MAX(${equipment.createdAt})`), desc(item.createdAt)])
 		)
 		.limit(limit)
 		.offset(offset);

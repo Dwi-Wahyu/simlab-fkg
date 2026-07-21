@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const items = await db.query.item.findMany({
 		where: (fields, { eq, and, sql }) => {
-			const conditions = [eq(fields.type, 'CONSUMABLE')];
+			const conditions = [eq(fields.type, 'CONSUMABLE'), eq(fields.isDeleted, false)];
 			if (queryCategoryId) {
 				conditions.push(eq(fields.categoryId, queryCategoryId));
 			}
@@ -39,7 +39,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		}
 	});
 
-	const targetLabId = ['kepalaLab', 'laboran'].includes(user.role) ? user.laboratorium?.id : null;
+	const queryLabId = url.searchParams.get('laboratoriumId');
+	const isRestrictedRole = ['kepalaLab', 'laboran'].includes(user.role);
+	const targetLabId = isRestrictedRole
+		? user.laboratorium?.id ?? 'none'
+		: queryLabId && queryLabId !== '' && queryLabId !== 'all'
+			? queryLabId
+			: null;
 
 	const processedItems = items
 		.map((i) => {
@@ -55,10 +61,20 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 				status = 'RENDAH';
 			}
 
+			let latestActivity = i.createdAt ? new Date(i.createdAt).getTime() : 0;
+			for (const s of i.stocks) {
+				if (s.updatedAt) {
+					const t = new Date(s.updatedAt).getTime();
+					if (t > latestActivity) latestActivity = t;
+				}
+			}
+
 			return {
 				id: i.id,
 				name: i.name,
 				createdAt: i.createdAt,
+				latestActivity,
+				hideNewBadge: i.hideNewBadge,
 				totalQty,
 				minStock: i.minStock,
 				status,
@@ -73,6 +89,14 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			};
 		})
 		.filter((i) => !targetLabId || i.stocks.length > 0);
+
+	if (!sort) {
+		processedItems.sort((a, b) => b.latestActivity - a.latestActivity);
+	} else if (sort === 'asc') {
+		processedItems.sort((a, b) => a.name.localeCompare(b.name));
+	} else if (sort === 'desc') {
+		processedItems.sort((a, b) => b.name.localeCompare(a.name));
+	}
 
 	const totalItems = processedItems.length;
 	const totalPages = Math.ceil(totalItems / limit);
