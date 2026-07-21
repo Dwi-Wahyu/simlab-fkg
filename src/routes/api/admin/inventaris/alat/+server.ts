@@ -75,10 +75,16 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	}
 	const whereClause = and(...conditions);
 
+	const groupByParam = url.searchParams.get('groupBy') || url.searchParams.get('view');
+	const isGroupedView = groupByParam === 'category' || groupByParam === 'grouped';
+	const effectiveLimit = isGroupedView ? 1000 : limit;
+	const effectiveOffset = isGroupedView ? 0 : offset;
+
 	const itemStats = await db
 		.select({
 			id: item.id,
 			name: item.name,
+			categoryId: item.categoryId,
 			equipmentType: item.equipmentType,
 			createdAt: item.createdAt,
 			hideNewBadge: item.hideNewBadge,
@@ -91,7 +97,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.innerJoin(item, eq(equipment.itemId, item.id))
 		.leftJoin(warehouse, eq(equipment.warehouseId, warehouse.id))
 		.where(whereClause)
-		.groupBy(item.id, item.name, item.equipmentType, item.createdAt, item.hideNewBadge)
+		.groupBy(item.id, item.name, item.categoryId, item.equipmentType, item.createdAt, item.hideNewBadge)
 		.orderBy(
 			...(sort === 'asc'
 				? [asc(item.name)]
@@ -99,8 +105,8 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 					? [desc(item.name)]
 					: [desc(sql`MAX(${equipment.createdAt})`), desc(item.createdAt)])
 		)
-		.limit(limit)
-		.offset(offset);
+		.limit(effectiveLimit)
+		.offset(effectiveOffset);
 
 	// Total distinct items for pagination
 	const [totalItemsResult] = await db

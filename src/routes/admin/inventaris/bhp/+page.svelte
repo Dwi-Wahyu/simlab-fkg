@@ -40,6 +40,9 @@
 	import { cn } from '$lib/utils';
 	import { shouldShowNewBadge } from '$lib/utils/item-badge';
 
+	import * as Accordion from '$lib/components/ui/accordion/index.js';
+	import ExportPeriodicReportDialog from '$lib/components/ExportPeriodicReportDialog.svelte';
+
 	let { data } = $props();
 
 	let laboratories = $state<any[]>([]);
@@ -60,6 +63,43 @@
 	const selectedCategoryName = $derived(
 		categories.find((c) => c.id === selectedCategoryId)?.name ?? 'Semua Kategori'
 	);
+
+	let showExportDialog = $state(false);
+	let viewMode = $state<'table' | 'grouped'>(
+		(pageStore.url.searchParams.get('view') as 'grouped' | 'table') || 'table'
+	);
+
+	function handleViewChange(mode: 'table' | 'grouped') {
+		viewMode = mode;
+		updateUrl({ view: mode === 'table' ? '' : 'grouped', page: 1 });
+	}
+
+	function getBhpGroups(items: any[], categoriesList: any[]) {
+		const map = new Map<string, any[]>();
+		for (const it of items) {
+			const key = it.categoryId ?? '__none__';
+			if (!map.has(key)) map.set(key, []);
+			map.get(key)!.push(it);
+		}
+		const named = categoriesList
+			.filter((c) => map.has(c.id))
+			.map((c) => ({
+				key: c.id,
+				name: c.name,
+				items: map.get(c.id)!.sort((a, b) => a.name.localeCompare(b.name))
+			}))
+			.sort((a, b) => a.name.localeCompare(b.name));
+
+		const withoutCategory = map.get('__none__');
+		if (withoutCategory && withoutCategory.length > 0) {
+			named.push({
+				key: '__none__',
+				name: 'Tanpa Kategori',
+				items: withoutCategory.sort((a, b) => a.name.localeCompare(b.name))
+			});
+		}
+		return named;
+	}
 
 	onMount(async () => {
 		const promises: Promise<Response>[] = [fetch('/api/admin/equipment-category')];
@@ -131,6 +171,7 @@
 		const urlCat = pageStore.url.searchParams.get('categoryId') || 'all';
 		const urlLab = pageStore.url.searchParams.get('laboratoriumId') || 'all';
 		const urlSort = pageStore.url.searchParams.get('sort') || '';
+		const urlView = (pageStore.url.searchParams.get('view') as 'grouped' | 'table') || 'table';
 		untrack(() => {
 			if (searchQuery !== urlSearch) {
 				searchQuery = urlSearch;
@@ -143,6 +184,9 @@
 			}
 			if (currentSort !== urlSort) {
 				currentSort = urlSort;
+			}
+			if (viewMode !== urlView) {
+				viewMode = urlView;
 			}
 		});
 	});
@@ -200,34 +244,6 @@
 	const currentLabStocks = $derived(
 		stockItem?.stocks?.filter((s) => s.laboratoriumId === activeLabId) ?? []
 	);
-	const selectedStockRow = $derived(currentLabStocks.find((s) => s.id === selectedStockRowId));
-
-	$effect(() => {
-		if (stockEventType !== 'RECEIVE') {
-			isNewVariant = false;
-			if (
-				currentLabStocks.length > 0 &&
-				!currentLabStocks.some((s) => s.id === selectedStockRowId)
-			) {
-				selectedStockRowId = currentLabStocks[0].id;
-			}
-		} else {
-			if (currentLabStocks.length === 0) {
-				isNewVariant = true;
-			} else if (!isNewVariant && !selectedStockRowId) {
-				selectedStockRowId = currentLabStocks[0].id;
-			}
-		}
-	});
-
-	const eventTypeOptions = [
-		{ value: 'RECEIVE', label: 'Masuk (Receive)' },
-		{ value: 'ISSUE', label: 'Keluar (Issue)' },
-		{ value: 'ADJUSTMENT', label: 'Penyesuaian (Adjustment)' }
-	];
-	const stockEventTrigger = $derived(
-		eventTypeOptions.find((o) => o.value === stockEventType)?.label ?? 'Pilih Tipe'
-	);
 
 	function openStockModal(item: any) {
 		stockItem = item;
@@ -235,78 +251,72 @@
 		stockQty = 0;
 		stockNotes = '';
 		stockExpiryDate = '';
+		isNewVariant = false;
 		stockBrand = '';
 		stockVariant = '';
-		selectedStockRowId = '';
-		isNewVariant = false;
-		if (!isRestrictedLabUser && laboratoriumList.length === 0) {
-			fetch('/api/admin/laboratorium')
-				.then((r) => r.json())
-				.then((labs) => (laboratoriumList = labs));
+
+		if (!isRestrictedLabUser) {
+			if (laboratories.length > 0) {
+				stockLaboratoriumId = laboratories[0].id;
+			}
 		}
+
+		const matchingStocks = item.stocks?.filter((s: any) => s.laboratoriumId === activeLabId) ?? [];
+		if (matchingStocks.length > 0) {
+			selectedStockRowId = matchingStocks[0].id;
+			stockBrand = matchingStocks[0].brand || '';
+			stockVariant = matchingStocks[0].variant || '';
+		} else {
+			selectedStockRowId = 'NEW';
+			isNewVariant = true;
+		}
+
 		showStockModal = true;
 	}
 
+	function handleStockRowSelection(rowId: string) {
+		selectedStockRowId = rowId;
+		if (rowId === 'NEW') {
+			isNewVariant = true;
+			stockBrand = '';
+			stockVariant = '';
+		} else {
+			isNewVariant = false;
+			const found = currentLabStocks.find((s) => s.id === rowId);
+			if (found) {
+				stockBrand = found.brand || '';
+				stockVariant = found.variant || '';
+			}
+		}
+	}
+
 	async function submitStockChange() {
-		if (!stockItem || stockQty == null) return;
+		if (!stockItem) return;
 		const labId = isRestrictedLabUser ? userLabId : stockLaboratoriumId;
 		if (!labId) {
-			toast.destructive('Gagal', {
-				description: 'Pilih laboratorium terlebih dahulu.'
+			toast.destructive('Laboratorium Wajib', {
+				description: 'Pilih laboratorium tujuan terlebih dahulu.'
 			});
 			return;
 		}
 
-		let brand = '';
-		let variant = '';
-
-		if (stockEventType === 'RECEIVE') {
-			if (isNewVariant) {
-				brand = stockBrand.trim();
-				variant = stockVariant.trim();
-				if (!brand || !variant) {
-					toast.destructive('Gagal', {
-						description: 'Merk dan Varian baru harus diisi.'
-					});
-					return;
-				}
-			} else {
-				const matched = currentLabStocks.find((s) => s.id === selectedStockRowId);
-				if (!matched) {
-					toast.destructive('Gagal', {
-						description: 'Pilih varian stok terlebih dahulu.'
-					});
-					return;
-				}
-				brand = matched.brand;
-				variant = matched.variant;
-			}
-		} else {
-			const matched = currentLabStocks.find((s) => s.id === selectedStockRowId);
-			if (!matched) {
-				toast.destructive('Gagal', {
-					description: 'Pilih varian stok terlebih dahulu.'
-				});
-				return;
-			}
-			brand = matched.brand;
-			variant = matched.variant;
-
-			if (stockEventType === 'ISSUE' && matched.qty - stockQty < 0) {
-				toast.destructive('Stok Tidak Mencukupi', {
-					description: `Stok untuk varian "${matched.brand} (${matched.variant})" hanya tersisa ${matched.qty} ${stockItem.baseUnit}.`
-				});
-				return;
-			}
-		}
-
-		// Client-side validation
-		if (stockEventType === 'ISSUE' && stockItem.totalQty - stockQty < stockItem.minStock) {
-			toast.destructive('Di Bawah Minimum', {
-				description: `Hasil stok (${stockItem.totalQty - stockQty}) akan di bawah minimum (${stockItem.minStock}).`
+		if (stockQty <= 0) {
+			toast.destructive('Jumlah Tidak Valid', {
+				description: 'Jumlah perubahan stok harus lebih besar dari 0.'
 			});
 			return;
 		}
+
+		let brand = stockBrand;
+		let variant = stockVariant;
+		if (!isNewVariant && selectedStockRowId !== 'NEW') {
+			const found = currentLabStocks.find((s) => s.id === selectedStockRowId);
+			if (found) {
+				brand = found.brand || '';
+				variant = found.variant || '';
+			}
+		}
+
 		if (stockEventType === 'ADJUSTMENT' && stockQty < stockItem.minStock) {
 			toast.destructive('Di Bawah Minimum', {
 				description: `Stok akhir (${stockQty}) tidak boleh kurang dari minimum (${stockItem.minStock}).`
@@ -356,20 +366,9 @@
 			<p class="text-slate-500">Manajemen stok bahan dan konsumsi laboratorium.</p>
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
-			{#if data.user?.role === 'superadmin'}
-				<Button
-					href="/admin/laporan/inventaris/export?labId={selectedLabId === 'all' ? '' : selectedLabId}"
-					variant="outline"
-					class="gap-2"
-					disabled={!selectedLabId || selectedLabId === 'all'}
-				>
-					<Download class="size-4" /> Export
-				</Button>
-			{:else if ['kepalaLab', 'laboran'].includes(data.user?.role)}
-				<Button href="/admin/laporan/inventaris/export" variant="outline" class="gap-2">
-					<Download class="size-4" /> Export
-				</Button>
-			{/if}
+			<Button onclick={() => (showExportDialog = true)} variant="outline" class="gap-2">
+				<Download class="size-4" /> Export
+			</Button>
 
 			{#if data.user?.role !== 'koordinator'}
 				<Button href="/admin/inventaris/bhp/tambah">
@@ -467,25 +466,47 @@
 				</Button>
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
-				<SearchableSelect.Root
-					type="single"
-					value={selectedCategoryId}
-					onValueChange={handleCategoryChange}
-				>
-					<SearchableSelect.Trigger class="h-10 w-fit min-w-[200px] bg-white">
-						{selectedCategoryName}
-					</SearchableSelect.Trigger>
-					<SearchableSelect.Content>
-						<SearchableSelect.Item value="all" label="Semua Kategori"
-							>Semua Kategori</SearchableSelect.Item
-						>
-						{#each categories as cat}
-							<SearchableSelect.Item value={cat.id} label={cat.name}
-								>{cat.name}</SearchableSelect.Item
+				<!-- Toggle Mode Tampilan -->
+				<div class="flex items-center gap-1 rounded-lg border bg-slate-50 p-1">
+					<Button
+						variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+						size="sm"
+						class="h-8 text-xs font-medium"
+						onclick={() => handleViewChange('table')}
+					>
+						Tabel
+					</Button>
+					<Button
+						variant={viewMode === 'grouped' ? 'secondary' : 'ghost'}
+						size="sm"
+						class="h-8 text-xs font-medium"
+						onclick={() => handleViewChange('grouped')}
+					>
+						Kelompok Kategori
+					</Button>
+				</div>
+
+				{#if viewMode === 'table'}
+					<SearchableSelect.Root
+						type="single"
+						value={selectedCategoryId}
+						onValueChange={handleCategoryChange}
+					>
+						<SearchableSelect.Trigger class="h-10 w-fit min-w-[200px] bg-white">
+							{selectedCategoryName}
+						</SearchableSelect.Trigger>
+						<SearchableSelect.Content>
+							<SearchableSelect.Item value="all" label="Semua Kategori"
+								>Semua Kategori</SearchableSelect.Item
 							>
-						{/each}
-					</SearchableSelect.Content>
-				</SearchableSelect.Root>
+							{#each categories as cat}
+								<SearchableSelect.Item value={cat.id} label={cat.name}
+									>{cat.name}</SearchableSelect.Item
+								>
+							{/each}
+						</SearchableSelect.Content>
+					</SearchableSelect.Root>
+				{/if}
 
 				{#if !['kepalaLab', 'laboran'].includes(data.user?.role)}
 					<Select.Root type="single" value={selectedLabId} onValueChange={handleLabChange}>
@@ -501,282 +522,328 @@
 					</Select.Root>
 				{/if}
 
-				<Select.Root
-					type="single"
-					value={res.pagination.limit.toString()}
-					onValueChange={handleLimitChange}
-				>
-					<Select.Trigger class="w-27.5">
-						{res.pagination.limit} / Hal
-					</Select.Trigger>
-					<Select.Content>
-						<Select.Item value="10" label="10 / Halaman">10 / Hal</Select.Item>
-						<Select.Item value="25" label="25 / Halaman">25 / Hal</Select.Item>
-						<Select.Item value="50" label="50 / Halaman">50 / Hal</Select.Item>
-						<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
-					</Select.Content>
-				</Select.Root>
+				{#if viewMode === 'table'}
+					<Select.Root
+						type="single"
+						value={res.pagination.limit.toString()}
+						onValueChange={handleLimitChange}
+					>
+						<Select.Trigger class="w-27.5">
+							{res.pagination.limit} / Hal
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="10" label="10 / Halaman">10 / Hal</Select.Item>
+							<Select.Item value="25" label="25 / Halaman">25 / Hal</Select.Item>
+							<Select.Item value="50" label="50 / Halaman">50 / Hal</Select.Item>
+							<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
+						</Select.Content>
+					</Select.Root>
+				{/if}
 			</div>
 		</div>
 
-		<!-- Data Table -->
-		<div class="rounded-md border bg-white shadow-sm">
-			<div class="overflow-x-auto">
-				<Table.Root class="block md:table">
-					<Table.Header class="hidden md:table-header-group">
-						<Table.Row class="md:table-row">
-							<Table.Head class="px-6 py-4">
-								<div class="flex items-center gap-1">
-									<span>Nama Bahan</span>
-									<Tooltip.Provider>
-										<Tooltip.Root>
-											<Tooltip.Trigger>
-												<Button
-													variant="ghost"
-													size="icon"
-													class="h-6 w-6 p-0 hover:bg-slate-100"
-													onclick={toggleSort}
-													title="Sortir berdasarkan abjad"
-												>
-													{#if currentSort === 'asc'}
-														<ArrowUpNarrowWide class="h-4 w-4 text-blue-600 font-bold" />
-													{:else if currentSort === 'desc'}
-														<ArrowDownWideNarrow class="h-4 w-4 text-blue-600 font-bold" />
-													{:else}
-														<ArrowUpNarrowWide class="h-4 w-4 text-slate-400 opacity-50" />
-													{/if}
-												</Button>
-											</Tooltip.Trigger>
-											<Tooltip.Content side="top">
-												Sortir berdasarkan abjad {currentSort === 'asc' ? '(A-Z)' : currentSort === 'desc' ? '(Z-A)' : ''}
-											</Tooltip.Content>
-										</Tooltip.Root>
-									</Tooltip.Provider>
+		{#if viewMode === 'grouped'}
+			{@const groups = getBhpGroups(res.items, categories)}
+			{#if groups.length === 0}
+				<div class="rounded-md border bg-white p-8 text-center text-muted-foreground">
+					Data tidak ditemukan.
+				</div>
+			{:else}
+				<Accordion.Root type="multiple" value={groups.map((g) => g.key)} class="w-full space-y-3">
+					{#each groups as group (group.key)}
+						<Accordion.Item value={group.key} class="rounded-md border bg-white px-4 shadow-sm">
+							<Accordion.Trigger class="py-4 hover:no-underline">
+								<div class="flex items-center gap-2">
+									<span class="font-semibold text-slate-900">{group.name}</span>
+									<Badge variant="secondary" class="ml-1 text-xs">{group.items.length} item</Badge>
 								</div>
-							</Table.Head>
-							<Table.Head>Stok Sekarang</Table.Head>
-							<Table.Head>Stok Minimum</Table.Head>
-							<Table.Head>Satuan</Table.Head>
-							<Table.Head>Status</Table.Head>
-							<Table.Head class="pr-6 text-right">Aksi</Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body class="block md:table-row-group">
-						{#if res.items.length === 0}
-							<Table.Row class="flex flex-col md:table-row">
-								<Table.Cell
-									colspan={6}
-									class="py-10 text-center text-muted-foreground md:table-cell"
-								>
-									Data tidak ditemukan.
-								</Table.Cell>
-							</Table.Row>
-						{:else}
-							{#each res.items as item (item.id)}
-								<Table.Row
-									class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
-								>
-									<!-- Nama Bahan + Mobile status/expand -->
-									<Table.Cell
-										class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:py-4 md:pl-6"
-									>
-										<div class="flex flex-col">
-											<div class="flex items-center gap-2">
-												<span class="font-bold text-slate-900 md:font-medium">{item.name}</span>
-												{#if shouldShowNewBadge(item.createdAt, item.hideNewBadge)}
-													<Badge
-														class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
-														>Baru</Badge
-													>
-												{/if}
-												<Badge
-													variant={item.status === 'AMAN'
-														? 'default'
-														: item.status === 'RENDAH'
-															? 'outline'
-															: 'destructive'}
-													class={cn(
-														'px-1.5 py-0.5 text-[9px] md:hidden',
-														item.status === 'AMAN'
-															? 'bg-green-100 text-green-700 hover:bg-green-100'
-															: item.status === 'RENDAH'
-																? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
-																: ''
-													)}
-												>
-													{item.status === 'AMAN'
-														? 'Aman'
-														: item.status === 'RENDAH'
-															? 'Stok Rendah'
-															: 'Habis'}
-												</Badge>
+							</Accordion.Trigger>
+							<Accordion.Content class="pb-4 pt-1">
+								<div class="divide-y rounded-md border border-slate-100 bg-slate-50/50">
+									{#each group.items as item (item.id)}
+										<div class="flex items-center justify-between p-3 transition-colors hover:bg-slate-100/60">
+											<div class="flex flex-col">
+												<div class="flex items-center gap-2">
+													<span class="font-medium text-slate-900">{item.name}</span>
+													{#if shouldShowNewBadge(item.createdAt, item.hideNewBadge)}
+														<Badge class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white">Baru</Badge>
+													{/if}
+												</div>
+												<span class="text-xs text-slate-500">
+													Total Stok: {item.totalQty} {item.baseUnit} (Status: {item.status})
+												</span>
 											</div>
+											<Button href="/admin/inventaris/bhp/{item.id}" size="sm" variant="outline" class="h-8 gap-1 text-xs">
+												<Eye class="size-3.5" /> Detail
+											</Button>
 										</div>
-										<Button
-											variant="ghost"
-											size="icon"
-											class="ml-4 h-8 w-8 shrink-0 md:hidden"
-											onclick={() => (expandedItems[item.id] = !expandedItems[item.id])}
-											aria-label="Expand row"
-										>
-											{#if expandedItems[item.id]}
-												<ChevronUp class="h-4 w-4" />
-											{:else}
-												<ChevronDown class="h-4 w-4" />
-											{/if}
-										</Button>
-									</Table.Cell>
-
-									<!-- Stok Sekarang -->
-									<Table.Cell
-										class={cn(
-											expandedItems[item.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
-										)}
-									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Stok Sekarang</span
-										>
-										<span class="text-sm text-slate-600">{item.totalQty}</span>
-									</Table.Cell>
-
-									<!-- Stok Minimum -->
-									<Table.Cell
-										class={cn(
-											expandedItems[item.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
-										)}
-									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Stok Minimum</span>
-										<span class="text-sm text-slate-600">{item.minStock}</span>
-									</Table.Cell>
-
-									<!-- Satuan -->
-									<Table.Cell
-										class={cn(
-											expandedItems[item.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
-										)}
-									>
-										<span class="text-xs font-semibold text-slate-400 md:hidden">Satuan</span>
-										<span class="text-sm text-slate-600">{item.baseUnit}</span>
-									</Table.Cell>
-
-									<!-- Status (Desktop only) -->
-									<Table.Cell class="hidden md:table-cell md:border-b md:py-4 md:pl-3">
-										<Badge
-											variant={item.status === 'AMAN'
-												? 'default'
-												: item.status === 'RENDAH'
-													? 'outline'
-													: 'destructive'}
-											class={item.status === 'AMAN'
-												? 'bg-green-100 text-green-700 hover:bg-green-100'
-												: item.status === 'RENDAH'
-													? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
-													: ''}
-										>
-											{item.status === 'AMAN'
-												? 'Aman'
-												: item.status === 'RENDAH'
-													? 'Stok Rendah'
-													: 'Habis'}
-										</Badge>
-									</Table.Cell>
-
-									<!-- Aksi -->
-									<Table.Cell
-										class={cn(
-											expandedItems[item.id] ? 'flex' : 'hidden',
-											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
-										)}
-									>
-										<DropdownMenu.Root>
-											<DropdownMenu.Trigger>
-												{#snippet child({ props })}
-													<Button {...props} variant="ghost" size="icon" class="h-8 w-8">
-														<MoreHorizontal class="h-4 w-4" />
+									{/each}
+								</div>
+							</Accordion.Content>
+						</Accordion.Item>
+					{/each}
+				</Accordion.Root>
+			{/if}
+		{:else}
+			<!-- Data Table -->
+			<div class="rounded-md border bg-white shadow-sm">
+				<div class="overflow-x-auto">
+					<Table.Root class="block md:table">
+						<Table.Header class="hidden md:table-header-group">
+							<Table.Row class="md:table-row">
+								<Table.Head class="px-6 py-4">
+									<div class="flex items-center gap-1">
+										<span>Nama Bahan</span>
+										<Tooltip.Provider>
+											<Tooltip.Root>
+												<Tooltip.Trigger>
+													<Button
+														variant="ghost"
+														size="icon"
+														class="h-6 w-6 p-0 hover:bg-slate-100"
+														onclick={toggleSort}
+														title="Sortir berdasarkan abjad"
+													>
+														{#if currentSort === 'asc'}
+															<ArrowUpNarrowWide class="h-4 w-4 text-blue-600 font-bold" />
+														{:else if currentSort === 'desc'}
+															<ArrowDownWideNarrow class="h-4 w-4 text-blue-600 font-bold" />
+														{:else}
+															<ArrowUpNarrowWide class="h-4 w-4 text-slate-400 opacity-50" />
+														{/if}
 													</Button>
-												{/snippet}
-											</DropdownMenu.Trigger>
-											<DropdownMenu.Content align="end">
-												<DropdownMenu.Label>Aksi</DropdownMenu.Label>
-												<a href="/admin/inventaris/bhp/{item.id}">
-													<DropdownMenu.Item>
-														<Eye /> Detail
-													</DropdownMenu.Item>
-												</a>
-												<DropdownMenu.Separator />
-												<DropdownMenu.Item onclick={() => openStockModal(item)}>
-													<ArrowUpDown /> Ubah Stok
-												</DropdownMenu.Item>
-												<DropdownMenu.Separator />
-												<a href="/admin/inventaris/bhp/{item.id}/edit">
-													<DropdownMenu.Item>
-														<FileEdit /> Edit
-													</DropdownMenu.Item>
-												</a>
-												<DropdownMenu.Separator />
-											</DropdownMenu.Content>
-										</DropdownMenu.Root>
+												</Tooltip.Trigger>
+												<Tooltip.Content side="top">
+													Sortir berdasarkan abjad {currentSort === 'asc' ? '(A-Z)' : currentSort === 'desc' ? '(Z-A)' : ''}
+												</Tooltip.Content>
+											</Tooltip.Root>
+										</Tooltip.Provider>
+									</div>
+								</Table.Head>
+								<Table.Head>Stok Sekarang</Table.Head>
+								<Table.Head>Stok Minimum</Table.Head>
+								<Table.Head>Satuan</Table.Head>
+								<Table.Head>Status</Table.Head>
+								<Table.Head class="pr-6 text-right">Aksi</Table.Head>
+							</Table.Row>
+						</Table.Header>
+						<Table.Body class="block md:table-row-group">
+							{#if res.items.length === 0}
+								<Table.Row class="flex flex-col md:table-row">
+									<Table.Cell
+										colspan={6}
+										class="py-10 text-center text-muted-foreground md:table-cell"
+									>
+										Data tidak ditemukan.
 									</Table.Cell>
 								</Table.Row>
-							{/each}
-						{/if}
-					</Table.Body>
-				</Table.Root>
-			</div>
+							{:else}
+								{#each res.items as item (item.id)}
+									<Table.Row
+										class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
+									>
+										<!-- Nama Bahan + Mobile status/expand -->
+										<Table.Cell
+											class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:py-4 md:pl-6"
+										>
+											<div class="flex flex-col">
+												<div class="flex items-center gap-2">
+													<span class="font-bold text-slate-900 md:font-medium">{item.name}</span>
+													{#if shouldShowNewBadge(item.createdAt, item.hideNewBadge)}
+														<Badge
+															class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
+															>Baru</Badge
+														>
+													{/if}
+													<Badge
+														variant={item.status === 'AMAN'
+															? 'default'
+															: item.status === 'RENDAH'
+																? 'outline'
+																: 'destructive'}
+														class={cn(
+															'px-1.5 py-0.5 text-[9px] md:hidden',
+															item.status === 'AMAN'
+																? 'bg-green-100 text-green-700 hover:bg-green-100'
+																: item.status === 'RENDAH'
+																	? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+																	: ''
+														)}
+													>
+														{item.status === 'AMAN'
+															? 'Aman'
+															: item.status === 'RENDAH'
+																? 'Stok Rendah'
+																: 'Habis'}
+													</Badge>
+												</div>
+											</div>
+											<Button
+												variant="ghost"
+												size="icon"
+												class="ml-4 h-8 w-8 shrink-0 md:hidden"
+												onclick={() => (expandedItems[item.id] = !expandedItems[item.id])}
+												aria-label="Expand row"
+											>
+												{#if expandedItems[item.id]}
+													<ChevronUp class="h-4 w-4" />
+												{:else}
+													<ChevronDown class="h-4 w-4" />
+												{/if}
+											</Button>
+										</Table.Cell>
 
-			<!-- Pagination -->
-			<div class="flex items-center justify-between border-t px-4 py-4">
-				<div class="text-sm text-slate-500">
-					Menampilkan {(res.pagination.currentPage - 1) * res.pagination.limit + 1} sampai {Math.min(
-						res.pagination.currentPage * res.pagination.limit,
-						res.pagination.totalItems
-					)} dari {res.pagination.totalItems} bahan
+										<!-- Stok Sekarang -->
+										<Table.Cell
+											class={cn(
+												expandedItems[item.id] ? 'flex' : 'hidden',
+												'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
+											)}
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Stok Sekarang</span
+											>
+											<span class="text-sm text-slate-600">{item.totalQty}</span>
+										</Table.Cell>
+
+										<!-- Stok Minimum -->
+										<Table.Cell
+											class={cn(
+												expandedItems[item.id] ? 'flex' : 'hidden',
+												'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
+											)}
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Stok Minimum</span>
+											<span class="text-sm text-slate-600">{item.minStock}</span>
+										</Table.Cell>
+
+										<!-- Satuan -->
+										<Table.Cell
+											class={cn(
+												expandedItems[item.id] ? 'flex' : 'hidden',
+												'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
+											)}
+										>
+											<span class="text-xs font-semibold text-slate-400 md:hidden">Satuan</span>
+											<span class="text-sm text-slate-600">{item.baseUnit}</span>
+										</Table.Cell>
+
+										<!-- Status (Desktop only) -->
+										<Table.Cell class="hidden md:table-cell md:border-b md:py-4 md:pl-3">
+											<Badge
+												variant={item.status === 'AMAN'
+													? 'default'
+													: item.status === 'RENDAH'
+														? 'outline'
+														: 'destructive'}
+												class={item.status === 'AMAN'
+													? 'bg-green-100 text-green-700 hover:bg-green-100'
+													: item.status === 'RENDAH'
+														? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+														: ''}
+											>
+												{item.status === 'AMAN'
+													? 'Aman'
+													: item.status === 'RENDAH'
+														? 'Stok Rendah'
+														: 'Habis'}
+											</Badge>
+										</Table.Cell>
+
+										<!-- Aksi -->
+										<Table.Cell
+											class={cn(
+												expandedItems[item.id] ? 'flex' : 'hidden',
+												'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
+											)}
+										>
+											<DropdownMenu.Root>
+												<DropdownMenu.Trigger>
+													{#snippet child({ props })}
+														<Button {...props} variant="ghost" size="icon" class="h-8 w-8">
+															<MoreHorizontal class="h-4 w-4" />
+														</Button>
+													{/snippet}
+												</DropdownMenu.Trigger>
+												<DropdownMenu.Content align="end">
+													<DropdownMenu.Label>Aksi</DropdownMenu.Label>
+													<a href="/admin/inventaris/bhp/{item.id}">
+														<DropdownMenu.Item>
+															<Eye /> Detail
+														</DropdownMenu.Item>
+													</a>
+													<DropdownMenu.Separator />
+													<DropdownMenu.Item onclick={() => openStockModal(item)}>
+														<ArrowUpDown /> Ubah Stok
+													</DropdownMenu.Item>
+													<DropdownMenu.Separator />
+													<a href="/admin/inventaris/bhp/{item.id}/edit">
+														<DropdownMenu.Item>
+															<FileEdit /> Edit
+														</DropdownMenu.Item>
+													</a>
+													<DropdownMenu.Separator />
+												</DropdownMenu.Content>
+											</DropdownMenu.Root>
+										</Table.Cell>
+									</Table.Row>
+								{/each}
+							{/if}
+						</Table.Body>
+					</Table.Root>
 				</div>
-				<div class="flex items-center space-x-2">
-					<Button
-						variant="outline"
-						size="icon"
-						class="hidden h-8 w-8 lg:flex"
-						onclick={() => handlePageChange(1)}
-						disabled={res.pagination.currentPage === 1}
-					>
-						<ChevronsLeft class="h-4 w-4" />
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						class="h-8 w-8"
-						onclick={() => handlePageChange(res.pagination.currentPage - 1)}
-						disabled={res.pagination.currentPage === 1}
-					>
-						<ChevronLeft class="h-4 w-4" />
-					</Button>
-					<div class="flex items-center justify-center text-sm font-medium">
-						Halaman {res.pagination.currentPage} dari {res.pagination.totalPages}
+
+				<!-- Pagination -->
+				<div class="flex items-center justify-between border-t px-4 py-4">
+					<div class="text-sm text-slate-500">
+						Menampilkan {(res.pagination.currentPage - 1) * res.pagination.limit + 1} sampai {Math.min(
+							res.pagination.currentPage * res.pagination.limit,
+							res.pagination.totalItems
+						)} dari {res.pagination.totalItems} bahan
 					</div>
-					<Button
-						variant="outline"
-						size="icon"
-						class="h-8 w-8"
-						onclick={() => handlePageChange(res.pagination.currentPage + 1)}
-						disabled={res.pagination.currentPage === res.pagination.totalPages}
-					>
-						<ChevronRight class="h-4 w-4" />
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						class="hidden h-8 w-8 lg:flex"
-						onclick={() => handlePageChange(res.pagination.totalPages)}
-						disabled={res.pagination.currentPage === res.pagination.totalPages}
-					>
-						<ChevronsRight class="h-4 w-4" />
-					</Button>
+					<div class="flex items-center space-x-2">
+						<Button
+							variant="outline"
+							size="icon"
+							class="hidden h-8 w-8 lg:flex"
+							onclick={() => handlePageChange(1)}
+							disabled={res.pagination.currentPage === 1}
+						>
+							<ChevronsLeft class="h-4 w-4" />
+						</Button>
+						<Button
+							variant="outline"
+							size="icon"
+							class="h-8 w-8"
+							onclick={() => handlePageChange(res.pagination.currentPage - 1)}
+							disabled={res.pagination.currentPage === 1}
+						>
+							<ChevronLeft class="h-4 w-4" />
+						</Button>
+						<div class="flex items-center justify-center text-sm font-medium">
+							Halaman {res.pagination.currentPage} dari {res.pagination.totalPages}
+						</div>
+						<Button
+							variant="outline"
+							size="icon"
+							class="h-8 w-8"
+							onclick={() => handlePageChange(res.pagination.currentPage + 1)}
+							disabled={res.pagination.currentPage === res.pagination.totalPages}
+						>
+							<ChevronRight class="h-4 w-4" />
+						</Button>
+						<Button
+							variant="outline"
+							size="icon"
+							class="hidden h-8 w-8 lg:flex"
+							onclick={() => handlePageChange(res.pagination.totalPages)}
+							disabled={res.pagination.currentPage === res.pagination.totalPages}
+						>
+							<ChevronsRight class="h-4 w-4" />
+						</Button>
+					</div>
 				</div>
 			</div>
-		</div>
+		{/if}
 	{:catch error}
 		<Card.Root class="border-red-200 bg-red-50 p-8 text-center">
 			<div class="flex flex-col items-center gap-2 text-red-600">
@@ -801,8 +868,6 @@
 	title="Ubah Stok"
 	onConfirm={submitStockChange}
 	confirmLabel="Simpan"
-
-	// {stockItem ? description: `${stockItem.name} (Stok: ${stockItem.totalQty} ${stockItem.baseUnit})` : ''}
 >
 	<div class="space-y-4">
 		{#if isRestrictedLabUser}
@@ -953,3 +1018,12 @@
 		</div>
 	</div>
 </Modal>
+
+<ExportPeriodicReportDialog
+	bind:open={showExportDialog}
+	reportLabel="Laporan Stok Bahan Habis Pakai"
+	exportBasePath="/admin/laporan/inventaris/bhp/export"
+	labs={laboratories}
+	isRestrictedLabUser={['kepalaLab', 'laboran'].includes(data.user?.role)}
+	userLabId={data.user?.laboratorium?.id ?? ''}
+/>

@@ -156,6 +156,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			itemId,
 			eventType,
 			qty: movementQty,
+			direction: eventType === 'ADJUSTMENT' ? (qty - currentQty >= 0 ? 'IN' : 'OUT') : null,
 			unit: targetItem.baseUnit,
 			laboratoriumId,
 			notes: notes ?? null,

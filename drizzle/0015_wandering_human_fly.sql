@@ -1,0 +1,1 @@
+ALTER TABLE `movement` ADD `movement_direction` enum('IN','OUT');

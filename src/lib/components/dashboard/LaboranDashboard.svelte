@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { AlertTriangle } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { LaboranDashboardData } from '$lib/types/dashboard';
-	import { AlertTriangle } from '@lucide/svelte';
 
 	let { data }: { data: LaboranDashboardData } = $props();
 
@@ -24,7 +24,7 @@
 			color: 'text-red-600'
 		},
 		{
-			label: 'Sedang Dipakai',
+			label: 'Dipinjam',
 			value: data.inventorySummary.inUse,
 			color: 'text-blue-600'
 		},

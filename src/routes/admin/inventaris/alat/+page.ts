@@ -7,6 +7,7 @@ export const load: PageLoad = ({ fetch, url }) => {
 	const laboratoriumId = url.searchParams.get('laboratoriumId') || '';
 	const categoryId = url.searchParams.get('categoryId') || '';
 	const sort = url.searchParams.get('sort') || '';
+	const view = url.searchParams.get('view') || '';
 
 	const fetchData = async () => {
 		const query = new URLSearchParams({ page, limit, search });
@@ -18,6 +19,9 @@ export const load: PageLoad = ({ fetch, url }) => {
 		}
 		if (sort) {
 			query.set('sort', sort);
+		}
+		if (view) {
+			query.set('view', view);
 		}
 		const res = await fetch(`/api/admin/inventaris/alat?${query.toString()}`);
 		if (!res.ok) throw new Error('Gagal memuat data alat');

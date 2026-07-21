@@ -25,8 +25,7 @@ export interface SuperadminDashboardData {
 	inventorySummary: {
 		totalEquipment: number;
 		baik: number;
-		rusakRingan: number;
-		rusakBerat: number;
+		rusak: number;
 	};
 	activeIncidents: number;
 }
@@ -53,8 +52,7 @@ export interface KepalaLabDashboardData {
 	inventorySummary: {
 		totalEquipment: number;
 		baik: number;
-		rusakRingan: number;
-		rusakBerat: number;
+		rusak: number;
 		inUse: number;
 		maintenance: number;
 	};

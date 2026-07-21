@@ -1,17 +1,37 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import type { KepalaLabDashboardData } from '$lib/types/dashboard';
 
 	let { data }: { data: KepalaLabDashboardData } = $props();
 
 	const inventoryItems = $derived([
-		{ label: 'Total Alat', value: data.inventorySummary.totalEquipment, color: '' },
-		{ label: 'Kondisi Baik', value: data.inventorySummary.baik, color: 'text-green-600' },
-		{ label: 'Kondisi Rusak', value: data.inventorySummary.rusak, color: 'text-red-600' },
-		{ label: 'Sedang Dipakai', value: data.inventorySummary.inUse, color: 'text-blue-600' },
-		{ label: 'Pemeliharaan', value: data.inventorySummary.maintenance, color: 'text-orange-600' }
+		{
+			label: 'Total Alat',
+			value: data.inventorySummary.totalEquipment,
+			color: ''
+		},
+		{
+			label: 'Kondisi Baik',
+			value: data.inventorySummary.baik,
+			color: 'text-green-600'
+		},
+		{
+			label: 'Kondisi Rusak',
+			value: data.inventorySummary.rusak,
+			color: 'text-red-600'
+		},
+		{
+			label: 'Dipinjam',
+			value: data.inventorySummary.inUse,
+			color: 'text-blue-600'
+		},
+		{
+			label: 'Pemeliharaan',
+			value: data.inventorySummary.maintenance,
+			color: 'text-orange-600'
+		}
 	]);
 </script>
 

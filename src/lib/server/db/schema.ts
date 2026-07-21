@@ -303,6 +303,8 @@ export const movementReferenceTypeEnum = mysqlEnum('movement_reference_type', [
 	'MAINTENANCE'
 ]);
 
+export const movementDirectionEnum = mysqlEnum('movement_direction', ['IN', 'OUT']);
+
 export const movement = mysqlTable(
 	'movement',
 	{
@@ -319,6 +321,8 @@ export const movement = mysqlTable(
 
 		// Quantity for consumable items (default 1 for assets)
 		qty: int('qty').notNull().default(1),
+
+		direction: movementDirectionEnum,
 
 		// Unit for consumable items (e.g., "PCS", "BOX")
 		unit: varchar('unit', { length: 20 }),

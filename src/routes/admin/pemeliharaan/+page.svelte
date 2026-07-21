@@ -25,6 +25,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import { toast } from '$lib/components/toast';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -33,7 +34,6 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
-	import { toast } from '$lib/components/toast';
 
 	let { data } = $props();
 
@@ -233,7 +233,7 @@
 
 	<!-- Tabs Area -->
 	<Tabs.Root bind:value={activeTab} onValueChange={handleTabChange} class="w-full space-y-4">
-		<Tabs.List variant="line" class=" w-full">
+		<Tabs.List class=" w-full">
 			<Tabs.Trigger value="pemeliharaan" class="h-10 cursor-pointer">Pemeliharaan</Tabs.Trigger>
 			<Tabs.Trigger value="kalibrasi" class="h-10 cursor-pointer">Kalibrasi</Tabs.Trigger>
 			<Tabs.Trigger value="biaya" class="h-10 cursor-pointer">Analisis Biaya</Tabs.Trigger>

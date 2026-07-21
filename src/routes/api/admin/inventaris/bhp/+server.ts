@@ -72,6 +72,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			return {
 				id: i.id,
 				name: i.name,
+				categoryId: i.categoryId,
 				createdAt: i.createdAt,
 				latestActivity,
 				hideNewBadge: i.hideNewBadge,
@@ -99,11 +100,14 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	}
 
 	const totalItems = processedItems.length;
-	const totalPages = Math.ceil(totalItems / limit);
+	const groupByParam = url.searchParams.get('groupBy') || url.searchParams.get('view');
+	const isGroupedView = groupByParam === 'category' || groupByParam === 'grouped';
+	const effectiveLimit = isGroupedView ? 1000 : limit;
+	const effectiveOffset = isGroupedView ? 0 : offset;
+	const totalPages = Math.ceil(totalItems / effectiveLimit);
 
 	// Slice for pagination since we process status in memory
-	// In production with huge data, this logic should move to SQL
-	const paginatedItems = processedItems.slice(offset, offset + limit);
+	const paginatedItems = processedItems.slice(effectiveOffset, effectiveOffset + effectiveLimit);
 
 	const aman = processedItems.filter((i) => i.status === 'AMAN').length;
 	const rendah = processedItems.filter((i) => i.status === 'RENDAH').length;
