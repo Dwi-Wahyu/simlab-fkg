@@ -14,8 +14,10 @@
 		Download,
 		Eye,
 		FileEdit,
+		Filter,
 		MoreHorizontal,
 		Plus,
+		RotateCcw,
 		Search,
 		ShieldCheck,
 		Trash2,
@@ -24,11 +26,14 @@
 	import { onMount, untrack } from 'svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page as pageStore } from '$app/state';
+	import ExportPeriodicReportDialog from '$lib/components/ExportPeriodicReportDialog.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/components/toast';
+	import * as Accordion from '$lib/components/ui/accordion/index.js';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -39,9 +44,6 @@
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { cn } from '$lib/utils';
 	import { shouldShowNewBadge } from '$lib/utils/item-badge';
-
-	import * as Accordion from '$lib/components/ui/accordion/index.js';
-	import ExportPeriodicReportDialog from '$lib/components/ExportPeriodicReportDialog.svelte';
 
 	let { data } = $props();
 
@@ -65,6 +67,26 @@
 	);
 
 	let showExportDialog = $state(false);
+	let showFilterDialog = $state(false);
+
+	const isLabFiltered = $derived(
+		!['kepalaLab', 'laboran'].includes(data.user?.role) &&
+			selectedLabId !== 'all' &&
+			selectedLabId !== ''
+	);
+	const isCategoryFiltered = $derived(selectedCategoryId !== 'all' && selectedCategoryId !== '');
+	const activeFilterCount = $derived((isLabFiltered ? 1 : 0) + (isCategoryFiltered ? 1 : 0));
+	const hasActiveFilters = $derived(activeFilterCount > 0);
+
+	function clearFilters() {
+		selectedCategoryId = 'all';
+		handleCategoryChange('all');
+		if (!['kepalaLab', 'laboran'].includes(data.user?.role)) {
+			selectedLabId = 'all';
+			handleLabChange('all');
+		}
+	}
+
 	let viewMode = $state<'table' | 'grouped'>(
 		(pageStore.url.searchParams.get('view') as 'grouped' | 'table') || 'table'
 	);
@@ -356,7 +378,6 @@
 			stockLoading = false;
 		}
 	}
-
 </script>
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
@@ -370,7 +391,7 @@
 				<Download class="size-4" /> Export
 			</Button>
 
-			{#if data.user?.role !== 'koordinator'}
+			{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 				<Button href="/admin/inventaris/bhp/tambah">
 					<Plus /> Tambah BHP
 				</Button>
@@ -452,7 +473,7 @@
 					<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
 					<Input
 						placeholder="Cari bahan..."
-						class="pl-10"
+						class="h-10 pl-10"
 						bind:value={searchQuery}
 						onkeydown={(e) => {
 							if (e.key === 'Enter') {
@@ -461,17 +482,112 @@
 						}}
 					/>
 				</div>
-				<Button onclick={executeSearch} variant="secondary" class="gap-1">
+				<Button onclick={executeSearch} variant="secondary" class="h-10 gap-1">
 					<Search class="size-4" /> Cari
 				</Button>
 			</div>
-			<div class="flex flex-wrap items-center gap-2">
+			<div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+				<!-- Filter Dialog Trigger -->
+				<Dialog.Root bind:open={showFilterDialog}>
+					<Dialog.Trigger class="flex-1 sm:flex-none">
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="outline"
+								class={cn(
+									'relative h-10 w-full justify-center gap-2 bg-white px-3.5 sm:w-auto',
+									hasActiveFilters && 'border-blue-500 bg-blue-50/50 font-medium text-blue-600'
+								)}
+							>
+								<Filter class="size-4" />
+								<span>Filter</span>
+								{#if hasActiveFilters}
+									<span
+										class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white"
+									>
+										{activeFilterCount}
+									</span>
+								{/if}
+							</Button>
+						{/snippet}
+					</Dialog.Trigger>
+					<Dialog.Content class="sm:max-w-[425px]">
+						<Dialog.Header>
+							<Dialog.Title>Filter Inventaris BHP</Dialog.Title>
+							<Dialog.Description>
+								Pilih kriteria kategori dan laboratorium untuk menyaring data.
+							</Dialog.Description>
+						</Dialog.Header>
+
+						<div class="grid gap-4">
+							<div class="grid gap-2">
+								<Label for="filter-category" class="text-sm font-medium">Kategori</Label>
+								<SearchableSelect.Root
+									type="single"
+									value={selectedCategoryId}
+									onValueChange={handleCategoryChange}
+								>
+									<SearchableSelect.Trigger id="filter-category" class="h-10 w-full bg-white">
+										{selectedCategoryName}
+									</SearchableSelect.Trigger>
+									<SearchableSelect.Content>
+										<SearchableSelect.Item value="all" label="Semua Kategori">
+											Semua Kategori
+										</SearchableSelect.Item>
+										{#each categories as cat}
+											<SearchableSelect.Item value={cat.id} label={cat.name}>
+												{cat.name}
+											</SearchableSelect.Item>
+										{/each}
+									</SearchableSelect.Content>
+								</SearchableSelect.Root>
+							</div>
+
+							{#if !['kepalaLab', 'laboran'].includes(data.user?.role)}
+								<div class="grid gap-2">
+									<Label for="filter-lab" class="text-sm font-medium">Laboratorium</Label>
+									<Select.Root type="single" value={selectedLabId} onValueChange={handleLabChange}>
+										<Select.Trigger id="filter-lab" class="h-10 w-full bg-white">
+											{selectedLabName}
+										</Select.Trigger>
+										<Select.Content>
+											<Select.Item value="all" label="Semua Laboratorium"
+												>Semua Laboratorium</Select.Item
+											>
+											{#each laboratories as lab}
+												<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+											{/each}
+										</Select.Content>
+									</Select.Root>
+								</div>
+							{/if}
+						</div>
+
+						<Dialog.Footer
+							class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-0"
+						>
+							{#if hasActiveFilters}
+								<Button
+									variant="ghost"
+									onclick={clearFilters}
+									class="gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700"
+								>
+									<RotateCcw class="size-4" /> Reset Filter
+								</Button>
+							{:else}
+								<div></div>
+							{/if}
+							<Button onclick={() => (showFilterDialog = false)}>Terapkan</Button>
+						</Dialog.Footer>
+					</Dialog.Content>
+				</Dialog.Root>
+
 				<!-- Toggle Mode Tampilan -->
-				<div class="flex items-center gap-1 rounded-lg border bg-slate-50 p-1">
+				<div class="flex flex-1 items-center gap-1 rounded-lg border bg-slate-50 p-1 sm:flex-none">
 					<Button
 						variant={viewMode === 'table' ? 'secondary' : 'ghost'}
 						size="sm"
-						class="h-8 text-xs font-medium"
+						class="h-8 flex-1 text-xs font-medium sm:flex-none"
 						onclick={() => handleViewChange('table')}
 					>
 						Tabel
@@ -479,7 +595,7 @@
 					<Button
 						variant={viewMode === 'grouped' ? 'secondary' : 'ghost'}
 						size="sm"
-						class="h-8 text-xs font-medium"
+						class="h-8 flex-1 text-xs font-medium sm:flex-none"
 						onclick={() => handleViewChange('grouped')}
 					>
 						Kelompok Kategori
@@ -487,57 +603,23 @@
 				</div>
 
 				{#if viewMode === 'table'}
-					<SearchableSelect.Root
-						type="single"
-						value={selectedCategoryId}
-						onValueChange={handleCategoryChange}
-					>
-						<SearchableSelect.Trigger class="h-10 w-fit min-w-[200px] bg-white">
-							{selectedCategoryName}
-						</SearchableSelect.Trigger>
-						<SearchableSelect.Content>
-							<SearchableSelect.Item value="all" label="Semua Kategori"
-								>Semua Kategori</SearchableSelect.Item
-							>
-							{#each categories as cat}
-								<SearchableSelect.Item value={cat.id} label={cat.name}
-									>{cat.name}</SearchableSelect.Item
-								>
-							{/each}
-						</SearchableSelect.Content>
-					</SearchableSelect.Root>
-				{/if}
-
-				{#if !['kepalaLab', 'laboran'].includes(data.user?.role)}
-					<Select.Root type="single" value={selectedLabId} onValueChange={handleLabChange}>
-						<Select.Trigger class="h-10 w-fit bg-white">
-							{selectedLabName}
-						</Select.Trigger>
-						<Select.Content>
-							<Select.Item value="all" label="Semua Laboratorium">Semua Laboratorium</Select.Item>
-							{#each laboratories as lab}
-								<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
-				{/if}
-
-				{#if viewMode === 'table'}
-					<Select.Root
-						type="single"
-						value={res.pagination.limit.toString()}
-						onValueChange={handleLimitChange}
-					>
-						<Select.Trigger class="w-27.5">
-							{res.pagination.limit} / Hal
-						</Select.Trigger>
-						<Select.Content>
-							<Select.Item value="10" label="10 / Halaman">10 / Hal</Select.Item>
-							<Select.Item value="25" label="25 / Halaman">25 / Hal</Select.Item>
-							<Select.Item value="50" label="50 / Halaman">50 / Hal</Select.Item>
-							<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
-						</Select.Content>
-					</Select.Root>
+					<div class="flex-1 sm:flex-none">
+						<Select.Root
+							type="single"
+							value={res.pagination.limit.toString()}
+							onValueChange={handleLimitChange}
+						>
+							<Select.Trigger class="h-10 w-full sm:w-27.5">
+								{res.pagination.limit} / Hal
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="10" label="10 / Halaman">10 / Hal</Select.Item>
+								<Select.Item value="25" label="25 / Halaman">25 / Hal</Select.Item>
+								<Select.Item value="50" label="50 / Halaman">50 / Hal</Select.Item>
+								<Select.Item value="100" label="100 / Halaman">100 / Hal</Select.Item>
+							</Select.Content>
+						</Select.Root>
+					</div>
 				{/if}
 			</div>
 		</div>
@@ -558,22 +640,33 @@
 									<Badge variant="secondary" class="ml-1 text-xs">{group.items.length} item</Badge>
 								</div>
 							</Accordion.Trigger>
-							<Accordion.Content class="pb-4 pt-1">
+							<Accordion.Content class="pt-1 pb-4">
 								<div class="divide-y rounded-md border border-slate-100 bg-slate-50/50">
 									{#each group.items as item (item.id)}
-										<div class="flex items-center justify-between p-3 transition-colors hover:bg-slate-100/60">
+										<div
+											class="flex items-center justify-between p-3 transition-colors hover:bg-slate-100/60"
+										>
 											<div class="flex flex-col">
 												<div class="flex items-center gap-2">
 													<span class="font-medium text-slate-900">{item.name}</span>
 													{#if shouldShowNewBadge(item.createdAt, item.hideNewBadge)}
-														<Badge class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white">Baru</Badge>
+														<Badge
+															class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white"
+															>Baru</Badge
+														>
 													{/if}
 												</div>
 												<span class="text-xs text-slate-500">
-													Total Stok: {item.totalQty} {item.baseUnit} (Status: {item.status})
+													Total Stok: {item.totalQty}
+													{item.baseUnit} (Status: {item.status})
 												</span>
 											</div>
-											<Button href="/admin/inventaris/bhp/{item.id}" size="sm" variant="outline" class="h-8 gap-1 text-xs">
+											<Button
+												href="/admin/inventaris/bhp/{item.id}"
+												size="sm"
+												variant="outline"
+												class="h-8 gap-1 text-xs"
+											>
 												<Eye class="size-3.5" /> Detail
 											</Button>
 										</div>
@@ -605,16 +698,20 @@
 														title="Sortir berdasarkan abjad"
 													>
 														{#if currentSort === 'asc'}
-															<ArrowUpNarrowWide class="h-4 w-4 text-blue-600 font-bold" />
+															<ArrowUpNarrowWide class="h-4 w-4 font-bold text-blue-600" />
 														{:else if currentSort === 'desc'}
-															<ArrowDownWideNarrow class="h-4 w-4 text-blue-600 font-bold" />
+															<ArrowDownWideNarrow class="h-4 w-4 font-bold text-blue-600" />
 														{:else}
 															<ArrowUpNarrowWide class="h-4 w-4 text-slate-400 opacity-50" />
 														{/if}
 													</Button>
 												</Tooltip.Trigger>
 												<Tooltip.Content side="top">
-													Sortir berdasarkan abjad {currentSort === 'asc' ? '(A-Z)' : currentSort === 'desc' ? '(Z-A)' : ''}
+													Sortir berdasarkan abjad {currentSort === 'asc'
+														? '(A-Z)'
+														: currentSort === 'desc'
+															? '(Z-A)'
+															: ''}
 												</Tooltip.Content>
 											</Tooltip.Root>
 										</Tooltip.Provider>
@@ -700,7 +797,8 @@
 												'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
 											)}
 										>
-											<span class="text-xs font-semibold text-slate-400 md:hidden">Stok Sekarang</span
+											<span class="text-xs font-semibold text-slate-400 md:hidden"
+												>Stok Sekarang</span
 											>
 											<span class="text-sm text-slate-600">{item.totalQty}</span>
 										</Table.Cell>
@@ -712,7 +810,9 @@
 												'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-3'
 											)}
 										>
-											<span class="text-xs font-semibold text-slate-400 md:hidden">Stok Minimum</span>
+											<span class="text-xs font-semibold text-slate-400 md:hidden"
+												>Stok Minimum</span
+											>
 											<span class="text-sm text-slate-600">{item.minStock}</span>
 										</Table.Cell>
 

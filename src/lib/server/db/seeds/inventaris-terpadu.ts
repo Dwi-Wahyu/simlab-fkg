@@ -215,11 +215,14 @@ async function upsertItem(
 	});
 
 	if (existing) {
-		// Update categoryId if provided and currently null
-		if (params.categoryId && !existing.categoryId && !DRY_RUN) {
+		if (!DRY_RUN) {
+			const updateData: Record<string, any> = { hideNewBadge: true };
+			if (params.categoryId && !existing.categoryId) {
+				updateData.categoryId = params.categoryId;
+			}
 			await db
 				.update(schema.item)
-				.set({ categoryId: params.categoryId })
+				.set(updateData)
 				.where(eq(schema.item.id, existing.id));
 		}
 		itemCache.set(cacheKey, existing.id);
@@ -242,6 +245,7 @@ async function upsertItem(
 		baseUnit: params.baseUnit,
 		description: params.description ?? null,
 		minStock: 0,
+		hideNewBadge: true,
 		createdAt: new Date()
 	});
 
