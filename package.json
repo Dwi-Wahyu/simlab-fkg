@@ -23,6 +23,7 @@
 		"db:seed-dpjp": "bun run src/lib/server/db/seeds/dpjp.ts",
 		"db:seed-inventaris-preparasi": "bun run src/lib/server/db/seeds/inventaris-preparasi.ts",
 		"db:seed-inventaris-fdrl": "bun run src/lib/server/db/seeds/inventaris-dfrl.ts",
+		"db:seed-inventaris-terpadu": "bun run src/lib/server/db/seeds/inventaris-terpadu.ts",
 		"db:seed-users": "bun run src/lib/server/db/seeds/users.ts",
 		"db:seed-mahasiswa": "bun run src/lib/server/db/seeds/mahasiswa.ts",
 		"db:seed-logbook-templates": "bun run src/lib/server/db/seeds/logbook-templates.ts",
