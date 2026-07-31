@@ -1,9 +1,9 @@
-import { defineConfig } from 'vitest/config';
-import { playwright } from '@vitest/browser-playwright';
-import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
+import { playwright } from '@vitest/browser-playwright';
 import path from 'path';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	plugins: [

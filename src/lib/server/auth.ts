@@ -50,7 +50,10 @@ export const auth = betterAuth({
 		updateAge: 60 * 60 * 24 // 1 day (every 1 day the session expiration is updated)
 	},
 	advanced: {
-		disableOriginCheck: true
+		disableOriginCheck: true,
+		ipAddress: {
+			ipAddressHeaders: ['x-forwarded-for', 'x-real-ip']
+		}
 	},
 	databaseHooks: {
 		session: {

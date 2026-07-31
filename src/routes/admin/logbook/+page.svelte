@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { Plus, Pencil, Trash2, FileText } from '@lucide/svelte';
+	import { FileText, Pencil, Plus, Trash2 } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
-	import * as Card from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
-	import * as Dialog from '$lib/components/ui/dialog';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import * as Table from '$lib/components/ui/table';
 
 	let { data } = $props();
 
@@ -45,7 +45,7 @@
 			<p class="text-muted-foreground">Kelola format template logbook yang digunakan mahasiswa.</p>
 		</div>
 		<Button onclick={() => (showCreateDialog = true)}>
-			<Plus class="mr-2 h-4 w-4" /> Tambah Template
+			<Plus /> Tambah Template
 		</Button>
 	</div>
 

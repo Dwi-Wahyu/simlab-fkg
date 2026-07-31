@@ -1,9 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { APIError } from 'better-auth/api';
+import { eq } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { user as userTable } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
-import { APIError } from 'better-auth/api';
 import type { Actions, PageServerLoad } from './$types';
 
 const SELF_SERVICE_REDIRECT = '/admin/peminjaman/ajukan';
@@ -39,6 +39,7 @@ export const actions: Actions = {
 			// 2a. Sudah terdaftar → JANGAN buat akun baru, coba masuk dengan password yang diinput
 			try {
 				await auth.api.signInUsername({
+					headers: event.request.headers,
 					body: { username, password, callbackURL: SELF_SERVICE_REDIRECT }
 				});
 			} catch (error) {
@@ -57,6 +58,7 @@ export const actions: Actions = {
 		try {
 			const synthesizedEmail = `${username}@nim.simlab.local`;
 			const signUpResponse = await auth.api.signUpEmail({
+				headers: event.request.headers,
 				body: {
 					email: synthesizedEmail,
 					username,
@@ -74,7 +76,9 @@ export const actions: Actions = {
 		} catch (error) {
 			console.error(error);
 			if (error instanceof APIError) {
-				return fail(error.status as number, { message: error.message || 'Gagal mendaftar' });
+				return fail(error.status as number, {
+					message: error.message || 'Gagal mendaftar'
+				});
 			}
 			return fail(500, { message: 'Terjadi kesalahan sistem' });
 		}

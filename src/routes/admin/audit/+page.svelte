@@ -6,24 +6,24 @@
 		ChevronsLeft,
 		ChevronsRight,
 		ChevronUp,
+		Download,
 		FileEdit,
+		FileText,
 		Plus,
 		Search,
-		Trash2,
-		Download,
-		FileText
+		Trash2
 	} from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page as pageStore } from '$app/state';
+	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
+	import { toast } from '$lib/components/toast';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
-	import { toast } from '$lib/components/toast';
-	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
 
 	let { data } = $props();
 
@@ -83,7 +83,7 @@
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
 			<Button href="/admin/audit/tambah">
-				<Plus class="mr-2 size-4" /> Tambah Audit
+				<Plus /> Tambah Audit
 			</Button>
 		</div>
 	</div>

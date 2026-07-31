@@ -86,7 +86,7 @@
 				{
 					name: 'Logbook Digital',
 					path: `/admin/logbook`,
-					role: ['superadmin', 'koordinator']
+					role: ['superadmin']
 				},
 				{
 					name: 'Daftar Mahasiswa',
@@ -180,7 +180,7 @@
 			path: `/admin/limbah-k3`,
 			icon: Activity,
 			isDropdown: false,
-			role: ['superadmin', 'koordinator', 'kepalaLab', 'admin', 'spmi'],
+			role: ['superadmin', 'kepalaLab', 'admin', 'spmi'],
 			children: []
 		},
 		{
@@ -188,7 +188,7 @@
 			path: `/admin/audit`,
 			icon: ShieldCheck,
 			isDropdown: false,
-			role: ['superadmin', 'koordinator', 'kepalaLab', 'spmi'],
+			role: ['superadmin', 'kepalaLab', 'spmi'],
 			children: []
 		},
 		{
