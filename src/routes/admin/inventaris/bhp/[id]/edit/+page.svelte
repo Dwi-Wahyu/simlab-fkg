@@ -150,7 +150,7 @@
 
 				<!-- Nama Item -->
 				<div class="flex flex-col gap-2 md:col-span-2">
-					<Label for="name">Nama Bahan (BHP)</Label>
+					<Label for="name">Nama</Label>
 					<Input
 						type="text"
 						name="name"

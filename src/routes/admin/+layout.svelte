@@ -122,8 +122,6 @@
 						organizationId={data.user.laboratorium?.id}
 					/>
 
-					<div class="h-8 w-px bg-slate-200"></div>
-
 					<a
 						href="/admin/profil"
 						class="group flex items-center gap-3 transition-opacity hover:opacity-90"
@@ -134,7 +132,7 @@
 							{initials}
 							class="h-9 w-9 border-2 border-primary/10 transition-transform group-hover:scale-105"
 						/>
-						<div class="flex flex-col">
+						<!-- <div class="flex flex-col">
 							<span
 								class="text-sm font-bold text-slate-700 transition-colors group-hover:text-primary"
 								>{data.user.name}</span
@@ -142,7 +140,7 @@
 							<span class="text-[11px] font-medium text-slate-400">
 								{roleLabel}
 							</span>
-						</div>
+						</div> -->
 					</a>
 
 					<button
@@ -185,7 +183,7 @@
 									class="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-slate-100 focus:bg-slate-100"
 								>
 									<User class="size-5 text-slate-500" />
-									<span>Profil Saya</span>
+									<span>Profil</span>
 								</a>
 								<a
 									href="/admin/notifikasi"

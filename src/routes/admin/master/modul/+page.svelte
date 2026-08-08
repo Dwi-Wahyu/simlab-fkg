@@ -74,7 +74,7 @@
 <div class="flex flex-col gap-6 p-6">
 	<div class="flex flex-col items-center justify-between gap-4 md:flex-row">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Modul Praktikum</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Modul Praktikum</h1>
 			<p class="text-muted-foreground">Manajemen daftar modul praktikum laboratorium.</p>
 		</div>
 		<Button href="/admin/master/modul/tambah" class="w-full md:w-fit">
@@ -86,11 +86,7 @@
 		<div class="flex flex-wrap items-end gap-4">
 			<div class="grid w-full max-w-xs gap-1.5">
 				<label for="department" class="text-sm font-medium">Departemen</label>
-				<Select.Root
-					type="single"
-					bind:value={selectedDepartmentId}
-					onValueChange={handleFilter}
-				>
+				<Select.Root type="single" bind:value={selectedDepartmentId} onValueChange={handleFilter}>
 					<Select.Trigger class="w-full text-left">
 						{departmentTrigger}
 					</Select.Trigger>

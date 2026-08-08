@@ -486,7 +486,7 @@ lain yang ditemukan saat scan. Tambahkan tombol di header section tersebut:
 ```svelte
 <div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight text-slate-900">Peminjaman Saya</h1>
+		<h1 class="text-2xl font-bold tracking-tight text-slate-900">Peminjaman Saya</h1>
 		<p class="text-slate-500">Ajukan dan pantau status peminjaman alat laboratorium Anda.</p>
 	</div>
 	<Button href="/admin/peminjaman/ajukan" class="w-full gap-2 sm:w-fit">

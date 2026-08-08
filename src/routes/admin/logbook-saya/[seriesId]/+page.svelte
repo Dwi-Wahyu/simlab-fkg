@@ -370,7 +370,7 @@
 			<ChevronLeft class="h-5 w-5" />
 		</Button>
 		<div class="flex-1">
-			<h1 class="text-3xl font-bold tracking-tight">{data.series.name}</h1>
+			<h1 class="text-2xl font-bold tracking-tight">{data.series.name}</h1>
 			<div class="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
 				<span class="flex items-center gap-1">
 					<FlaskConical class="h-4 w-4" />

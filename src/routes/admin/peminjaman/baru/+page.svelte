@@ -190,7 +190,7 @@
 			<ChevronLeft class="size-5" />
 		</Button>
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Peminjaman Baru</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Peminjaman Baru</h1>
 			<p class="text-muted-foreground">Buat peminjaman massal untuk mahasiswa atau dosen.</p>
 		</div>
 	</div>

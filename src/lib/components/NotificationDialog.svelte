@@ -75,7 +75,7 @@
 				<!-- <Dialog.Close class={buttonVariants({ variant: 'outline' })}>
 					Continue shopping
 				</Dialog.Close> -->
-				<Button class={cn('min-w-[120px]', config.bg, 'hover:opacity-90')} onclick={onAction}>
+				<Button class={cn(config.bg, 'hover:opacity-90')} onclick={onAction}>
 					{actionLabel}
 				</Button>
 			</div>

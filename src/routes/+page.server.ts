@@ -16,6 +16,7 @@ export const actions: Actions = {
 		const formData = await event.request.formData();
 		const username = formData.get('username')?.toString() ?? '';
 		const password = formData.get('password')?.toString() ?? '';
+		const rememberMe = formData.get('rememberMe') === 'true';
 
 		try {
 			await auth.api.signInUsername({
@@ -23,6 +24,7 @@ export const actions: Actions = {
 				body: {
 					username,
 					password,
+					rememberMe,
 					callbackURL: `/admin/dashboard`
 				}
 			});

@@ -88,7 +88,7 @@
 <div class="flex h-full flex-col gap-6 p-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Manajemen Pengguna</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Manajemen Pengguna</h1>
 			<p class="text-muted-foreground">Kelola pengguna dan akses mereka ke laboratorium.</p>
 		</div>
 		<Dialog.Root bind:open={isCreateModalOpen}>

@@ -35,7 +35,7 @@
 			<ChevronLeft class="h-4 w-4" />
 		</Button>
 		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold tracking-tight">Tambah {data.roleLabel}</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Tambah {data.roleLabel}</h1>
 			<p class="text-muted-foreground">Buat akun {data.roleLabel.toLowerCase()} baru.</p>
 		</div>
 	</div>

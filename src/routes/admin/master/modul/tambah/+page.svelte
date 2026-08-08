@@ -108,7 +108,7 @@
 <div class="flex flex-col gap-6 p-6">
 	<div class="mx-auto w-full max-w-2xl space-y-6">
 		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold tracking-tight">Tambah Modul Praktikum</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Tambah Modul Praktikum</h1>
 			<p class="text-muted-foreground">Buat modul praktikum baru untuk sistem.</p>
 		</div>
 

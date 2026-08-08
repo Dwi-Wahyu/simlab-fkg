@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		Activity,
 		AlertCircle,
 		AlertTriangle,
 		CheckCircle,
@@ -17,7 +16,8 @@
 		Search,
 		ShieldCheck,
 		Trash2,
-		XCircle
+		XCircle,
+		Pencil
 	} from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import Skeleton from '@/components/ui/skeleton/skeleton.svelte';
@@ -139,7 +139,10 @@
 					<div class="flex items-center gap-2">
 						<h1 class="text-2xl font-bold text-slate-900">{res.equipment.name ?? '...'}</h1>
 						{#if shouldShowNewBadge(res.equipment?.createdAt, res.equipment?.hideNewBadge)}
-							<Badge class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600">Baru</Badge>
+							<Badge
+								class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
+								>Baru</Badge
+							>
 						{/if}
 					</div>
 					<p class="text-sm text-slate-500">{res.equipment.id}</p>
@@ -148,14 +151,21 @@
 			<div class="flex items-center gap-2">
 				{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
 					<Button href="/admin/inventaris/alat/tambah?itemId={res.equipment.id}" class="gap-2">
-						<Plus class="size-4" /> Tambah Alat
+						<Plus /> Tambah Alat
+					</Button>
+					<Button
+						href="/admin/inventaris/alat/{res.equipment.id}/edit"
+						variant="outline"
+						class="gap-2"
+					>
+						<Pencil /> Edit
 					</Button>
 					<Button
 						variant="destructive"
 						class="gap-2"
 						onclick={() => (isDeleteItemConfirmOpen = true)}
 					>
-						<Trash2 class="size-4" /> Hapus Item
+						<Trash2 /> Hapus Item
 					</Button>
 				{/if}
 			</div>
@@ -303,20 +313,19 @@
 												<Button
 													variant="outline"
 													size="icon"
-													class="h-8 w-8"
 													href="/admin/inventaris/alat/{res.equipment
 														.id}/edit?equipmentId={equipment.id}"
 												>
-													<Edit class="h-4 w-4" />
+													<Edit />
 												</Button>
-												<Button
+												<!-- <Button
 													variant="outline"
 													size="icon"
 													class="h-8 w-8 text-destructive"
 													onclick={() => openDeleteDialog(equipment.id)}
 												>
 													<Trash2 class="h-4 w-4" />
-												</Button>
+												</Button> -->
 											{/if}
 										</div>
 									</Table.Cell>
@@ -388,7 +397,7 @@
 <ConfirmationDialog
 	bind:open={isDeleteItemConfirmOpen}
 	type="error"
-	title="Hapus Item Inventaris?"
+	title="Hapus Item?"
 	description="Tindakan ini tidak dapat dibatalkan. Menghapus item ini akan menghapusnya dari data inventaris secara permanen."
 	actionLabel="Hapus Item"
 	cancelLabel="Batal"

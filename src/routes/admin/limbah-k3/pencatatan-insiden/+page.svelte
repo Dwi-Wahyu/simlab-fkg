@@ -98,7 +98,7 @@
 				<ChevronLeft class="h-4 w-4" />
 			</Button>
 			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold tracking-tight">Laporkan Insiden K3</h1>
+				<h1 class="text-2xl font-bold tracking-tight">Laporkan Insiden K3</h1>
 				<p class="text-muted-foreground">
 					Catat insiden keselamatan kerja dan rencana tindak lanjut (CAPA).
 				</p>

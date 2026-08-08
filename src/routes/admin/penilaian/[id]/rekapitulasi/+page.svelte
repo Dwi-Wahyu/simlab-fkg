@@ -73,7 +73,7 @@
 			</Button>
 			<div class="flex flex-col gap-1">
 				<div class="flex items-center gap-2">
-					<h1 class="text-3xl font-bold tracking-tight">
+					<h1 class="text-2xl font-bold tracking-tight">
 						{data.schedule.series?.name ?? 'Rekapitulasi Nilai'}
 					</h1>
 				</div>

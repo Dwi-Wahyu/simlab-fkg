@@ -167,7 +167,7 @@
 			<ChevronLeft class="size-5" />
 		</Button>
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Edit Peminjaman</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Edit Peminjaman</h1>
 			<p class="text-muted-foreground">Sesuaikan data peminjaman dan kelola peralatan</p>
 		</div>
 	</div>

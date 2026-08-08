@@ -90,7 +90,7 @@
 <div class="flex h-full flex-col gap-6 p-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Master Departemen</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Master Departemen</h1>
 			<p class="text-muted-foreground">Kelola daftar departemen di fakultas.</p>
 		</div>
 	</div>

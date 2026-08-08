@@ -145,7 +145,7 @@
 <div class="flex h-full flex-col gap-6 p-6">
 	<div class="flex items-center gap-4">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Tambah Jadwal Baru</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Tambah Jadwal Baru</h1>
 			<p class="text-muted-foreground">Buat jadwal kegiatan praktikum, OSCE, atau pelatihan.</p>
 		</div>
 	</div>

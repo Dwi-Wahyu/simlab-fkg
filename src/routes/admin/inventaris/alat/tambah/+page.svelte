@@ -52,14 +52,40 @@
 
 	// State untuk Dialog Pencarian Aset
 	let isDialogOpen = $state(false);
+	let assetSearchInput = $state('');
 	let assetSearchQuery = $state('');
 	let selectedAssetId = $state<string | null>(null);
+
+	// Pagination state
+	let currentPage = $state(1);
+	const itemsPerPage = 5;
 
 	const filteredAssets = $derived(
 		data.existingAssets.filter((asset: any) =>
 			asset.name.toLowerCase().includes(assetSearchQuery.toLowerCase())
 		)
 	);
+
+	const paginatedAssets = $derived(
+		filteredAssets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+	);
+	
+	const totalPages = $derived(
+		Math.max(1, Math.ceil(filteredAssets.length / itemsPerPage))
+	);
+
+	function performSearch() {
+		assetSearchQuery = assetSearchInput;
+		currentPage = 1;
+	}
+
+	function nextPage() {
+		if (currentPage < totalPages) currentPage++;
+	}
+
+	function prevPage() {
+		if (currentPage > 1) currentPage--;
+	}
 
 	function selectAsset(asset: any) {
 		name = asset.name;
@@ -291,20 +317,31 @@
 				<Dialog.Root bind:open={isDialogOpen}>
 					<Dialog.Content class="sm:max-w-106.25">
 						<Dialog.Header>
-							<Dialog.Title>Pilih Template Alat</Dialog.Title>
+							<Dialog.Title>Pilih Referensi Alat</Dialog.Title>
 							<Dialog.Description>
 								Cari alat yang sudah ada untuk menyamakan penamaan dan data dasar.
 							</Dialog.Description>
 						</Dialog.Header>
 						<div class="space-y-4 py-4">
-							<div class="relative">
-								<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
-								<Input placeholder="Cari nama alat..." bind:value={assetSearchQuery} class="pl-9" />
+							<div class="flex gap-2">
+								<Input 
+									placeholder="Cari nama alat..." 
+									bind:value={assetSearchInput} 
+									onkeydown={(e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault();
+											performSearch();
+										}
+									}}
+								/>
+								<Button type="button" variant="secondary" onclick={performSearch}>
+									<Search class="size-4" />
+								</Button>
 							</div>
-							<div class="max-h-75 overflow-y-auto rounded-md border border-slate-200">
-								{#if filteredAssets.length > 0}
+							<div class="rounded-md border border-slate-200">
+								{#if paginatedAssets.length > 0}
 									<div class="divide-y">
-										{#each filteredAssets as asset (asset.id)}
+										{#each paginatedAssets as asset (asset.id)}
 											<button
 												type="button"
 												class="flex w-full flex-col p-3 text-left transition hover:bg-slate-50"
@@ -312,8 +349,7 @@
 											>
 												<span class="font-medium text-slate-900">{asset.name}</span>
 												<span class="text-xs text-slate-500">
-													{asset.equipmentType || 'ASSET'} • {asset.equipments?.[0]?.brand ||
-														'No Brand'}
+													{asset.equipments?.[0]?.brand || '-'}
 												</span>
 											</button>
 										{/each}
@@ -321,6 +357,15 @@
 								{:else}
 									<div class="p-4 text-center text-sm text-slate-500">Alat tidak ditemukan.</div>
 								{/if}
+							</div>
+							
+							<!-- Pagination controls -->
+							<div class="flex items-center justify-between">
+								<span class="text-sm text-slate-500">Halaman {currentPage} dari {totalPages}</span>
+								<div class="flex gap-2">
+									<Button type="button" size="sm" variant="outline" disabled={currentPage === 1} onclick={prevPage}>Prev</Button>
+									<Button type="button" size="sm" variant="outline" disabled={currentPage === totalPages} onclick={nextPage}>Next</Button>
+								</div>
 							</div>
 						</div>
 					</Dialog.Content>

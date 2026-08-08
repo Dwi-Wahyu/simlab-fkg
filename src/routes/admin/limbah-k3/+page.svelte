@@ -18,12 +18,11 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { cn } from '$lib/utils';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	const { incidents, wasteLogs, stats } = $derived(data);
 
 	// Enum Mappings for display
 	const severityMap = {
@@ -119,13 +118,51 @@
 	<!-- Header -->
 	<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight text-slate-900">Manajemen Limbah & K3</h1>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Manajemen Limbah & K3</h1>
 			<p class="text-slate-500">Keselamatan kerja, pengelolaan limbah, dan kepatuhan lingkungan.</p>
 		</div>
 	</div>
 
-	<!-- Summary Cards -->
-	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+	{#await data.streamed.data}
+		<!-- Skeleton Mock UI -->
+		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			{#each Array(4) as _}
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+						<Skeleton class="h-4 w-1/2" />
+						<Skeleton class="h-4 w-4" />
+					</Card.Header>
+					<Card.Content>
+						<Skeleton class="h-8 w-12" />
+						<Skeleton class="mt-2 h-3 w-3/4" />
+					</Card.Content>
+				</Card.Root>
+			{/each}
+		</div>
+
+		<div class="space-y-4">
+			<Skeleton class="h-10 w-64 mb-4" />
+			<Card.Root>
+				<Card.Header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+					<div class="space-y-2">
+						<Skeleton class="h-6 w-48" />
+						<Skeleton class="h-4 w-64" />
+					</div>
+					<Skeleton class="h-10 w-32" />
+				</Card.Header>
+				<Card.Content>
+					<div class="space-y-4">
+						{#each Array(5) as _}
+							<Skeleton class="h-12 w-full" />
+						{/each}
+					</div>
+				</Card.Content>
+			</Card.Root>
+		</div>
+	{:then resolved}
+		{@const { incidents, wasteLogs, stats } = resolved}
+		<!-- Summary Cards -->
+		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 		<!-- Insiden Bulan Ini -->
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -527,4 +564,5 @@
 			</Card.Content>
 		</Card.Root>
 	</Tabs.Root>
+	{/await}
 </div>

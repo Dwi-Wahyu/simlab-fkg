@@ -269,7 +269,7 @@
 		<!-- Header -->
 		<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 			<div>
-				<h1 class="text-3xl font-bold tracking-tight text-slate-900">Peminjaman Saya</h1>
+				<h1 class="text-2xl font-bold tracking-tight text-slate-900">Peminjaman Saya</h1>
 				<p class="text-slate-500">Ajukan dan pantau status peminjaman alat laboratorium Anda.</p>
 			</div>
 			<Button
@@ -693,7 +693,7 @@
 		<!-- Header -->
 		<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 			<div>
-				<h1 class="text-3xl font-bold tracking-tight text-slate-900">Daftar Peminjaman</h1>
+				<h1 class="text-2xl font-bold tracking-tight text-slate-900">Daftar Peminjaman</h1>
 				<p class="text-slate-500">Monitor dan kelola peminjaman alat oleh mahasiswa dan dosen.</p>
 			</div>
 			<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">

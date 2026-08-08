@@ -105,7 +105,7 @@
 
 <div class="space-y-6 p-6">
 	<div>
-		<h1 class="text-2xl font-bold tracking-tight">Profil Saya</h1>
+		<h1 class="text-2xl font-bold tracking-tight">Profil</h1>
 		<p class="text-muted-foreground">Kelola informasi akun dan keamanan Anda.</p>
 	</div>
 
@@ -122,7 +122,7 @@
 	<div class="grid gap-6 md:grid-cols-3">
 		<!-- Profil User -->
 		<Card.Root class="h-fit md:col-span-1">
-			<Card.Header class="pb-2 text-center">
+			<Card.Header class="pb-2 text-center text-wrap">
 				<div
 					class="mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-muted"
 				>

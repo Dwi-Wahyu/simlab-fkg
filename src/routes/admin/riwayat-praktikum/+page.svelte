@@ -93,7 +93,7 @@
 
 <div class="flex flex-col gap-6 p-6">
 	<div class="flex flex-col">
-		<h1 class="text-3xl font-bold tracking-tight">Riwayat Hasil Praktikum</h1>
+		<h1 class="text-2xl font-bold tracking-tight">Riwayat Hasil Praktikum</h1>
 
 		<p class="text-slate-500">
 			Daftar nilai dan feedback dari seluruh kegiatan praktikum yang telah diikuti.

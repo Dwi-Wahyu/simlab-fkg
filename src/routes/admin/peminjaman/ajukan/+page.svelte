@@ -141,7 +141,7 @@
 			<ChevronLeft class="size-5" />
 		</Button>
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight text-slate-900">Ajukan Peminjaman Alat</h1>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Ajukan Peminjaman Alat</h1>
 			<p class="text-slate-500">
 				Ajukan peminjaman alat laboratorium untuk penelitian mandiri, lomba, atau organisasi.
 				Pengajuan Anda akan masuk sebagai DRAFT untuk diverifikasi oleh Kepala Lab.

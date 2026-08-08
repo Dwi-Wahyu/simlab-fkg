@@ -198,7 +198,7 @@
 	<!-- Header -->
 	<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight text-slate-900">Pemeliharaan & Kalibrasi</h1>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Pemeliharaan & Kalibrasi</h1>
 			<p class="text-slate-500">
 				Monitor kesehatan alat laboratorium dan jadwal kalibrasi periodik.
 			</p>

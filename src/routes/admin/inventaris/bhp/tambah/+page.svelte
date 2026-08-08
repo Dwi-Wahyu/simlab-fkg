@@ -43,14 +43,38 @@
 
 	// State untuk Dialog Pencarian Aset
 	let isDialogOpen = $state(false);
+	let bhpSearchInput = $state('');
 	let bhpSearchQuery = $state('');
 	let selectedBhpId = $state<string | null>(null);
+
+	// Pagination state
+	let currentPage = $state(1);
+	const itemsPerPage = 5;
 
 	const filteredBhp = $derived(
 		data.existingBhp.filter((bhp: any) =>
 			bhp.name.toLowerCase().includes(bhpSearchQuery.toLowerCase())
 		)
 	);
+
+	const paginatedBhp = $derived(
+		filteredBhp.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+	);
+
+	const totalPages = $derived(Math.max(1, Math.ceil(filteredBhp.length / itemsPerPage)));
+
+	function performSearch() {
+		bhpSearchQuery = bhpSearchInput;
+		currentPage = 1;
+	}
+
+	function nextPage() {
+		if (currentPage < totalPages) currentPage++;
+	}
+
+	function prevPage() {
+		if (currentPage > 1) currentPage--;
+	}
 
 	function selectBhp(bhp: any) {
 		name = bhp.name;
@@ -248,18 +272,29 @@
 						<Dialog.Header>
 							<Dialog.Title>Pilih Referensi Bahan</Dialog.Title>
 							<Dialog.Description>
-								Cari bahan habis pakai yang sudah ada untuk menyamakan penamaan dan data dasar.
+								Klik bahan yang sudah ada untuk menyamakan penamaan dan data dasar.
 							</Dialog.Description>
 						</Dialog.Header>
-						<div class="space-y-4 py-4">
-							<div class="relative">
-								<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
-								<Input placeholder="Cari nama bahan..." bind:value={bhpSearchQuery} class="pl-9" />
+						<div class="space-y-4">
+							<div class="flex gap-2">
+								<Input
+									placeholder="Cari nama bahan..."
+									bind:value={bhpSearchInput}
+									onkeydown={(e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault();
+											performSearch();
+										}
+									}}
+								/>
+								<Button type="button" variant="secondary" onclick={performSearch}>
+									<Search class="size-4" />
+								</Button>
 							</div>
-							<div class="max-h-75 overflow-y-auto rounded-md border border-slate-200">
-								{#if filteredBhp.length > 0}
+							<div class="rounded-md border border-slate-200">
+								{#if paginatedBhp.length > 0}
 									<div class="divide-y">
-										{#each filteredBhp as bhp (bhp.id)}
+										{#each paginatedBhp as bhp (bhp.id)}
 											<button
 												type="button"
 												class="flex w-full flex-col p-3 text-left transition hover:bg-slate-50"
@@ -275,6 +310,27 @@
 								{:else}
 									<div class="p-4 text-center text-sm text-slate-500">Bahan tidak ditemukan.</div>
 								{/if}
+							</div>
+
+							<!-- Pagination controls -->
+							<div class="flex items-center justify-between">
+								<span class="text-sm text-slate-500">Halaman {currentPage} dari {totalPages}</span>
+								<div class="flex gap-2">
+									<Button
+										type="button"
+										size="sm"
+										variant="outline"
+										disabled={currentPage === 1}
+										onclick={prevPage}>Prev</Button
+									>
+									<Button
+										type="button"
+										size="sm"
+										variant="outline"
+										disabled={currentPage === totalPages}
+										onclick={nextPage}>Next</Button
+									>
+								</div>
 							</div>
 						</div>
 					</Dialog.Content>

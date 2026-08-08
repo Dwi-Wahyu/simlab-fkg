@@ -182,7 +182,7 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Jadwal Praktikum</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Jadwal Praktikum</h1>
 			<p class="text-muted-foreground">
 				Kelola jadwal praktikum, OSCE, dan pelatihan di laboratorium.
 			</p>

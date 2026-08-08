@@ -1,17 +1,12 @@
 <script lang="ts">
-	import {
-		DateFormatter,
-		getLocalTimeZone,
-		today,
-		type DateValue
-	} from '@internationalized/date';
+	import { DateFormatter, type DateValue, getLocalTimeZone, today } from '@internationalized/date';
 	import { Calendar as CalendarIcon, Download } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Calendar } from '$lib/components/ui/calendar/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { Calendar } from '$lib/components/ui/calendar/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 
 	interface Props {
 		open?: boolean;
@@ -54,8 +49,7 @@
 	);
 
 	const isDateRangeInvalid = $derived(
-		periodMode === 'semester' &&
-			Boolean(startDate && endDate && endDate.compare(startDate) < 0)
+		periodMode === 'semester' && Boolean(startDate && endDate && endDate.compare(startDate) < 0)
 	);
 
 	const isSubmitDisabled = $derived(
@@ -99,10 +93,9 @@
 			</Dialog.Description>
 		</Dialog.Header>
 
-		<div class="flex flex-col gap-5 py-4">
+		<div class="flex flex-col gap-5 py-4 pt-1">
 			<!-- Pilihan Jenis Laporan -->
 			<div class="flex flex-col gap-2">
-				<Label class="text-xs font-semibold uppercase text-slate-500">Jenis Periode Laporan</Label>
 				<div class="grid grid-cols-2 gap-2">
 					<Button
 						type="button"
@@ -126,7 +119,9 @@
 			<!-- Filter Laboratorium (Jika Admin / Koordinator) -->
 			{#if !isRestrictedLabUser}
 				<div class="flex flex-col gap-2">
-					<Label for="labSelect" class="text-xs font-semibold uppercase text-slate-500">Laboratorium</Label>
+					<Label for="labSelect" class="text-xs font-semibold text-slate-500 uppercase"
+						>Laboratorium</Label
+					>
 					<Select.Root type="single" bind:value={selectedLabId}>
 						<Select.Trigger id="labSelect" class="w-full text-left">
 							{targetLabName}
@@ -143,7 +138,7 @@
 			<!-- Filter Tanggal Monthly -->
 			{#if periodMode === 'monthly'}
 				<div class="flex flex-col gap-2">
-					<Label class="text-xs font-semibold uppercase text-slate-500">Pilih Bulan</Label>
+					<Label class="text-xs font-semibold text-slate-500 uppercase">Pilih Bulan</Label>
 					<Popover.Root>
 						<Popover.Trigger>
 							<Button variant="outline" class="w-full justify-start text-left font-normal">
@@ -164,10 +159,13 @@
 				<div class="flex flex-col gap-3">
 					<div class="grid grid-cols-2 gap-3">
 						<div class="flex flex-col gap-1.5">
-							<Label class="text-xs font-semibold uppercase text-slate-500">Tanggal Awal</Label>
+							<Label class="text-xs font-semibold text-slate-500 uppercase">Tanggal Awal</Label>
 							<Popover.Root>
 								<Popover.Trigger>
-									<Button variant="outline" class="w-full justify-start text-left font-normal text-xs px-2.5">
+									<Button
+										variant="outline"
+										class="w-full justify-start px-2.5 text-left text-xs font-normal"
+									>
 										<CalendarIcon class="mr-1.5 h-3.5 w-3.5" />
 										{startDate ? df.format(startDate.toDate(getLocalTimeZone())) : 'Awal'}
 									</Button>
@@ -179,10 +177,13 @@
 						</div>
 
 						<div class="flex flex-col gap-1.5">
-							<Label class="text-xs font-semibold uppercase text-slate-500">Tanggal Akhir</Label>
+							<Label class="text-xs font-semibold text-slate-500 uppercase">Tanggal Akhir</Label>
 							<Popover.Root>
 								<Popover.Trigger>
-									<Button variant="outline" class="w-full justify-start text-left font-normal text-xs px-2.5">
+									<Button
+										variant="outline"
+										class="w-full justify-start px-2.5 text-left text-xs font-normal"
+									>
 										<CalendarIcon class="mr-1.5 h-3.5 w-3.5" />
 										{endDate ? df.format(endDate.toDate(getLocalTimeZone())) : 'Akhir'}
 									</Button>
@@ -195,7 +196,7 @@
 					</div>
 
 					{#if isDateRangeInvalid}
-						<p class="text-xs text-destructive font-medium">
+						<p class="text-xs font-medium text-destructive">
 							Tanggal akhir tidak boleh lebih awal dari tanggal awal.
 						</p>
 					{/if}
@@ -208,7 +209,7 @@
 			<Button
 				disabled={isSubmitDisabled}
 				onclick={handleDownload}
-				class="bg-[#2D5A47] text-white hover:bg-[#234735] gap-2"
+				class="gap-2 bg-[#2D5A47] text-white hover:bg-[#234735]"
 			>
 				<Download class="size-4" /> Unduh Laporan
 			</Button>

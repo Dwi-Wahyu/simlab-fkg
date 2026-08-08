@@ -91,7 +91,7 @@
 				<ChevronLeft class="size-5" />
 			</Button>
 			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold tracking-tight">Catat Limbah Baru</h1>
+				<h1 class="text-2xl font-bold tracking-tight">Catat Limbah Baru</h1>
 				<p class="text-muted-foreground">Input detail limbah medis atau kimia untuk monitoring.</p>
 			</div>
 		</div>

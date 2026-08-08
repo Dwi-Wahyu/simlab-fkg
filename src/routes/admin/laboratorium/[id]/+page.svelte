@@ -24,7 +24,7 @@
 			<ArrowLeft class="size-4" />
 		</Button>
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">{lab.name}</h1>
+			<h1 class="text-2xl font-bold tracking-tight">{lab.name}</h1>
 			<p class="text-muted-foreground">Detail dan anggota laboratorium.</p>
 		</div>
 	</div>

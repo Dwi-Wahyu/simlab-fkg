@@ -131,7 +131,7 @@
 	<div class="mx-auto w-full max-w-2xl space-y-6">
 		<div class="flex items-center gap-4">
 			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold tracking-tight">Edit Modul Praktikum</h1>
+				<h1 class="text-2xl font-bold tracking-tight">Edit Modul Praktikum</h1>
 				<p class="text-muted-foreground">Perbarui informasi modul praktikum.</p>
 			</div>
 		</div>

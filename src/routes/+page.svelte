@@ -24,34 +24,10 @@
 	let { form } = $props();
 	let showPassword = $state(false);
 	let isLoading = $state(false);
-	let isDevModeOpen = $state(false);
 
 	let username = $state('');
 	let password = $state('');
-	let loginFormElement = $state<HTMLFormElement>();
-
-	const quickAccessUsers = [
-		{ name: 'Superadmin', username: 'superadmin', role: 'superadmin' },
-		{ name: 'PJ Mata Kuliah', username: 'koordinator', role: 'koordinator' },
-		{ name: 'Kepala Lab', username: 'kepalalab', role: 'kepalaLab' },
-		{ name: 'DPJP', username: 'dpjp', role: 'instruktur' },
-		{ name: 'Mahasiswa', username: 'peneliti', role: 'peneliti' },
-		{ name: 'Teknisi', username: 'teknisi', role: 'teknisi' },
-		{ name: 'SPMI', username: 'spmi', role: 'spmi' },
-		{ name: 'Laboran', username: 'laboran', role: 'laboran' }
-	];
-
-	function quickLogin(user: (typeof quickAccessUsers)[0]) {
-		username = user.username;
-		password = 'password123';
-		isDevModeOpen = false;
-
-		setTimeout(() => {
-			if (loginFormElement) {
-				loginFormElement.requestSubmit();
-			}
-		}, 50);
-	}
+	let rememberMe = $state(false);
 
 	function handleSignIn() {
 		isLoading = true;
@@ -102,7 +78,7 @@
 		>
 			<div class="w-full max-w-md">
 				<header class="mb-6 flex flex-col text-center">
-					<div class="mb-8 hidden flex-col items-center gap-4 md:flex md:flex-row">
+					<!-- <div class="mb-8 hidden flex-col items-center gap-4 md:flex md:flex-row">
 						<img src="/logo-unhas.webp" class="h-12 w-auto object-contain" alt="Logo Unhas" />
 						<div class="flex flex-col">
 							<span class="text-xl leading-tight font-bold text-[#181d18]">
@@ -110,8 +86,8 @@
 							</span>
 							<span class="text-start text-base text-muted-foreground">Universitas Hasanuddin</span>
 						</div>
-					</div>
-					<h1 class="mb-1 text-start text-3xl font-bold text-[#181d18] md:text-4xl">
+					</div> -->
+					<h1 class="mb-1 text-start text-2xl font-bold text-[#181d18] md:text-4xl">
 						Selamat Datang
 					</h1>
 					<p class="text-start text-base text-muted-foreground">
@@ -119,13 +95,7 @@
 					</p>
 				</header>
 
-				<form
-					bind:this={loginFormElement}
-					method="post"
-					action="?/signIn"
-					use:enhance={handleSignIn}
-					class="space-y-6"
-				>
+				<form method="post" action="?/signIn" use:enhance={handleSignIn} class="space-y-6">
 					<!-- Username Field -->
 					<div class="group space-y-1">
 						<label class="block px-1 text-sm font-medium text-muted-foreground" for="username">
@@ -186,10 +156,7 @@
 					<!-- Options Row -->
 					<div class="flex items-center justify-between py-1 text-sm">
 						<label class="flex cursor-pointer items-center gap-2 select-none">
-							<input
-								type="checkbox"
-								class="h-5 w-5 rounded border-[#becabd] bg-[#ebefe7] text-[#006a34] focus:ring-[#006a34] focus:ring-offset-0"
-							/>
+							<input type="checkbox" bind:checked={rememberMe} class="rounded" />
 							<span class="text-muted-foreground">Remember me</span>
 						</label>
 						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
@@ -218,63 +185,6 @@
 						</button>
 					</div>
 				</form>
-
-				<!-- Developer Mode Toggle -->
-				<!-- <div class="mt-8 flex justify-center">
-					<button
-						type="button"
-						onclick={() => (isDevModeOpen = true)}
-						class="flex items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-[#006a34]"
-					>
-						<Terminal size={14} />
-						Developer Mode
-					</button>
-				</div> -->
-
-				<!-- Developer Mode Dialog -->
-				<Dialog.Root bind:open={isDevModeOpen}>
-					<Dialog.Content class="sm:max-w-lg">
-						<Dialog.Header>
-							<Dialog.Title>Quick Access (Developer Mode)</Dialog.Title>
-							<Dialog.Description>
-								Pilih salah satu akun di bawah untuk login cepat ke dalam sistem.
-							</Dialog.Description>
-						</Dialog.Header>
-						<div class="grid grid-cols-1 gap-2 py-4 sm:grid-cols-2">
-							{#each quickAccessUsers as user (user.username)}
-								<button
-									type="button"
-									onclick={() => quickLogin(user)}
-									class="flex items-center gap-3 rounded-xl border border-[#becabd]/40 bg-[#f0f5ed]/50 p-3 text-sm font-medium text-[#181d18] transition-all duration-200 hover:scale-[1.02] hover:border-[#006a34]/30 hover:bg-[#006a34]/10 active:scale-[0.98]"
-								>
-									<span class="text-[#006a34]">
-										{#if user.role === 'superadmin'}
-											<ShieldAlert size={18} />
-										{:else if user.role === 'koordinator'}
-											<Briefcase size={18} />
-										{:else if user.role === 'kepalaLab'}
-											<UserCog size={18} />
-										{:else if user.role === 'instruktur'}
-											<GraduationCap size={18} />
-										{:else if user.role === 'peneliti'}
-											<Search size={18} />
-										{:else if user.role === 'teknisi'}
-											<Wrench size={18} />
-										{:else if user.role === 'spmi'}
-											<ClipboardCheck size={18} />
-										{:else if user.role === 'laboran'}
-											<Package size={18} />
-										{/if}
-									</span>
-									<div class="flex flex-col items-start text-left">
-										<span class="font-bold">{user.name}</span>
-										<span class="text-xs font-normal text-muted-foreground">@{user.username}</span>
-									</div>
-								</button>
-							{/each}
-						</div>
-					</Dialog.Content>
-				</Dialog.Root>
 
 				<div class="mt-6 text-center text-sm text-muted-foreground">
 					Mahasiswa yang ingin meminjam alat untuk penelitian, lomba, atau kegiatan organisasi?
@@ -314,17 +224,17 @@
 					<div class="mb-4 flex flex-col items-center justify-center gap-2">
 						<h2 class="text-5xl font-bold tracking-tight text-white md:text-7xl">SIM-Lab</h2>
 						<!-- Institutional Text for Mobile -->
-						<div class="flex flex-col md:hidden">
+						<!-- <div class="flex flex-col md:hidden">
 							<span class="text-sm leading-tight font-bold text-white/90">
 								Fakultas Kedokteran Gigi
 							</span>
 							<span class="text-xs text-white/70">Universitas Hasanuddin</span>
-						</div>
+						</div> -->
 					</div>
 					<div class="hidden space-y-4 md:block">
 						<div class="mx-auto h-1 w-12 rounded-full bg-white/40"></div>
 						<p class="text-xl font-medium text-muted md:text-2xl">
-							Sistem Informasi Pengelolaan Laboratorium
+							Sistem Informasi Pengelolaan Laboratorium FKG Unhas
 						</p>
 					</div>
 				</div>

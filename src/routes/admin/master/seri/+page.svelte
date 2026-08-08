@@ -31,9 +31,7 @@
 	let notificationDescription = $state('');
 
 	const filteredSeries = $derived(
-		data.series.filter((s: any) =>
-			s.name.toLowerCase().includes(searchQuery.toLowerCase())
-		)
+		data.series.filter((s: any) => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
 	);
 
 	function openCreate() {
@@ -60,11 +58,13 @@
 	type={notificationType}
 	title={notificationTitle}
 	description={notificationDescription}
+	onAction={() => (showNotification = false)}
 />
 
 <ConfirmationDialog
 	bind:open={isDeleteDialogOpen}
 	title="Hapus Seri Praktikum?"
+	type="error"
 	description="Tindakan ini tidak dapat dibatalkan. Seri praktikum tidak dapat dihapus jika masih digunakan oleh jadwal praktikum atau riwayat logbook."
 	onAction={() => {
 		const formData = new FormData();
@@ -73,39 +73,41 @@
 		fetch('?/delete', {
 			method: 'POST',
 			body: formData
-		}).then(async (res) => {
-			const result = await res.json();
-			isDeleteDialogOpen = false;
-			
-			let isSuccess = true;
-			let errMsg = 'Terjadi kesalahan saat menghapus.';
-			
-			if (result && typeof result === 'object') {
-				if (result.type === 'failure' || result.type === 'error') {
-					isSuccess = false;
-					const dataObj = result.data ? JSON.parse(result.data) : null;
-					errMsg = dataObj?.message || 'Gagal menghapus seri.';
-				}
-			}
+		})
+			.then(async (res) => {
+				const result = await res.json();
+				isDeleteDialogOpen = false;
 
-			if (isSuccess) {
-				notificationType = 'success';
-				notificationTitle = 'Berhasil';
-				notificationDescription = 'Seri praktikum telah dihapus.';
-				await invalidateAll();
-			} else {
+				let isSuccess = true;
+				let errMsg = 'Terjadi kesalahan saat menghapus.';
+
+				if (result && typeof result === 'object') {
+					if (result.type === 'failure' || result.type === 'error') {
+						isSuccess = false;
+						const dataObj = result.data ? JSON.parse(result.data) : null;
+						errMsg = dataObj?.message || 'Gagal menghapus seri.';
+					}
+				}
+
+				if (isSuccess) {
+					notificationType = 'success';
+					notificationTitle = 'Berhasil';
+					notificationDescription = 'Seri praktikum telah dihapus.';
+					await invalidateAll();
+				} else {
+					notificationType = 'error';
+					notificationTitle = 'Gagal';
+					notificationDescription = errMsg;
+				}
+				showNotification = true;
+			})
+			.catch((err) => {
+				isDeleteDialogOpen = false;
 				notificationType = 'error';
 				notificationTitle = 'Gagal';
-				notificationDescription = errMsg;
-			}
-			showNotification = true;
-		}).catch((err) => {
-			isDeleteDialogOpen = false;
-			notificationType = 'error';
-			notificationTitle = 'Gagal';
-			notificationDescription = 'Koneksi bermasalah.';
-			showNotification = true;
-		});
+				notificationDescription = 'Koneksi bermasalah.';
+				showNotification = true;
+			});
 	}}
 />
 
@@ -113,7 +115,7 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Master Praktikum</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Master Praktikum</h1>
 			<p class="text-muted-foreground">Kelola grup kegiatan praktikum.</p>
 		</div>
 		<Button onclick={openCreate}>
@@ -124,12 +126,7 @@
 
 	<div class="relative w-full max-w-sm">
 		<Search class="absolute top-3 left-2.5 h-4 w-4 text-muted-foreground" />
-		<Input
-			type="search"
-			placeholder="Cari nama seri..."
-			class="pl-9"
-			bind:value={searchQuery}
-		/>
+		<Input type="search" placeholder="Cari nama seri..." class="pl-9" bind:value={searchQuery} />
 	</div>
 
 	<div class="rounded-md border bg-card shadow-sm">
@@ -275,7 +272,9 @@
 			</div>
 
 			<Dialog.Footer>
-				<Button type="button" variant="ghost" onclick={() => (isEditDialogOpen = false)}>Batal</Button>
+				<Button type="button" variant="ghost" onclick={() => (isEditDialogOpen = false)}
+					>Batal</Button
+				>
 				<Button type="submit">Simpan Perubahan</Button>
 			</Dialog.Footer>
 		</form>

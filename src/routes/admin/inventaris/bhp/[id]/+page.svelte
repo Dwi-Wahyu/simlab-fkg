@@ -10,7 +10,8 @@
 		Search,
 		Trash2,
 		ArrowDownWideNarrow,
-		ArrowUpNarrowWide
+		ArrowUpNarrowWide,
+		Pencil
 	} from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import Skeleton from '@/components/ui/skeleton/skeleton.svelte';
@@ -51,11 +52,11 @@
 			isDeletingItem = false;
 			isDeleteItemConfirmOpen = false;
 			if (res.ok) {
-				toast.success('Berhasil', { description: 'BHP berhasil dihapus.' });
+				toast.success('Berhasil', { description: 'Item berhasil dihapus.' });
 				goto('/admin/inventaris/bhp');
 			} else {
 				toast.destructive('Gagal', {
-					description: 'Gagal menghapus BHP. Item ini mungkin masih memiliki data stok aktif.'
+					description: 'Gagal menghapus. Item ini mungkin masih memiliki data stok aktif.'
 				});
 			}
 		});
@@ -126,8 +127,9 @@
 				<Skeleton class="h-10 w-20" />
 
 				<div class="flex gap-2">
-					<Skeleton class="h-10 w-16" />
-					<Skeleton class="h-10 w-12" />
+					<Skeleton class="h-9 w-16" />
+					<Skeleton class="h-9 w-16" />
+					<Skeleton class="h-9 w-12" />
 				</div>
 			</div>
 			<div class="flex flex-col gap-2">
@@ -147,23 +149,31 @@
 					<div class="flex items-center gap-2">
 						<h1 class="text-2xl font-bold text-slate-900">{res.item.name ?? '...'}</h1>
 						{#if shouldShowNewBadge(res.item?.createdAt, res.item?.hideNewBadge)}
-							<Badge class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600">Baru</Badge>
+							<Badge
+								class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
+								>Baru</Badge
+							>
 						{/if}
 					</div>
 					<p class="text-sm text-slate-500">{res.item.id}</p>
 				</div>
 			</div>
 			<div class="flex items-center gap-2">
-				<Button href="/admin/inventaris/bhp/tambah?itemId={res.item.id}" class="gap-2">
-					<Plus class="size-4" /> Tambah Stok
-				</Button>
 				{#if ['kepalaLab', 'laboran', 'superadmin'].includes(data.user?.role)}
+					<Button href="/admin/inventaris/bhp/tambah?itemId={res.item.id}" class="gap-2">
+						<Plus /> Tambah Stok
+					</Button>
+
+					<Button href="/admin/inventaris/bhp/{res.item.id}/edit" variant="outline" class="gap-2">
+						<Pencil /> Edit
+					</Button>
+
 					<Button
 						variant="destructive"
 						class="gap-2"
 						onclick={() => (isDeleteItemConfirmOpen = true)}
 					>
-						<Trash2 class="size-4" /> Hapus Item
+						<Trash2 /> Hapus Item
 					</Button>
 				{/if}
 			</div>
@@ -385,7 +395,7 @@
 													showDeleteModal = true;
 												}}
 											>
-												<Trash2 class="size-4" />
+												<Trash2 />
 												<span class="hidden md:inline">Hapus</span>
 											</Button>
 										{/if}
@@ -493,7 +503,7 @@
 <ConfirmationDialog
 	bind:open={isDeleteItemConfirmOpen}
 	type="error"
-	title="Hapus Item BHP?"
+	title="Hapus Item?"
 	description="Tindakan ini tidak dapat dibatalkan. Menghapus item ini akan menghapusnya dari data inventaris secara permanen."
 	actionLabel="Hapus Item"
 	cancelLabel="Batal"

@@ -182,7 +182,7 @@
 
 <div class="flex h-full flex-col gap-6 p-6">
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Edit Jadwal</h1>
+		<h1 class="text-2xl font-bold tracking-tight">Edit Jadwal</h1>
 		<p class="text-muted-foreground">Ubah detail jadwal kegiatan praktikum.</p>
 	</div>
 

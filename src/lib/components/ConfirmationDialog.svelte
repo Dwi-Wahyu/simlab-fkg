@@ -90,7 +90,7 @@
 				</AlertDialog.Cancel>
 
 				<AlertDialog.Action
-					class={cn('min-w-30', config.bg, 'hover:opacity-90')}
+					class={cn(config.bg, 'hover:opacity-90')}
 					onclick={(e) => {
 						e.preventDefault();
 						onAction();

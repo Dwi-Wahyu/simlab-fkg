@@ -179,7 +179,7 @@
 			<ChevronLeft class="size-5" />
 		</Button>
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight text-slate-900">Ubah Pengajuan Alat</h1>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Ubah Pengajuan Alat</h1>
 			<p class="text-slate-500">
 				Ubah pengajuan peminjaman alat laboratorium Anda. Pengajuan ini masih berstatus DRAFT dan
 				akan diverifikasi kembali oleh Kepala Lab.

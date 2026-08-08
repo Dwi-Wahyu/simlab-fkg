@@ -55,7 +55,7 @@
 	</Button>
 
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight text-slate-900">Persetujuan Pemeliharaan</h1>
+		<h1 class="text-2xl font-bold tracking-tight text-slate-900">Persetujuan Pemeliharaan</h1>
 		<p class="text-slate-500">
 			Daftar pemeliharaan selesai yang memerlukan verifikasi Kepala Lab / Superadmin.
 		</p>

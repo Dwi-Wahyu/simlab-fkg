@@ -70,7 +70,7 @@
 <div class="space-y-6 p-6">
 	<div class="flex flex-col items-center justify-between gap-4 md:flex-row">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Manajemen Laboratorium</h1>
+			<h1 class="text-2xl font-bold tracking-tight">Manajemen Laboratorium</h1>
 			<p class="text-muted-foreground">Kelola daftar laboratorium dan koordinatornya.</p>
 		</div>
 		<Button

@@ -335,7 +335,7 @@
 	<!-- Header Section -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight text-slate-900">Catat Nilai</h1>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Catat Nilai</h1>
 			<p class="text-slate-500">
 				{data.schedule.series?.name
 					? `${data.schedule.series.name} - ${data.schedule.title}`
