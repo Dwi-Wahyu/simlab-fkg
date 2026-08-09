@@ -35,7 +35,7 @@
 			['LAPORAN PENILAIAN PRAKTIKUM MAHASISWA'],
 			[''],
 			['Nama Mahasiswa', data.student.name],
-			['NIM / Username', data.student.username],
+			['NIM', data.student.username],
 			['Email', data.student.email || '-'],
 			['Kelas / Angkatan', studentClassesDisplay],
 			['Tanggal Cetak', new Date().toLocaleDateString('id-ID')],
@@ -121,7 +121,7 @@
 	
 	<div class="mb-4 grid grid-cols-2 gap-2 text-xs">
 		<div><strong>Nama Mahasiswa:</strong> {data.student.name}</div>
-		<div><strong>NIM / Username:</strong> {data.student.username}</div>
+		<div><strong>NIM:</strong> {data.student.username}</div>
 		<div><strong>Email:</strong> {data.student.email || '-'}</div>
 		<div><strong>Kelas / Angkatan:</strong> {studentClassesDisplay}</div>
 		<div><strong>Tanggal Cetak:</strong> {new Date().toLocaleDateString('id-ID')}</div>
@@ -421,6 +421,11 @@
 		:global(body) {
 			background-color: white !important;
 			color: black !important;
+		}
+		:global(aside),
+		:global(header),
+		:global(nav) {
+			display: none !important;
 		}
 		.print-hide {
 			display: none !important;

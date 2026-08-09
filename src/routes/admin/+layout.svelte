@@ -236,3 +236,13 @@
 	cancelLabel="Batal"
 	onAction={handleLogout}
 />
+
+<style>
+	@media print {
+		:global(aside),
+		:global(header),
+		:global(nav) {
+			display: none !important;
+		}
+	}
+</style>
