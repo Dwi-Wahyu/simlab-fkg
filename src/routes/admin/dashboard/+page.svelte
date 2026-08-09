@@ -26,8 +26,8 @@
 		superadmin: 'Super Admin',
 		koordinator: 'PJ Mata Kuliah',
 		kepalaLab: 'Kepala Laboratorium',
-		instruktur: 'DPJP / Dosen',
-		peneliti: 'Mahasiswa',
+		dosen: 'DPJP / Dosen',
+		mahasiswa: 'Mahasiswa',
 		teknisi: 'Teknisi',
 		spmi: 'SPMI',
 		laboran: 'Laboran'
@@ -47,9 +47,9 @@
 			<KoordinatorSkeleton />
 		{:else if role === 'kepalaLab'}
 			<KepalaLabSkeleton />
-		{:else if role === 'instruktur'}
+		{:else if role === 'dosen'}
 			<InstrukturSkeleton />
-		{:else if role === 'peneliti'}
+		{:else if role === 'mahasiswa'}
 			<PenelitiSkeleton />
 		{:else if role === 'teknisi'}
 			<TeknisiSkeleton />
@@ -66,9 +66,9 @@
 			<KoordinatorDashboard data={dashboardData.data} />
 		{:else if dashboardData.role === 'kepalaLab'}
 			<KepalaLabDashboard data={dashboardData.data} />
-		{:else if dashboardData.role === 'instruktur'}
+		{:else if dashboardData.role === 'dosen'}
 			<InstrukturDashboard data={dashboardData.data} />
-		{:else if dashboardData.role === 'peneliti'}
+		{:else if dashboardData.role === 'mahasiswa'}
 			<PenelitiDashboard data={dashboardData.data} />
 		{:else if dashboardData.role === 'teknisi'}
 			<TeknisiDashboard data={dashboardData.data} />

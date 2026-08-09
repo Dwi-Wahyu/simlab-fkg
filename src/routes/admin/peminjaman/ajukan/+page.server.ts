@@ -8,7 +8,7 @@ import path from 'path';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	if (!locals.user || !['peneliti', 'instruktur'].includes(locals.user.role)) {
+	if (!locals.user || !['mahasiswa', 'dosen'].includes(locals.user.role)) {
 		throw redirect(302, '/admin/peminjaman');
 	}
 
@@ -42,7 +42,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 export const actions: Actions = {
 	ajukan: async ({ request, locals }) => {
 		const currentUser = locals.user;
-		if (!currentUser || !['peneliti', 'instruktur'].includes(currentUser.role)) {
+		if (!currentUser || !['mahasiswa', 'dosen'].includes(currentUser.role)) {
 			return fail(403, { message: 'Tidak diizinkan' });
 		}
 
