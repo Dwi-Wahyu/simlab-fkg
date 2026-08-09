@@ -103,7 +103,13 @@ export const auth = betterAuth({
 const DPJP_COUNT = 4;
 
 async function main() {
-	console.log(`Sedang melakukan seeding ${DPJP_COUNT} user DPJP (instruktur)...`);
+	console.log(`Sedang melakukan seeding ${DPJP_COUNT} user DPJP (dosen)...`);
+
+	// Migrasi otomatis role 'instruktur' -> 'dosen'
+	await db
+		.update(authSchema.user)
+		.set({ role: 'dosen' })
+		.where(eq(authSchema.user.role, 'instruktur'));
 
 	for (let i = 1; i <= DPJP_COUNT; i++) {
 		const username = `dpjp${i}`;
@@ -146,9 +152,9 @@ async function main() {
 					.set({ password: hashedPwd })
 					.where(eq(authSchema.account.userId, userId));
 
-				console.log(`- User sudah ada, password di-reset: ${email}`);
+				console.log(`- User sudah ada, password & role di-update: ${email}`);
 			} catch (err) {
-				console.log(`- User sudah ada: ${email} (Update password gagal: ${err})`);
+				console.log(`- User sudah ada: ${email} (Update password/role gagal: ${err})`);
 			}
 		}
 

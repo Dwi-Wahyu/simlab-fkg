@@ -265,7 +265,11 @@ async function seedTestingPeneliti() {
 			.update(authSchema.account)
 			.set({ password: hashedPwd })
 			.where(eq(authSchema.account.userId, userId));
-		console.log(`- Akun testing peneliti (${username}) sudah ada, password di-reset`);
+		await db
+			.update(authSchema.user)
+			.set({ role: 'mahasiswa' })
+			.where(eq(authSchema.user.id, userId));
+		console.log(`- Akun testing mahasiswa (${username}) sudah ada, password & role di-update`);
 	}
 
 	// Pastikan user ini masuk ke setidaknya satu kelas (ambil kelas pertama yang ada)
@@ -357,12 +361,17 @@ async function seedKelompokMahasiswa() {
 }
 
 async function main() {
-	console.log('Sedang melakukan seeding mahasiswa...');
+	console.log('Sedang melakukan seeding & migrasi role mahasiswa...');
+	await db
+		.update(authSchema.user)
+		.set({ role: 'mahasiswa' })
+		.where(eq(authSchema.user.role, 'peneliti'));
+
 	await seedTestingPeneliti();
 	await seedMahasiswa();
 	await seedLogbooks();
 	await seedKelompokMahasiswa();
-	console.log('\nSeeding mahasiswa selesai!');
+	console.log('\nSeeding & migrasi role mahasiswa selesai!');
 	process.exit(0);
 }
 
