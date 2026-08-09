@@ -327,21 +327,13 @@
 </script>
 
 <div class="flex h-full flex-col gap-6 p-6">
-	<Button variant="outline" href="/admin/penilaian" class="-mb-2 w-fit">
-		<ChevronLeft />
-		Kembali
-	</Button>
-
 	<!-- Header Section -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-		<div>
-			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Catat Nilai</h1>
-			<p class="text-slate-500">
-				{data.schedule.series?.name
-					? `${data.schedule.series.name} - ${data.schedule.title}`
-					: data.schedule.title} • {data.schedule.laboratorium.name}
-			</p>
-		</div>
+		<Button variant="outline" href="/admin/penilaian" class="-mb-2 w-fit">
+			<ChevronLeft />
+			Kembali
+		</Button>
+
 		<div class="flex flex-col items-stretch gap-2 md:flex-row md:items-center">
 			<Button
 				href="/admin/penilaian/{data.schedule.id}/rekapitulasi"
@@ -386,11 +378,15 @@
 
 	<!-- Main Table -->
 	<Card.Root class="overflow-hidden border bg-white p-0 shadow-sm ring-1 ring-slate-100">
-		<Card.Header class="border-b px-6 py-4">
+		<Card.Header class="border-b">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<Card.Title class="text-lg font-semibold text-slate-900">Daftar Mahasiswa</Card.Title>
-					<Card.Description>Lakukan penilaian mahasiswa secara dinamis dan live.</Card.Description>
+					<Card.Title class="text-lg font-semibold text-slate-900">Catat Nilai</Card.Title>
+					<Card.Description>
+						{data.schedule.series?.name
+							? `${data.schedule.series.name} - ${data.schedule.title}`
+							: data.schedule.title} • {data.schedule.laboratorium.name}
+					</Card.Description>
 				</div>
 
 				<div class="flex flex-wrap items-center gap-3">
@@ -463,11 +459,11 @@
 																	<p class="text-[11px] font-semibold text-slate-800">
 																		{crit.name} (Max: {crit.maxScore})
 																	</p>
-																	{#if crit.description}
+																	<!-- {#if crit.description}
 																		<p class="text-[10px] text-slate-500 italic">
 																			{crit.description}
 																		</p>
-																	{/if}
+																	{/if} -->
 																	{#if crit.bands && crit.bands.length > 0}
 																		<div class="mt-0.5 space-y-1 border-l border-slate-200 pl-2">
 																			{#each crit.bands as band}

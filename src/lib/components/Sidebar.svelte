@@ -59,11 +59,6 @@
 					role: ['superadmin', 'koordinator']
 				},
 				{
-					name: 'Kalender Jadwal',
-					path: `/admin/kalender-jadwal`,
-					role: ['superadmin', 'koordinator']
-				},
-				{
 					name: 'Praktikum',
 					path: `/admin/master/seri`,
 					role: ['superadmin', 'koordinator']

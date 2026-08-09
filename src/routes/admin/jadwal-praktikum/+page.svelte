@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		Calendar,
+		CalendarDays,
 		ChevronDown,
 		ChevronUp,
 		Clock,
@@ -16,9 +17,9 @@
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { badgeVariants } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import type { PageData } from './$types';
 
 	let { data, form } = $props();
@@ -187,12 +188,24 @@
 				Kelola jadwal praktikum, OSCE, dan pelatihan di laboratorium.
 			</p>
 		</div>
-		{#if data.userRole !== 'dosen'}
-			<Button href="/admin/jadwal-praktikum/tambah" class="w-full justify-center gap-2  sm:w-auto">
-				<Plus class="size-4" />
-				Tambah Jadwal
-			</Button>
-		{/if}
+		<div class="flex gap-1">
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<Button variant="outline" size="icon" href="/admin/kalender-jadwal">
+						<CalendarDays />
+					</Button>
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>Kalender Jadwal</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
+			{#if ['koordinator'].includes(data.userRole)}
+				<Button href="/admin/jadwal-praktikum/tambah" class="grow justify-center gap-2">
+					<Plus class="size-4" />
+					Tambah Jadwal
+				</Button>
+			{/if}
+		</div>
 	</div>
 
 	{#if form?.message}

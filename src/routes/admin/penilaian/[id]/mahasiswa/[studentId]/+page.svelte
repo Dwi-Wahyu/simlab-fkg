@@ -131,9 +131,9 @@
 						<div class="flex items-start justify-between">
 							<div class="space-y-1">
 								<Card.Title class="text-lg md:text-xl">{mod.name}</Card.Title>
-								{#if mod.description}
+								<!-- {#if mod.description}
 									<Card.Description>{mod.description}</Card.Description>
-								{/if}
+								{/if} -->
 							</div>
 						</div>
 						{#if assessment}

@@ -24,6 +24,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		with: {
 			laboratorium: true,
 			series: true,
+			classes: {
+				with: {
+					class: true
+				}
+			},
+			practicumClass: true,
 			modules: {
 				with: {
 					module: true
@@ -49,7 +55,11 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		throw error(403, 'Forbidden: You are not authorized to view this schedule');
 	}
 
-	const classId = schedule.classId!;
+	const classIds = [
+		...(schedule.classes?.map((c) => c.classId) || []),
+		...(schedule.classId ? [schedule.classId] : [])
+	].filter((v, i, a): v is string => !!v && a.indexOf(v) === i);
+
 	const myInstructorRows = schedule.instructors.filter((i) => i.instructorId === instructorId);
 	const myGroupIds = [
 		...new Set(myInstructorRows.map((i) => i.groupId).filter((g): g is string => !!g))
@@ -78,12 +88,19 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				return true;
 			})
 			.map((gm) => ({ user: gm.user }));
-	} else {
+	} else if (classIds.length > 0) {
 		students = await db.query.practicumClassMember.findMany({
-			where: eq(practicumClassMember.classId, classId),
+			where: inArray(practicumClassMember.classId, classIds),
 			with: {
 				user: true
 			}
+		});
+		// Dedup mahasiswa jika ada yang terdaftar di lebih dari 1 kelas
+		const seen = new Set<string>();
+		students = students.filter((s) => {
+			if (!s.user?.id || seen.has(s.user.id)) return false;
+			seen.add(s.user.id);
+			return true;
 		});
 	}
 
@@ -125,10 +142,13 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				})
 			: [];
 
-	const groups = await db.query.kelompokMahasiswa.findMany({
-		where: eq(kelompokMahasiswa.classId, classId),
-		orderBy: (km, { asc }) => [asc(km.name)]
-	});
+	const groups =
+		classIds.length > 0
+			? await db.query.kelompokMahasiswa.findMany({
+					where: inArray(kelompokMahasiswa.classId, classIds),
+					orderBy: (km, { asc }) => [asc(km.name)]
+				})
+			: [];
 
 	const groupMembersInfo =
 		groups.length > 0

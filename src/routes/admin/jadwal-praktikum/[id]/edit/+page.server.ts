@@ -3,6 +3,7 @@ import {
 	practicumSchedule,
 	practicumScheduleInstructor,
 	practicumScheduleModule,
+	practicumScheduleClass,
 	laboratorium,
 	user,
 	practicumModule,
@@ -25,7 +26,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		where: and(eq(practicumSchedule.id, id), eq(practicumSchedule.isDeleted, false)),
 		with: {
 			instructors: true,
-			modules: true
+			modules: true,
+			classes: true
 		}
 	});
 
@@ -56,6 +58,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	});
 	const groups = await db.query.kelompokMahasiswa.findMany({
 		where: (km, { eq }) => eq(km.isDeleted, false),
+		with: {
+			class: true
+		},
 		orderBy: (km, { asc }) => [asc(km.name)]
 	});
 
@@ -79,8 +84,13 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const title = formData.get('title') as string;
 		const seriesId = formData.get('seriesId') as string;
-		const type = formData.get('type') as 'PELATIHAN' | 'OSCE' | 'PRAKTIKUM';
-		const classId = formData.get('classId') as string;
+		const type = (formData.get('type') as 'PELATIHAN' | 'OSCE' | 'PRAKTIKUM') || 'PRAKTIKUM';
+		const classIds = formData.getAll('classIds') as string[];
+		const singleClassId = formData.get('classId') as string;
+		if (singleClassId && !classIds.includes(singleClassId)) {
+			classIds.push(singleClassId);
+		}
+
 		const labId = formData.get('labId') as string;
 		const blockId = formData.get('blockId') as string;
 		const assignmentPairs = formData.getAll('assignments') as string[];
@@ -93,39 +103,37 @@ export const actions: Actions = {
 		const dateStr = formData.get('date') as string;
 		const startTimeStr = formData.get('startTime') as string;
 		const endTimeStr = formData.get('endTime') as string;
-		const participantCount = parseInt(formData.get('participantCount') as string);
+		const participantCount = parseInt((formData.get('participantCount') as string) || '0');
 		const notes = formData.get('notes') as string;
 
-		if (
-			!title ||
-			!type ||
-			!classId ||
-			!labId ||
-			instructorIds.length === 0 ||
-			!dateStr ||
-			!startTimeStr ||
-			!endTimeStr
-		) {
-			return fail(400, { message: 'Missing required fields' });
+		const missingFields: string[] = [];
+		if (!title?.trim()) missingFields.push('Judul Kegiatan');
+		if (type === 'PRAKTIKUM' && !seriesId) missingFields.push('Seri Praktikum');
+		if (classIds.length === 0) missingFields.push('Angkatan & Kelas');
+		if (!labId) missingFields.push('Laboratorium');
+		if (instructorIds.length === 0) missingFields.push('DPJP');
+		if (!dateStr) missingFields.push('Tanggal');
+		if (!startTimeStr) missingFields.push('Waktu Mulai');
+		if (!endTimeStr) missingFields.push('Waktu Selesai');
+
+		if (missingFields.length > 0) {
+			return fail(400, {
+				message: `Bidang berikut wajib diisi: ${missingFields.join(', ')}`
+			});
 		}
 
-		// Get class details to satisfy the 'class' enum (A, B, C)
 		const selectedClass = await db.query.practicumClass.findFirst({
-			where: eq(practicumClass.id, classId)
+			where: eq(practicumClass.id, classIds[0])
 		});
 
-		if (!selectedClass) return fail(400, { message: 'Invalid class' });
-
-		// Map class name to enum if possible, else default to 'A'
 		let classEnum: 'A' | 'B' | 'C' = 'A';
-		if (['A', 'B', 'C'].includes(selectedClass.name)) {
+		if (selectedClass && ['A', 'B', 'C'].includes(selectedClass.name)) {
 			classEnum = selectedClass.name as 'A' | 'B' | 'C';
 		}
 
 		const startTime = new Date(`${dateStr}T${startTimeStr}`);
 		const endTime = new Date(`${dateStr}T${endTimeStr}`);
 
-		// Check for overlapping schedules in the same lab (excluding current schedule)
 		const overlap = await db.query.practicumSchedule.findFirst({
 			where: and(
 				ne(practicumSchedule.id, id),
@@ -156,7 +164,7 @@ export const actions: Actions = {
 					title,
 					type,
 					class: classEnum,
-					classId: classId,
+					classId: classIds[0] || null,
 					laboratoriumId: labId,
 					blockId: blockId || null,
 					startTime,
@@ -166,6 +174,18 @@ export const actions: Actions = {
 					updatedAt: new Date()
 				})
 				.where(eq(practicumSchedule.id, id));
+
+			// Update classes
+			await tx
+				.delete(practicumScheduleClass)
+				.where(eq(practicumScheduleClass.scheduleId, id));
+			for (const cId of classIds) {
+				await tx.insert(practicumScheduleClass).values({
+					id: uuidv4(),
+					scheduleId: id,
+					classId: cId
+				});
+			}
 
 			// Delete old instructors and insert new ones
 			await tx

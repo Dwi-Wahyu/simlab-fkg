@@ -934,6 +934,29 @@ export const practicumScheduleModule = mysqlTable(
 	]
 );
 
+export const practicumScheduleClass = mysqlTable(
+	'practicum_schedule_class',
+	{
+		id: varchar('id', { length: 36 }).primaryKey(),
+		scheduleId: varchar('schedule_id', { length: 36 }).notNull(),
+		classId: varchar('class_id', { length: 36 }).notNull()
+	},
+	(table) => [
+		index('ps_class_schedule_idx').on(table.scheduleId),
+		index('ps_class_class_idx').on(table.classId),
+		foreignKey({
+			name: 'ps_cls_schedule_fk',
+			columns: [table.scheduleId],
+			foreignColumns: [practicumSchedule.id]
+		}).onDelete('cascade'),
+		foreignKey({
+			name: 'ps_cls_class_fk',
+			columns: [table.classId],
+			foreignColumns: [practicumClass.id]
+		}).onDelete('cascade')
+	]
+);
+
 // ─── Logbook Template ────────────────────────────────────────────────────────
 // Stores downloadable/fillable template files associated with a practicum module.
 export const practicumLogbookTemplate = mysqlTable(
@@ -1307,6 +1330,7 @@ export const practicumScheduleRelations = relations(practicumSchedule, ({ one, m
 		fields: [practicumSchedule.classId],
 		references: [practicumClass.id]
 	}),
+	classes: many(practicumScheduleClass),
 	instructors: many(practicumScheduleInstructor),
 	modules: many(practicumScheduleModule)
 }));
@@ -1340,9 +1364,21 @@ export const practicumScheduleModuleRelations = relations(practicumScheduleModul
 	})
 }));
 
+export const practicumScheduleClassRelations = relations(practicumScheduleClass, ({ one }) => ({
+	schedule: one(practicumSchedule, {
+		fields: [practicumScheduleClass.scheduleId],
+		references: [practicumSchedule.id]
+	}),
+	class: one(practicumClass, {
+		fields: [practicumScheduleClass.classId],
+		references: [practicumClass.id]
+	})
+}));
+
 export const practicumClassRelations = relations(practicumClass, ({ many }) => ({
 	members: many(practicumClassMember),
-	groups: many(kelompokMahasiswa)
+	groups: many(kelompokMahasiswa),
+	schedules: many(practicumScheduleClass)
 }));
 
 export const practicumClassMemberRelations = relations(practicumClassMember, ({ one }) => ({

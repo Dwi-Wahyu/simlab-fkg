@@ -54,7 +54,7 @@
 	async function handlePageChange(newPage: number) {
 		const url = new URL(page.url);
 		url.searchParams.set('page', newPage.toString());
-		await goto(url.toString(), { keepFocus: true, scroll: false });
+		await goto(url.toString(), { keepFocus: true, noScroll: true });
 	}
 
 	async function resetFilter() {
@@ -63,7 +63,7 @@
 		url.searchParams.delete('departmentId');
 		url.searchParams.delete('blockId');
 		url.searchParams.set('page', '1');
-		await goto(url.toString());
+		await goto(url.toString(), { noScroll: true });
 	}
 
 	function confirmDelete(id: string, name: string) {
