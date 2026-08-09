@@ -36,8 +36,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(404, 'Role tidak ditemukan');
 	}
 
-	const roleCondition =
-		role === 'dosen' ? inArray(user.role, ['dosen', 'instruktur']) : eq(user.role, role);
+	const roleCondition = role === 'dosen' ? inArray(user.role, ['dosen']) : eq(user.role, role);
 
 	const users = await db.query.user.findMany({
 		where: and(roleCondition, notDeleted(user)),

@@ -87,9 +87,7 @@
 							<span class="text-start text-base text-muted-foreground">Universitas Hasanuddin</span>
 						</div>
 					</div> -->
-					<h1 class="mb-1 text-start text-2xl font-bold text-[#181d18] md:text-4xl">
-						Selamat Datang
-					</h1>
+					<h1 class="mb-1 text-start text-2xl font-bold text-[#181d18]">Selamat Datang</h1>
 					<p class="text-start text-base text-muted-foreground">
 						Masukkan kredensial Anda untuk melanjutkan
 					</p>

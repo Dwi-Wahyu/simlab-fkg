@@ -8,7 +8,6 @@
 		ChevronRight,
 		ChevronsLeft,
 		ChevronsRight,
-		MoreHorizontal,
 		Eye,
 		FileEdit,
 		Trash2,
@@ -19,7 +18,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Input } from '$lib/components/ui/input';
 	import * as Table from '$lib/components/ui/table';
 	import * as Select from '$lib/components/ui/select';
@@ -27,6 +25,7 @@
 	import { page as pageStore } from '$app/state';
 	import { untrack } from 'svelte';
 	import { cn } from '$lib/utils';
+	import { getProfileImage } from '$lib/utils/get-profile-image';
 
 	let { data } = $props();
 
@@ -205,13 +204,13 @@
 					onValueChange={handleLimitChange}
 				>
 					<Select.Trigger class="w-full md:w-27.5">
-						{res.pagination.limit} / Halaman
+						{res.pagination.limit} / Hal
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="10" label="10 / Halaman">10 / Halaman</Select.Item>
-						<Select.Item value="25" label="25 / Halaman">25 / Halaman</Select.Item>
-						<Select.Item value="50" label="50 / Halaman">50 / Halaman</Select.Item>
-						<Select.Item value="100" label="100 / Halaman">100 / Halaman</Select.Item>
+						<Select.Item value="10" label="10 / Hal">10 / Hal</Select.Item>
+						<Select.Item value="25" label="25 / Hal">25 / Hal</Select.Item>
+						<Select.Item value="50" label="50 / Hal">50 / Hal</Select.Item>
+						<Select.Item value="100" label="100 / Hal">100 / Hal</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>
@@ -248,14 +247,27 @@
 								>
 									<!-- Nama Mahasiswa + Mobile expand -->
 									<Table.Cell
-										class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
+										class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b"
 									>
 										<div class="flex items-center gap-3">
-											<div
-												class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
-											>
-												<User size={20} />
-											</div>
+											{#if student.image}
+												{@const studentImage = getProfileImage(student.image)}
+												<div
+													class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-600"
+												>
+													<img
+														src={studentImage}
+														alt="Profile"
+														class="h-full w-full object-cover"
+													/>
+												</div>
+											{:else}
+												<div
+													class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+												>
+													<User size={20} />
+												</div>
+											{/if}
 											<div class="flex flex-col">
 												<a
 													href="/admin/users/mahasiswa/{student.id}"
@@ -287,7 +299,7 @@
 									<Table.Cell
 										class={cn(
 											expandedItems[student.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent'
 										)}
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Username</span>
@@ -298,7 +310,7 @@
 									<Table.Cell
 										class={cn(
 											expandedItems[student.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent'
 										)}
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Email</span>
@@ -312,7 +324,7 @@
 									<Table.Cell
 										class={cn(
 											expandedItems[student.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent'
 										)}
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Angkatan</span>
@@ -323,7 +335,7 @@
 									<Table.Cell
 										class={cn(
 											expandedItems[student.id] ? 'flex' : 'hidden',
-											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4'
+											'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent'
 										)}
 									>
 										<span class="text-xs font-semibold text-slate-400 md:hidden">Kelas</span>
@@ -334,7 +346,7 @@
 									<Table.Cell
 										class={cn(
 											expandedItems[student.id] ? 'flex' : 'hidden',
-											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:px-6 md:py-4 md:text-right'
+											'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:text-right'
 										)}
 									>
 										<div>

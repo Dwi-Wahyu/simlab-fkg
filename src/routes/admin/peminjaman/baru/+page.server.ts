@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// 1. Fetch potential requesters (Mahasiswa & DPJP)
 	const requesters = await db.query.user.findMany({
-		where: inArray(user.role, ['peneliti', 'instruktur']),
+		where: inArray(user.role, ['mahasiswa', 'dosen']),
 		columns: {
 			id: true,
 			name: true,

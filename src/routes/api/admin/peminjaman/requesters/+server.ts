@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 	// Total count for pagination
 	// Build role condition
-	const roleCond = inArray(user.role, ['peneliti', 'instruktur']);
+	const roleCond = inArray(user.role, ['peneliti', 'dosen']);
 	const activeCond = eq(user.isDeleted, false);
 	const baseWhere = whereClause
 		? and(roleCond, activeCond, whereClause)

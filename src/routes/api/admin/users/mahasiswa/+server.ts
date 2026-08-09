@@ -59,6 +59,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			name: s.name,
 			username: s.username,
 			email: s.email,
+			image: s.image,
 			batchDisplay: batches.join(', ') || '-',
 			classDisplay: classNames.join(', ') || '-'
 		};

@@ -101,7 +101,7 @@
 			icon: CalendarDays,
 			isDropdown: false,
 			path: `/admin/kalender-jadwal`,
-			role: ['dosen', 'instruktur'],
+			role: ['dosen'],
 			children: []
 		},
 		{
@@ -109,7 +109,7 @@
 			icon: Clipboard,
 			isDropdown: false,
 			path: `/admin/penilaian`,
-			role: ['dosen', 'instruktur'],
+			role: ['dosen'],
 			children: []
 		},
 
@@ -118,7 +118,7 @@
 			path: `/admin/users/mahasiswa`,
 			icon: GraduationCap,
 			isDropdown: false,
-			role: ['dosen', 'instruktur'],
+			role: ['dosen'],
 			children: []
 		},
 
@@ -159,7 +159,7 @@
 			path: `/admin/peminjaman`,
 			icon: ClipboardList,
 			isDropdown: false,
-			role: ['superadmin', 'koordinator', 'kepalaLab', 'mahasiswa', 'dosen', 'peneliti', 'instruktur'],
+			role: ['superadmin', 'koordinator', 'kepalaLab', 'mahasiswa', 'dosen', 'peneliti'],
 			children: []
 		},
 		{
@@ -228,6 +228,11 @@
 				{
 					name: 'Kepala Lab',
 					path: `/admin/users/kepala-lab`,
+					role: ['superadmin']
+				},
+				{
+					name: 'Laboran',
+					path: `/admin/users/laboran`,
 					role: ['superadmin']
 				},
 				{

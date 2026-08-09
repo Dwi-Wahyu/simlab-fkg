@@ -6,7 +6,9 @@ export const load: PageLoad = ({ fetch, data }) => {
 
 	const fetchDashboard = async () => {
 		const res = await fetch(`/api/admin/dashboard/${role}`);
-		if (!res.ok) throw new Error('Gagal memuat data dashboard');
+		if (!res.ok) {
+			throw new Error('Gagal memuat data dashboard');
+		}
 		return await res.json();
 	};
 

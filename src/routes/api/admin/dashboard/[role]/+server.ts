@@ -1,5 +1,3 @@
-// src/routes/api/admin/dashboard/[role]/+server.ts
-
 import { json, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import {
@@ -338,7 +336,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			});
 		}
 
-		case 'instruktur': {
+		case 'dosen': {
 			const userId = locals.user.id;
 
 			// Jadwal yang diampu DPJP ini
@@ -385,7 +383,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				.where(eq(practicumScheduleInstructor.instructorId, userId));
 
 			return json({
-				role: 'instruktur',
+				role: 'dosen',
 				data: {
 					upcomingSchedules,
 					pendingAssessments: pendingAssessmentsList.map((a) => ({
@@ -404,7 +402,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			});
 		}
 
-		case 'peneliti': {
+		case 'mahasiswa': {
 			const userId = locals.user.id;
 
 			const activeLendingsList = await db.query.lending.findMany({
@@ -435,7 +433,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			});
 
 			return json({
-				role: 'peneliti',
+				role: 'mahasiswa',
 				data: {
 					activeLendings: activeLendingsList.map((l) => ({
 						id: l.id,

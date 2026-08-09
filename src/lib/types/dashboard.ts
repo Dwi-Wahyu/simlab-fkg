@@ -5,7 +5,6 @@ export type DashboardRole =
 	| 'koordinator'
 	| 'kepalaLab'
 	| 'dosen'
-	| 'instruktur'
 	| 'mahasiswa'
 	| 'peneliti'
 	| 'teknisi'
@@ -211,7 +210,6 @@ export type DashboardData =
 	| { role: 'koordinator'; data: KoordinatorDashboardData }
 	| { role: 'kepalaLab'; data: KepalaLabDashboardData }
 	| { role: 'dosen'; data: InstrukturDashboardData }
-	| { role: 'instruktur'; data: InstrukturDashboardData }
 	| { role: 'mahasiswa'; data: PenelitiDashboardData }
 	| { role: 'peneliti'; data: PenelitiDashboardData }
 	| { role: 'teknisi'; data: TeknisiDashboardData }

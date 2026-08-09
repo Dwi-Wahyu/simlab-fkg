@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, Pencil, Trash2, Users, Calendar } from '@lucide/svelte';
+	import { Plus, Pencil, Trash2, Users, Calendar, Eye } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/components/toast';
 	import { Button } from '$lib/components/ui/button';
@@ -121,9 +121,12 @@
 <div class="flex flex-col gap-6 p-4 md:p-6">
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="space-y-1">
-			<a href="/admin/users/mahasiswa" class="mb-2 flex w-fit items-center gap-1 text-sm text-slate-500 transition-colors hover:text-slate-900">
+			<a
+				href="/admin/users/mahasiswa"
+				class="mb-2 flex w-fit items-center gap-1 text-sm text-slate-500 transition-colors hover:text-slate-900"
+			>
 				<ChevronLeftIcon class="h-4 w-4" />
-				Kembali ke Daftar Mahasiswa
+				Kembali
 			</a>
 			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Kelompok Mahasiswa</h1>
 			<p class="text-slate-500">
@@ -145,22 +148,19 @@
 
 	<!-- Filter & Search Section -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex w-full items-center gap-4 rounded-lg border bg-white p-4 sm:w-auto">
-			<Label class="text-sm font-medium whitespace-nowrap text-slate-700">Filter Kelas:</Label>
-			<Select.Root type="single" value={data.selectedClassId} onValueChange={handleClassFilter}>
-				<Select.Trigger class="w-[200px] bg-white">
-					{data.selectedClassId ? `${filterClassName}` : 'Semua Kelas'}
-				</Select.Trigger>
-				<Select.Content>
-					<Select.Item value="" label="Semua Kelas">Semua Kelas</Select.Item>
-					{#each data.classes as cls}
-						<Select.Item value={cls.id} label={`${cls.name} (${cls.batch})`}>
-							{cls.name} ({cls.batch})
-						</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
-		</div>
+		<Select.Root type="single" value={data.selectedClassId} onValueChange={handleClassFilter}>
+			<Select.Trigger class="w-[200px] bg-white">
+				{data.selectedClassId ? `${filterClassName}` : 'Semua Kelas'}
+			</Select.Trigger>
+			<Select.Content>
+				<Select.Item value="" label="Semua Kelas">Semua Kelas</Select.Item>
+				{#each data.classes as cls}
+					<Select.Item value={cls.id} label={`${cls.name} (${cls.batch})`}>
+						{cls.name} ({cls.batch})
+					</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
 
 		<div class="relative w-full sm:max-w-xs">
 			<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -176,7 +176,7 @@
 	{#await data.groupsPromise}
 		<!-- Skeleton Table -->
 		<Card.Root>
-			<Card.Content class="p-0">
+			<Card.Content>
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
@@ -204,7 +204,7 @@
 		</Card.Root>
 	{:then res}
 		<Card.Root>
-			<Card.Content class="p-0">
+			<Card.Content>
 				<Table.Root>
 					<Table.Header>
 						<Table.Row>
@@ -262,26 +262,29 @@
 											<Button
 												href="/admin/kelompok-mahasiswa/{group.id}"
 												variant="outline"
-												size="sm"
+												size="icon"
 											>
-												Detail
+												<Eye />
 											</Button>
-											<Button
-												onclick={() => openEditModal(group)}
-												variant="outline"
-												size="sm"
-												class="text-slate-700 hover:text-slate-900"
-											>
-												<Pencil class="size-3.5" />
-											</Button>
-											<Button
-												onclick={() => openDeleteModal(group)}
-												variant="outline"
-												size="sm"
-												class="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-											>
-												<Trash2 class="size-3.5" />
-											</Button>
+
+											{#if ['superadmin', 'koordinator'].includes(data.userRole)}
+												<Button
+													onclick={() => openEditModal(group)}
+													variant="outline"
+													size="icon"
+													class="text-slate-700 hover:text-slate-900"
+												>
+													<Pencil />
+												</Button>
+												<Button
+													onclick={() => openDeleteModal(group)}
+													variant="outline"
+													size="icon"
+													class="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+												>
+													<Trash2 />
+												</Button>
+											{/if}
 										</div>
 									</Table.Cell>
 								</Table.Row>
@@ -293,7 +296,7 @@
 		</Card.Root>
 
 		<!-- Pagination & Limit -->
-		<div class="flex flex-col gap-4 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 			<div class="text-sm text-slate-500">
 				Menampilkan {(res.pagination.currentPage - 1) * res.pagination.limit + 1} sampai {Math.min(
 					res.pagination.currentPage * res.pagination.limit,

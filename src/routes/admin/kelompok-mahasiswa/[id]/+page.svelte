@@ -103,7 +103,7 @@
 			class="flex w-fit items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-900"
 		>
 			<ChevronLeft class="size-4" />
-			Kembali ke Daftar Kelompok
+			Kembali
 		</a>
 		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 			<div class="space-y-1">

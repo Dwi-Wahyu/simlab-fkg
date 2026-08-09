@@ -187,7 +187,7 @@
 				Kelola jadwal praktikum, OSCE, dan pelatihan di laboratorium.
 			</p>
 		</div>
-		{#if data.userRole !== 'instruktur'}
+		{#if data.userRole !== 'dosen'}
 			<Button href="/admin/jadwal-praktikum/tambah" class="w-full justify-center gap-2  sm:w-auto">
 				<Plus class="size-4" />
 				Tambah Jadwal
@@ -323,7 +323,7 @@
 								>
 									<Info class="h-4 w-4" />
 								</Button>
-								{#if data.userRole !== 'instruktur'}
+								{#if data.userRole !== 'dosen'}
 									<Button
 										variant="ghost"
 										size="icon"

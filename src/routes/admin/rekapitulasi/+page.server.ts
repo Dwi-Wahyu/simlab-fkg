@@ -38,14 +38,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 		instructorOptions = memberUserIds.length
 			? await db.query.user.findMany({
-					where: and(eq(user.role, 'instruktur'), inArray(user.id, memberUserIds)),
+					where: and(eq(user.role, 'dosen'), inArray(user.id, memberUserIds)),
 					orderBy: (u, { asc }) => [asc(u.name)]
 				})
 			: [];
 	} else {
 		// superadmin: no lab scoping
 		instructorOptions = await db.query.user.findMany({
-			where: eq(user.role, 'instruktur'),
+			where: eq(user.role, 'dosen'),
 			orderBy: (u, { asc }) => [asc(u.name)]
 		});
 	}

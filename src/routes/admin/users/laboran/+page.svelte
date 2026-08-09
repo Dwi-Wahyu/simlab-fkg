@@ -82,7 +82,6 @@
 				<Table.Header>
 					<Table.Row>
 						<Table.Head>Pengguna</Table.Head>
-						<Table.Head>Email</Table.Head>
 						<Table.Head>Laboratorium</Table.Head>
 						<Table.Head>Dibuat Pada</Table.Head>
 						<Table.Head class="text-right">Aksi</Table.Head>
@@ -102,7 +101,6 @@
 									</div>
 								</div>
 							</Table.Cell>
-							<Table.Cell>{u.email}</Table.Cell>
 							<Table.Cell>
 								<div class="flex flex-wrap gap-1">
 									{#each u.members as member}

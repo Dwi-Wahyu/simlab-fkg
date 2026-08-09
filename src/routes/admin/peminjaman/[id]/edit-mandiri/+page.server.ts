@@ -10,7 +10,7 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const { id } = params;
 	const currentUser = locals.user;
-	if (!currentUser || !['peneliti', 'instruktur'].includes(currentUser.role)) {
+	if (!currentUser || !['mahasiswa', 'dosen'].includes(currentUser.role)) {
 		throw redirect(302, '/admin/peminjaman');
 	}
 
@@ -77,7 +77,7 @@ export const actions: Actions = {
 	editMandiri: async ({ params, request, locals }) => {
 		const { id } = params;
 		const currentUser = locals.user;
-		if (!currentUser || !['peneliti', 'instruktur'].includes(currentUser.role)) {
+		if (!currentUser || !['mahasiswa', 'dosen'].includes(currentUser.role)) {
 			return fail(403, { message: 'Tidak diizinkan' });
 		}
 

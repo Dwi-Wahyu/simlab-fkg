@@ -49,8 +49,8 @@
 	function mapRole(role: string | null | undefined): string {
 		if (!role) return '';
 		const lower = role.toLowerCase();
-		if (lower === 'instruktur') return 'Dosen';
-		if (lower === 'peneliti') return 'Mahasiswa';
+		if (lower === 'dosen') return 'Dosen';
+		if (lower === 'mahasiswa') return 'Mahasiswa';
 		return role.charAt(0).toUpperCase() + role.slice(1);
 	}
 
@@ -60,7 +60,7 @@
 	let expandedLendingsAdmin = $state<Record<string, boolean>>({});
 
 	$effect(() => {
-		if (data.user.role !== 'peneliti' && data.user.role !== 'instruktur') {
+		if (data.user.role !== 'mahasiswa' && data.user.role !== 'dosen') {
 			const url = new URL(window.location.href);
 			let changed = false;
 			if (activeTab && activeTab !== 'semua') {
@@ -144,7 +144,7 @@
 	let studentActiveTab = $state($page.url.searchParams.get('status') || 'semua');
 
 	$effect(() => {
-		if (data.user.role === 'peneliti' || data.user.role === 'instruktur') {
+		if (data.user.role === 'mahasiswa' || data.user.role === 'dosen') {
 			const url = new URL(window.location.href);
 			let changed = false;
 			if (studentActiveTab && studentActiveTab !== 'semua') {
@@ -175,7 +175,7 @@
 
 	// Fetch data on mount if student
 	$effect(() => {
-		if (data.user.role === 'peneliti') {
+		if (data.user.role === 'mahasiswa') {
 			fetchStudentLendings();
 		} else {
 			isLoading = false;
@@ -264,7 +264,7 @@
 	};
 </script>
 
-{#if data.user.role === 'peneliti' || data.user.role === 'instruktur'}
+{#if data.user.role === 'mahasiswa' || data.user.role === 'dosen'}
 	<div class="mx-auto max-w-7xl space-y-8 p-4 sm:p-6">
 		<!-- Header -->
 		<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">

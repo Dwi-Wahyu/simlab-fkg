@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) throw redirect(302, `${base}/`);
 
 	const role = locals.user.role;
-	if (!['superadmin', 'koordinator'].includes(role)) {
+	if (!['superadmin', 'koordinator', 'dosen'].includes(role)) {
 		throw redirect(302, `${base}/admin/dashboard`);
 	}
 

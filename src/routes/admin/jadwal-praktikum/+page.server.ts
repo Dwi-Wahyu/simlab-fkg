@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		where: (laboratorium, { eq }) => eq(laboratorium.isDeleted, false)
 	});
 	const instructors = await db.query.user.findMany({
-		where: (user, { eq, and }) => and(eq(user.role, 'instruktur'), eq(user.isDeleted, false))
+		where: (user, { eq, and }) => and(eq(user.role, 'dosen'), eq(user.isDeleted, false))
 	});
 
 	const schedules = await db.query.practicumSchedule.findMany({
@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const currentUser = locals.user;
 	let filteredSchedules = schedules;
-	if (currentUser && currentUser.role === 'instruktur') {
+	if (currentUser && currentUser.role === 'dosen') {
 		filteredSchedules = schedules.filter((s) =>
 			s.instructors.some((i) => i.instructorId === currentUser.id)
 		);

@@ -113,7 +113,7 @@
 	function mapRole(role: string | null | undefined): string {
 		if (!role) return '';
 		const lower = role.toLowerCase();
-		if (lower === 'instruktur') return 'Dosen';
+		if (lower === 'dosen') return 'Dosen';
 		if (lower === 'peneliti') return 'Mahasiswa';
 		return role.charAt(0).toUpperCase() + role.slice(1);
 	}

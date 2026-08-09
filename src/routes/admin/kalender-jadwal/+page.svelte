@@ -143,7 +143,7 @@
 
 <div class="flex h-full">
 	<!-- Sidebar Filter (non-DPJP) -->
-	{#if data.role !== 'instruktur'}
+	{#if data.role !== 'dosen'}
 		<aside class="flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
 			<div>
 				<h3 class="mb-2 text-sm font-semibold">Seri Praktikum</h3>
@@ -391,7 +391,7 @@
 				</div>
 			</div>
 
-			{#if data.role === 'instruktur'}
+			{#if data.role === 'dosen'}
 				<Dialog.Footer>
 					<Button href="/admin/penilaian/{selectedSchedule.id}" class="w-full">
 						<ClipboardEdit class="mr-2 h-4 w-4" />

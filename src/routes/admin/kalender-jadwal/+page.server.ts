@@ -14,15 +14,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const series = await db.query.practicumSeries.findMany();
 
 	const instructors =
-		role !== 'instruktur'
+		role !== 'dosen'
 			? await db.query.user.findMany({
-					where: and(eq(user.role, 'instruktur'), eq(user.isDeleted, false))
+					where: and(eq(user.role, 'dosen'), eq(user.isDeleted, false))
 				})
 			: [];
 
 	let schedules;
 
-	if (role === 'instruktur') {
+	if (role === 'dosen') {
 		schedules = await db.query.practicumSchedule.findMany({
 			where: (table, { exists, and, eq }) =>
 				and(

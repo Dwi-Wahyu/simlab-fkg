@@ -481,9 +481,16 @@
 					Data tidak ditemukan.
 				</div>
 			{:else}
-				<Accordion.Root type="multiple" value={groups.map((g) => g.key)} class="w-full space-y-3">
+				<Accordion.Root
+					type="multiple"
+					value={groups.map((g) => g.key)}
+					class="grid w-full grid-cols-1 gap-3 md:grid-cols-2"
+				>
 					{#each groups as group (group.key)}
-						<Accordion.Item value={group.key} class="rounded-md border bg-white px-4 shadow-sm">
+						<Accordion.Item
+							value={group.key}
+							class="h-fit rounded-md border bg-white px-4 shadow-sm"
+						>
 							<Accordion.Trigger class="py-4 hover:no-underline">
 								<div class="flex items-center gap-2">
 									<span class="font-semibold text-slate-900">{group.name}</span>
