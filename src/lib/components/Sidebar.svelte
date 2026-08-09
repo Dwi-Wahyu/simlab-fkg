@@ -92,11 +92,6 @@
 					name: 'Daftar Mahasiswa',
 					path: `/admin/users/mahasiswa`,
 					role: ['superadmin', 'koordinator', 'admin']
-				},
-				{
-					name: 'Kelompok Mahasiswa',
-					path: `/admin/kelompok-mahasiswa`,
-					role: ['superadmin', 'koordinator']
 				}
 			]
 		},
@@ -106,7 +101,7 @@
 			icon: CalendarDays,
 			isDropdown: false,
 			path: `/admin/kalender-jadwal`,
-			role: ['instruktur'],
+			role: ['dosen', 'instruktur'],
 			children: []
 		},
 		{
@@ -114,7 +109,7 @@
 			icon: Clipboard,
 			isDropdown: false,
 			path: `/admin/penilaian`,
-			role: ['instruktur'],
+			role: ['dosen', 'instruktur'],
 			children: []
 		},
 
@@ -123,7 +118,7 @@
 			path: `/admin/users/mahasiswa`,
 			icon: GraduationCap,
 			isDropdown: false,
-			role: ['instruktur'],
+			role: ['dosen', 'instruktur'],
 			children: []
 		},
 
@@ -132,7 +127,7 @@
 			path: `/admin/riwayat-praktikum`,
 			icon: History,
 			isDropdown: false,
-			role: ['peneliti'],
+			role: ['mahasiswa', 'peneliti'],
 			children: []
 		},
 		{
@@ -140,7 +135,7 @@
 			path: `/admin/logbook-saya`,
 			icon: ClipboardList,
 			isDropdown: false,
-			role: ['peneliti'],
+			role: ['mahasiswa', 'peneliti'],
 			children: []
 		},
 		{
@@ -164,7 +159,7 @@
 			path: `/admin/peminjaman`,
 			icon: ClipboardList,
 			isDropdown: false,
-			role: ['superadmin', 'koordinator', 'kepalaLab', 'peneliti', 'instruktur'],
+			role: ['superadmin', 'koordinator', 'kepalaLab', 'mahasiswa', 'dosen', 'peneliti', 'instruktur'],
 			children: []
 		},
 		{
@@ -237,7 +232,7 @@
 				},
 				{
 					name: 'DPJP',
-					path: `/admin/users/instruktur`,
+					path: `/admin/users/dosen`,
 					role: ['superadmin']
 				},
 				{

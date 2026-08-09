@@ -74,7 +74,7 @@
 	);
 
 	const componentOptions = [
-		{ value: '', label: 'Tanpa Komponen (Modul Umum)' },
+		{ value: '', label: 'Tanpa Komponen' },
 		{ value: 'PREPARASI', label: 'Preparasi' },
 		{ value: 'RESTORASI', label: 'Restorasi' }
 	];
@@ -201,9 +201,7 @@
 					{#if selectedScoringMode === 'RUBRIK'}
 						<div class="space-y-4 border-t pt-4">
 							<div class="flex items-center justify-between">
-								<h3 class="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-									Kriteria Rubrik
-								</h3>
+								<Label>Rubrik Penilaian</Label>
 								<Button type="button" variant="outline" size="sm" onclick={addCriterion}>
 									<Plus class="mr-2 h-4 w-4" />
 									Tambah Kriteria
@@ -298,9 +296,7 @@
 															/>
 														</div>
 														<div class="col-span-5 grid gap-1.5">
-															<Label class="text-[10px] text-muted-foreground"
-																>Deskripsi Rentang</Label
-															>
+															<Label class="text-[10px] text-muted-foreground">Deskripsi</Label>
 															<Textarea
 																placeholder="Deskripsi kemampuan di rentang ini..."
 																class="h-8 max-h-32 min-h-[32px] resize-y py-1.5 text-xs"

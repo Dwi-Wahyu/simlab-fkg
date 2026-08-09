@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { error, fail } from '@sveltejs/kit';
-import { desc, eq, and } from 'drizzle-orm';
+import { desc, eq, and, inArray } from 'drizzle-orm';
 import { notDeleted } from '$lib/server/db/soft-delete';
 import { createAuditLog } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
@@ -9,7 +9,8 @@ import type { Actions, PageServerLoad } from './$types';
 const slugToRole: Record<string, string> = {
 	koordinator: 'koordinator',
 	'kepala-lab': 'kepalaLab',
-	instruktur: 'instruktur',
+	dosen: 'dosen',
+	instruktur: 'dosen',
 	teknisi: 'teknisi',
 	spmi: 'spmi',
 	laboran: 'laboran'
@@ -18,7 +19,8 @@ const slugToRole: Record<string, string> = {
 const roleToLabel: Record<string, string> = {
 	koordinator: 'PJ Mata Kuliah',
 	kepalaLab: 'Kepala Lab',
-	instruktur: 'Dosen',
+	dosen: 'DPJP',
+	instruktur: 'DPJP',
 	teknisi: 'Teknisi',
 	spmi: 'SPMI',
 	laboran: 'Laboran'
@@ -34,8 +36,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(404, 'Role tidak ditemukan');
 	}
 
+	const roleCondition =
+		role === 'dosen' ? inArray(user.role, ['dosen', 'instruktur']) : eq(user.role, role);
+
 	const users = await db.query.user.findMany({
-		where: and(eq(user.role, role), notDeleted(user)),
+		where: and(roleCondition, notDeleted(user)),
 		orderBy: [desc(user.createdAt)],
 		with: {
 			members: {

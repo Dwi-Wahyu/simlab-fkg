@@ -121,6 +121,10 @@
 <div class="flex flex-col gap-6 p-4 md:p-6">
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="space-y-1">
+			<a href="/admin/users/mahasiswa" class="mb-2 flex w-fit items-center gap-1 text-sm text-slate-500 transition-colors hover:text-slate-900">
+				<ChevronLeftIcon class="h-4 w-4" />
+				Kembali ke Daftar Mahasiswa
+			</a>
 			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Kelompok Mahasiswa</h1>
 			<p class="text-slate-500">
 				Kelola pembagian kelompok belajar mahasiswa berdasarkan kelas praktikum.

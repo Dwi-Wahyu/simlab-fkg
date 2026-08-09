@@ -7,7 +7,8 @@ import type { Actions, PageServerLoad } from './$types';
 const slugToRole: Record<string, string> = {
 	koordinator: 'koordinator',
 	'kepala-lab': 'kepalaLab',
-	instruktur: 'instruktur',
+	dosen: 'dosen',
+	instruktur: 'dosen',
 	teknisi: 'teknisi',
 	spmi: 'spmi',
 	laboran: 'laboran'
@@ -16,7 +17,8 @@ const slugToRole: Record<string, string> = {
 const roleToLabel: Record<string, string> = {
 	koordinator: 'PJ Mata Kuliah',
 	kepalaLab: 'Kepala Lab',
-	instruktur: 'Dosen',
+	dosen: 'DPJP',
+	instruktur: 'DPJP',
 	teknisi: 'Teknisi',
 	spmi: 'SPMI',
 	laboran: 'Laboran'

@@ -123,14 +123,17 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div class="flex flex-col gap-1">
-			<h1 class="text-2xl font-bold tracking-tight">
+			<h1 class="text-2xl font-bold tracking-tight">Rekapitulasi Nilai</h1>
+
+			<!-- <h1 class="text-2xl font-bold tracking-tight">
 				{data.selectedInstructor?.name ?? 'Rekapitulasi Nilai'}
-			</h1>
-			{#if data.selectedInstructor}
+			</h1> -->
+
+			<!-- {#if data.selectedInstructor}
 				<p class="text-sm text-muted-foreground md:text-base">
 					NIM/NIP: {data.selectedInstructor.username} • Seri: {data.selectedSeries?.name ?? '-'}
 				</p>
-			{/if}
+			{/if} -->
 		</div>
 
 		<div class="flex items-center gap-2">

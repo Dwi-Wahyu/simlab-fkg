@@ -21,10 +21,11 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { cn } from '$lib/utils';
+	import { untrack } from 'svelte';
 
 	let { data } = $props();
 
-	let selectedDepartmentId = $state(data.filters.departmentId || '');
+	let selectedDepartmentId = $state(untrack(() => data.filters.departmentId || ''));
 	let showDeleteDialog = $state(false);
 	let moduleToDelete = $state<{ id: string; name: string } | null>(null);
 	let isDeleting = $state(false);

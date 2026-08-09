@@ -4,7 +4,9 @@ export type DashboardRole =
 	| 'superadmin'
 	| 'koordinator'
 	| 'kepalaLab'
+	| 'dosen'
 	| 'instruktur'
+	| 'mahasiswa'
 	| 'peneliti'
 	| 'teknisi'
 	| 'spmi'
@@ -208,7 +210,9 @@ export type DashboardData =
 	| { role: 'superadmin'; data: SuperadminDashboardData }
 	| { role: 'koordinator'; data: KoordinatorDashboardData }
 	| { role: 'kepalaLab'; data: KepalaLabDashboardData }
+	| { role: 'dosen'; data: InstrukturDashboardData }
 	| { role: 'instruktur'; data: InstrukturDashboardData }
+	| { role: 'mahasiswa'; data: PenelitiDashboardData }
 	| { role: 'peneliti'; data: PenelitiDashboardData }
 	| { role: 'teknisi'; data: TeknisiDashboardData }
 	| { role: 'spmi'; data: SpmiDashboardData }

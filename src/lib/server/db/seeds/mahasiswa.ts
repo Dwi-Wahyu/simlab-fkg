@@ -19,8 +19,8 @@ import {
 	superadmin,
 	koordinator,
 	kepalaLab,
-	instruktur,
-	peneliti,
+	dosen,
+	mahasiswa,
 	teknisi,
 	spmi
 } from '../../auth.roles';
@@ -32,8 +32,8 @@ const allAuthRoles = {
 	superadmin,
 	koordinator,
 	kepalaLab,
-	instruktur,
-	peneliti,
+	dosen,
+	mahasiswa,
 	teknisi,
 	spmi
 };
@@ -165,7 +165,7 @@ async function seedMahasiswa() {
 					if (userResponse) {
 						await db
 							.update(authSchema.user)
-							.set({ role: 'peneliti' })
+							.set({ role: 'mahasiswa' })
 							.where(eq(authSchema.user.id, userResponse.user.id));
 
 						await db.insert(schema.practicumClassMember).values({
@@ -186,6 +186,11 @@ async function seedMahasiswa() {
 						.update(authSchema.account)
 						.set({ password: hashedPwd })
 						.where(eq(authSchema.account.userId, existingStudent.id));
+
+					await db
+						.update(authSchema.user)
+						.set({ role: 'mahasiswa' })
+						.where(eq(authSchema.user.id, existingStudent.id));
 				}
 			} catch (e) {
 				console.error(`Gagal membuat user ${nim}:`, e);
@@ -196,12 +201,12 @@ async function seedMahasiswa() {
 }
 
 async function seedLogbooks() {
-	console.log('\nMemastikan semua peneliti memiliki logbook...');
+	console.log('\nMemastikan semua mahasiswa memiliki logbook...');
 	const allPeneliti = await db.query.user.findMany({
-		where: eq(authSchema.user.role, 'peneliti')
+		where: eq(authSchema.user.role, 'mahasiswa')
 	});
 
-	console.log(`Ditemukan ${allPeneliti.length} user dengan role 'peneliti'.`);
+	console.log(`Ditemukan ${allPeneliti.length} user dengan role 'mahasiswa'.`);
 
 	const allLogbooks = await db.query.practicumLogbook.findMany();
 	const existingUserIds = new Set(allLogbooks.map((l) => l.userId));
@@ -222,9 +227,9 @@ async function seedLogbooks() {
 }
 
 async function seedTestingPeneliti() {
-	console.log('\nMemastikan akun testing peneliti tersedia...');
-	const email = 'peneliti@unhas.ac.id';
-	const username = 'peneliti';
+	console.log('\nMemastikan akun testing mahasiswa tersedia...');
+	const email = 'mahasiswa@unhas.ac.id';
+	const username = 'mahasiswa';
 
 	const existingUser = await db.query.user.findFirst({
 		where: eq(authSchema.user.email, email)
@@ -246,7 +251,7 @@ async function seedTestingPeneliti() {
 			userId = userResponse.user.id;
 			await db
 				.update(authSchema.user)
-				.set({ role: 'peneliti' })
+				.set({ role: 'mahasiswa' })
 				.where(eq(authSchema.user.id, userId));
 			console.log(`- Berhasil membuat akun testing peneliti (${username})`);
 		} else {

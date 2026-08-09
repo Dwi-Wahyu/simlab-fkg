@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = ({ fetch, url }) => {
+export const load: PageLoad = ({ fetch, url, data }) => {
 	const page = url.searchParams.get('page') || '1';
 	const limit = url.searchParams.get('limit') || '10';
 	const search = url.searchParams.get('search') || '';
@@ -13,6 +13,7 @@ export const load: PageLoad = ({ fetch, url }) => {
 	};
 
 	return {
+		...data,
 		studentsPromise: fetchData()
 	};
 };

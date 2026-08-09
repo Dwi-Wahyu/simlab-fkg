@@ -98,6 +98,16 @@
 					<div class="h-8 w-16 animate-pulse rounded bg-slate-200"></div>
 				</Card.Content>
 			</Card.Root>
+
+			<Card.Root>
+				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+					<div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
+					<div class="h-4 w-4 animate-pulse rounded bg-slate-200"></div>
+				</Card.Header>
+				<Card.Content>
+					<div class="h-8 w-16 animate-pulse rounded bg-slate-200"></div>
+				</Card.Content>
+			</Card.Root>
 		</div>
 
 		<!-- Skeleton Table Controls -->
@@ -149,6 +159,28 @@
 					</Card.Content>
 				</Card.Root>
 			{/each}
+
+			<Card.Root
+				class="group relative overflow-hidden transition-all hover:border-primary/50 hover:shadow-md"
+			>
+				<a href="/admin/kelompok-mahasiswa" class="absolute inset-0 z-10">
+					<span class="sr-only">Lihat Kelompok Mahasiswa</span>
+				</a>
+				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+					<Card.Title class="text-sm font-medium transition-colors group-hover:text-primary"
+						>Kelompok Mahasiswa</Card.Title
+					>
+					<Users class="h-4 w-4 transition-colors group-hover:text-primary" />
+				</Card.Header>
+				<Card.Content>
+					<div class="text-2xl font-bold">{data.kelompokMahasiswaCount.length}</div>
+					<div
+						class="mt-2 flex items-center gap-1 text-xs text-muted-foreground transition-colors group-hover:text-primary"
+					>
+						Kelola Kelompok <ChevronRight class="h-3 w-3" />
+					</div>
+				</Card.Content>
+			</Card.Root>
 		</div>
 
 		<!-- Table Controls -->
@@ -225,7 +257,12 @@
 												<User size={20} />
 											</div>
 											<div class="flex flex-col">
-												<span class="font-bold text-slate-900 md:font-medium">{student.name}</span>
+												<a
+													href="/admin/users/mahasiswa/{student.id}"
+													class="font-bold text-slate-900 transition-colors hover:text-[#2D5A43] hover:underline md:font-medium"
+												>
+													{student.name}
+												</a>
 												<span class="text-xs text-muted-foreground uppercase md:hidden">
 													{student.username} • {student.batchDisplay}
 												</span>
@@ -301,7 +338,11 @@
 										)}
 									>
 										<div>
-											<Button size="icon" variant="outline">
+											<Button
+												size="icon"
+												variant="outline"
+												href="/admin/users/mahasiswa/{student.id}"
+											>
 												<Eye />
 											</Button>
 											{#if data.user.role === 'superadmin'}

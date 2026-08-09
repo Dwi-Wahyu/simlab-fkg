@@ -50,11 +50,11 @@ export const kepalaLab = accessControl.newRole({
 	member: ['create']
 });
 
-export const instruktur = accessControl.newRole({
+export const dosen = accessControl.newRole({
 	inventory: ['view', 'update']
 });
 
-export const peneliti = accessControl.newRole({
+export const mahasiswa = accessControl.newRole({
 	inventory: ['view', 'update']
 });
 

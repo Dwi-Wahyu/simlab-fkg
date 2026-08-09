@@ -9,11 +9,11 @@ import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import {
 	accessControl,
-	instruktur,
+	dosen,
 	kepalaLab,
 	koordinator,
 	laboran,
-	peneliti,
+	mahasiswa,
 	spmi,
 	superadmin,
 	teknisi
@@ -83,8 +83,8 @@ export const auth = betterAuth({
 				superadmin,
 				koordinator,
 				kepalaLab,
-				instruktur,
-				peneliti,
+				dosen,
+				mahasiswa,
 				teknisi,
 				spmi,
 				laboran
@@ -100,8 +100,8 @@ export const auth = betterAuth({
 				superadmin,
 				koordinator,
 				kepalaLab,
-				instruktur,
-				peneliti,
+				dosen,
+				mahasiswa,
 				teknisi,
 				spmi,
 				laboran

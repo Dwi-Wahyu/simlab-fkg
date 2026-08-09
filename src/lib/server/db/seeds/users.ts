@@ -19,8 +19,8 @@ import {
 	superadmin,
 	koordinator,
 	kepalaLab,
-	instruktur,
-	peneliti,
+	dosen,
+	mahasiswa,
 	teknisi,
 	spmi,
 	laboran
@@ -34,8 +34,8 @@ const allAuthRoles = {
 	superadmin,
 	koordinator,
 	kepalaLab,
-	instruktur,
-	peneliti,
+	dosen,
+	mahasiswa,
 	teknisi,
 	spmi,
 	laboran
@@ -169,11 +169,11 @@ async function main() {
 		process.exit(1);
 	}
 
-	const rolesToSeed = ['koordinator', 'instruktur', 'teknisi', 'spmi', 'laboran'];
+	const rolesToSeed = ['koordinator', 'dosen', 'teknisi', 'spmi', 'laboran'];
 
 	for (const roleName of rolesToSeed) {
-		const isInstruktur = roleName === 'instruktur';
-		const prefix = isInstruktur ? 'dpjp' : roleName.toLowerCase();
+		const isDosen = roleName === 'dosen';
+		const prefix = isDosen ? 'dpjp' : roleName.toLowerCase();
 		const email = `${prefix}@unhas.ac.id`;
 
 		// Cek apakah user sudah ada
@@ -190,7 +190,7 @@ async function main() {
 					email: email,
 					username: prefix,
 					password: process.env.DEFAULT_PASSWORD ?? 'password',
-					name: isInstruktur ? 'DPJP' : faker.person.fullName()
+					name: isDosen ? 'DPJP' : faker.person.fullName()
 				}
 			});
 

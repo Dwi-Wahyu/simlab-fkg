@@ -96,7 +96,7 @@
 	);
 
 	const componentOptions = [
-		{ value: '', label: 'Tanpa Komponen (Modul Umum)' },
+		{ value: '', label: 'Tanpa Komponen' },
 		{ value: 'PREPARASI', label: 'Preparasi' },
 		{ value: 'RESTORASI', label: 'Restorasi' }
 	];
@@ -328,9 +328,7 @@
 															/>
 														</div>
 														<div class="col-span-5 grid gap-1.5">
-															<Label class="text-[10px] text-muted-foreground"
-																>Deskripsi Rentang</Label
-															>
+															<Label class="text-[10px] text-muted-foreground">Deskripsi</Label>
 															<Textarea
 																placeholder="Deskripsi kemampuan di rentang ini..."
 																class="h-8 max-h-32 min-h-[32px] resize-y py-1.5 text-xs"

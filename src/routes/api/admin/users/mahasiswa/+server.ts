@@ -14,10 +14,10 @@ export const GET: RequestHandler = async ({ url }) => {
 	const [totalResult] = await db
 		.select({ value: count() })
 		.from(user)
-		.where(and(eq(user.role, 'peneliti'), eq(user.isDeleted, false)));
+		.where(and(eq(user.role, 'mahasiswa'), eq(user.isDeleted, false)));
 
 	// Prepare where clause
-	const conditions = [eq(user.role, 'peneliti'), eq(user.isDeleted, false)];
+	const conditions = [eq(user.role, 'mahasiswa'), eq(user.isDeleted, false)];
 
 	if (search) {
 		conditions.push(
