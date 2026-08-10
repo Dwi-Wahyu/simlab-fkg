@@ -1,0 +1,1 @@
+ALTER TABLE `lending_item` ADD `initial_condition` enum('BAIK','RUSAK') DEFAULT 'BAIK';
