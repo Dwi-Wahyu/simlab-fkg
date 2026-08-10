@@ -61,7 +61,8 @@
 					Peringatan Pengembalian Alat
 				</Card.Title>
 				<Card.Description
-					>Daftar peminjaman alat yang jatuh tempo besok atau sudah terlambat dikembalikan.</Card.Description
+					>Daftar peminjaman alat yang jatuh tempo segera (H-1 / Hari Ini) atau sudah terlambat
+					dikembalikan.</Card.Description
 				>
 			</Card.Header>
 			<Card.Content>
@@ -176,9 +177,6 @@
 				<Button href="/admin/inventaris/bhp" variant="outline" class="justify-start">
 					Stokis Bahan Habis Pakai
 				</Button>
-				<!-- <Button href="/admin/laporan" variant="outline" class="justify-start">
-					Laporan Inventaris
-				</Button> -->
 			</Card.Content>
 		</Card.Root>
 	</div>

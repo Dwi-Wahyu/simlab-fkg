@@ -69,6 +69,15 @@ export interface KepalaLabDashboardData {
 		status: string;
 		createdAt: Date;
 	} | null;
+	returnAlerts?: {
+		id: string;
+		dueDate: Date | null;
+		borrowerName: string;
+		items: {
+			name: string;
+			qty: number;
+		}[];
+	}[];
 }
 
 // --- Instruktur/Dosen ---
@@ -94,6 +103,14 @@ export interface InstrukturDashboardData {
 		status: string | null;
 	}[];
 	totalSchedulesThisMonth: number;
+	returnAlerts?: {
+		id: string;
+		dueDate: Date | null;
+		items: {
+			name: string;
+			qty: number;
+		}[];
+	}[];
 }
 
 // --- Peneliti/Mahasiswa ---

@@ -457,7 +457,7 @@
 						disabled={isSubmitting || selectedItems.length === 0}
 						class="bg-[#006a34] text-white hover:bg-[#268549]"
 					>
-						{isSubmitting ? 'Mengirim...' : 'Kirim Pengajuan'}
+						{isSubmitting ? 'Mengirim...' : 'Kirim'}
 					</Button>
 				</Card.Footer>
 			</Card.Root>

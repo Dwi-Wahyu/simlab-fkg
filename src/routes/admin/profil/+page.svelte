@@ -276,7 +276,7 @@
 
 			<!-- Sesi & Riwayat -->
 			<Tabs.Root value="sessions">
-				<Tabs.List class="grid w-full grid-cols-2">
+				<Tabs.List>
 					<Tabs.Trigger value="sessions">Sesi Aktif</Tabs.Trigger>
 					<Tabs.Trigger value="history">Riwayat Login</Tabs.Trigger>
 				</Tabs.List>

@@ -26,18 +26,23 @@
 						'flex flex-col gap-3 rounded-lg border p-4 shadow-sm md:flex-row md:items-center md:justify-between',
 						isOverdue
 							? 'border-red-200 bg-red-50 text-red-900'
-							: 'border-yellow-200 bg-yellow-50 text-yellow-900'
+							: 'border-amber-200 bg-amber-50 text-amber-900'
 					)}
 				>
 					<div class="flex items-start gap-3">
 						<AlertTriangle
-							class={cn('mt-0.5 size-5 shrink-0', isOverdue ? 'text-red-600' : 'text-yellow-600')}
+							class={cn('mt-0.5 size-5 shrink-0', isOverdue ? 'text-red-600' : 'text-amber-600')}
 						/>
 						<div>
 							<h4 class="text-sm font-semibold">
-								{isOverdue ? 'Peminjaman Alat Terlambat!' : 'Pengembalian Alat Besok!'}
+								{isOverdue ? 'Peminjaman Alat Terlambat!' : 'Pengingat Pengembalian Alat'}
 							</h4>
 							<p class="mt-0.5 text-xs opacity-90">
+								{#if isOverdue}
+									Masa peminjaman alat telah melewati batas waktu pengembalian.
+								{:else}
+									Masa peminjaman alat akan segera berakhir.
+								{/if}
 								Alat: <span class="font-medium"
 									>{alert.items.map((i) => `${i.name} (${i.qty} pcs)`).join(', ')}</span
 								>. Jatuh tempo:
@@ -60,7 +65,7 @@
 							'w-full shrink-0 gap-1 border-current bg-transparent hover:bg-white md:w-auto',
 							isOverdue
 								? 'text-red-900 hover:text-red-900'
-								: 'text-yellow-900 hover:text-yellow-900'
+								: 'text-amber-900 hover:text-amber-900'
 						)}
 					>
 						Kembalikan Sekarang
