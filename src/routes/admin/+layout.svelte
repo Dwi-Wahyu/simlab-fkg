@@ -63,7 +63,7 @@
 	const pageTitle = $derived.by(() => {
 		const path = page.url.pathname;
 		if (path.includes('/inventaris/alat')) return 'Inventaris Alat';
-		if (path.includes('/inventaris/bhp')) return 'Inventaris Bahan Habis Pakai';
+		if (path.includes('/inventaris/bhp')) return 'Bahan Habis Pakai';
 		if (path.includes('/alat') || path.includes('/inventori')) return 'Inventaris';
 		if (path.includes('/dashboard')) return 'Dashboard';
 		if (path.includes('/jadwal')) return 'Jadwal & Reservasi';

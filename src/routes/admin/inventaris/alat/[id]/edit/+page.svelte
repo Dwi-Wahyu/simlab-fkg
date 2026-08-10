@@ -381,7 +381,7 @@
 				</div>
 
 				<!-- QR Code Upload -->
-				<div class="flex flex-col gap-2 md:col-span-2">
+				<!-- <div class="flex flex-col gap-2 md:col-span-2">
 					<Label for="qrCode">Kode QR (Opsional)</Label>
 					<div
 						class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 p-6 transition hover:border-[#2D5A43]"
@@ -421,7 +421,7 @@
 							</label>
 						{/if}
 					</div>
-				</div>
+				</div> -->
 
 				<!-- Deskripsi -->
 				<div class="flex flex-col gap-2 md:col-span-2">

@@ -69,10 +69,8 @@
 	const paginatedAssets = $derived(
 		filteredAssets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 	);
-	
-	const totalPages = $derived(
-		Math.max(1, Math.ceil(filteredAssets.length / itemsPerPage))
-	);
+
+	const totalPages = $derived(Math.max(1, Math.ceil(filteredAssets.length / itemsPerPage)));
 
 	function performSearch() {
 		assetSearchQuery = assetSearchInput;
@@ -324,9 +322,9 @@
 						</Dialog.Header>
 						<div class="space-y-4 py-4">
 							<div class="flex gap-2">
-								<Input 
-									placeholder="Cari nama alat..." 
-									bind:value={assetSearchInput} 
+								<Input
+									placeholder="Cari nama alat..."
+									bind:value={assetSearchInput}
 									onkeydown={(e) => {
 										if (e.key === 'Enter') {
 											e.preventDefault();
@@ -358,13 +356,25 @@
 									<div class="p-4 text-center text-sm text-slate-500">Alat tidak ditemukan.</div>
 								{/if}
 							</div>
-							
+
 							<!-- Pagination controls -->
 							<div class="flex items-center justify-between">
 								<span class="text-sm text-slate-500">Halaman {currentPage} dari {totalPages}</span>
 								<div class="flex gap-2">
-									<Button type="button" size="sm" variant="outline" disabled={currentPage === 1} onclick={prevPage}>Prev</Button>
-									<Button type="button" size="sm" variant="outline" disabled={currentPage === totalPages} onclick={nextPage}>Next</Button>
+									<Button
+										type="button"
+										size="sm"
+										variant="outline"
+										disabled={currentPage === 1}
+										onclick={prevPage}>Prev</Button
+									>
+									<Button
+										type="button"
+										size="sm"
+										variant="outline"
+										disabled={currentPage === totalPages}
+										onclick={nextPage}>Next</Button
+									>
 								</div>
 							</div>
 						</div>
@@ -540,7 +550,7 @@
 				</div>
 
 				<!-- QR Code Upload -->
-				<div class="flex flex-col gap-2 md:col-span-2">
+				<!-- <div class="flex flex-col gap-2 md:col-span-2">
 					<Label for="qrCode">Kode QR (Opsional)</Label>
 					<div
 						class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 p-6 transition hover:border-[#2D5A43]"
@@ -579,7 +589,7 @@
 							</label>
 						{/if}
 					</div>
-				</div>
+				</div> -->
 
 				<!-- Deskripsi -->
 				<div class="flex flex-col gap-2 md:col-span-2">

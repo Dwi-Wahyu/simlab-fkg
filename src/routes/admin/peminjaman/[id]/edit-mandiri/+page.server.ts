@@ -37,11 +37,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		throw redirect(302, `/admin/peminjaman`);
 	}
 
-	const selectedLabId = url.searchParams.get('labId') || '';
+	const selectedLabIds = url.searchParams.getAll('labId').filter(Boolean);
 
-	const equipmentsFilter = selectedLabId
-		? and(eq(equipment.status, 'READY'), eq(equipment.laboratoriumId, selectedLabId))
-		: eq(equipment.status, 'READY');
+	const equipmentsFilter =
+		selectedLabIds.length > 0
+			? and(eq(equipment.status, 'READY'), inArray(equipment.laboratoriumId, selectedLabIds))
+			: eq(equipment.status, 'READY');
 
 	// Tampilkan semua item ASSET yang punya minimal 1 unit READY
 	const availableItems = await db.query.item.findMany({
@@ -68,7 +69,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		lending: lendingData,
 		items: availableItems.filter((i) => i.equipments.length > 0),
 		labs,
-		selectedLabId,
+		selectedLabIds,
 		currentSelectedItems
 	};
 };

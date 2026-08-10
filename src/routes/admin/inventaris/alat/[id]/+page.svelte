@@ -141,11 +141,11 @@
 						{#if shouldShowNewBadge(res.equipment?.createdAt, res.equipment?.hideNewBadge)}
 							<Badge
 								class="bg-blue-500 px-1.5 py-0 text-[10px] font-semibold text-white hover:bg-blue-600"
-								>Baru</Badge
 							>
+								Baru
+							</Badge>
 						{/if}
 					</div>
-					<p class="text-sm text-slate-500">{res.equipment.id}</p>
 				</div>
 			</div>
 			<div class="flex items-center gap-2">

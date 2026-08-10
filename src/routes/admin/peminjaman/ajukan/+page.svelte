@@ -3,6 +3,7 @@
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { page as pageStore } from '$app/state';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -16,7 +17,15 @@
 
 	let selectedItems = $state<{ itemId: string; name: string; qty: number; maxStock: number }[]>([]);
 	let unit = $state('');
-	let purpose = $state('PENELITIAN_MAHASISWA');
+	const isDosen = $derived(data.user?.role === 'dosen' || data.user?.role === 'instruktur');
+	let purpose = $state('');
+
+	$effect(() => {
+		if (!purpose) {
+			purpose = isDosen ? 'PENELITIAN_DOSEN' : 'PENELITIAN_MAHASISWA';
+		}
+	});
+
 	let startDate = $state('');
 	let endDate = $state('');
 	let nomorSurat = $state('');
@@ -25,28 +34,38 @@
 	let searchAlat = $state('');
 	let alatPage = $state(1);
 	const ITEMS_PER_PAGE = 5;
-	let labId = $state('');
-	$effect(() => {
-		labId = data.selectedLabId || '';
-	});
+	let selectedLabIds = $state<string[]>(data.selectedLabIds || []);
 
 	$effect(() => {
-		const url = new URL(window.location.href);
-		if (labId) {
-			if (url.searchParams.get('labId') !== labId) {
-				url.searchParams.set('labId', labId);
-				goto(url, { replaceState: true, keepFocus: true, noScroll: true });
-			}
-		} else {
-			if (url.searchParams.has('labId')) {
-				url.searchParams.delete('labId');
-				goto(url, { replaceState: true, keepFocus: true, noScroll: true });
-			}
+		if (data.selectedLabIds) {
+			untrack(() => {
+				selectedLabIds = data.selectedLabIds;
+			});
 		}
 	});
 
+	function toggleLabFilter(id: string) {
+		let updated: string[];
+		if (selectedLabIds.includes(id)) {
+			updated = selectedLabIds.filter((l) => l !== id);
+		} else {
+			updated = [...selectedLabIds, id];
+		}
+		selectedLabIds = updated;
+
+		const url = new URL(pageStore.url);
+		url.searchParams.delete('labId');
+		updated.forEach((l) => url.searchParams.append('labId', l));
+		goto(url.toString(), { keepFocus: true, noScroll: true, replaceState: true });
+	}
+
+	const getAvailableCount = (item: any) => {
+		return item.equipments?.length || 0;
+	};
+
 	$effect(() => {
 		searchAlat;
+		selectedLabIds;
 		untrack(() => {
 			alatPage = 1;
 		});
@@ -66,14 +85,28 @@
 		return `Menampilkan ${start} - ${end} ${label}`;
 	};
 
-	const purposeOptions = [
-		{ value: 'PENELITIAN_MAHASISWA', label: 'Penelitian / Skripsi Mahasiswa' },
-		{ value: 'LOMBA', label: 'Lomba / Kompetisi' },
-		{ value: 'ORGANISASI_MAHASISWA', label: 'Kegiatan Organisasi Mahasiswa' }
-	];
+	const purposeOptions = $derived(
+		isDosen
+			? [
+					{ value: 'PENELITIAN_DOSEN', label: 'Penelitian Dosen' },
+					{ value: 'PENGABDIAN_MASYARAKAT', label: 'Pengabdian Masyarakat' },
+					{ value: 'PRAKTIKUM', label: 'Praktikum / Pengajaran' }
+				]
+			: [
+					{ value: 'PENELITIAN_MAHASISWA', label: 'Penelitian / Skripsi Mahasiswa' },
+					{ value: 'LOMBA', label: 'Lomba / Kompetisi' },
+					{ value: 'ORGANISASI_MAHASISWA', label: 'Kegiatan Organisasi Mahasiswa' }
+				]
+	);
 
 	const purposeTriggerContent = $derived(
 		purposeOptions.find((p) => p.value === purpose)?.label ?? 'Pilih keperluan'
+	);
+
+	const unitPlaceholder = $derived(
+		isDosen
+			? 'e.g. Penelitian Dosen / Riset Mandiri / Pengabdian Masyarakat'
+			: 'e.g. Penelitian Mandiri Skripsi / UKM Seni / Panitia Seminar'
 	);
 
 	const addItem = (item: any) => {
@@ -84,7 +117,7 @@
 				itemId: item.id,
 				name: item.name,
 				qty: 1,
-				maxStock: item.equipments?.length || 0
+				maxStock: getAvailableCount(item)
 			}
 		];
 	};
@@ -193,17 +226,24 @@
 				<Card.Content>
 					<div class="mb-4 space-y-2">
 						<Label>Filter Laboratorium</Label>
-						<Select.Root type="single" bind:value={labId}>
-							<Select.Trigger class="w-full">
-								{data.labs?.find((l) => l.id === labId)?.name ?? 'Semua Laboratorium'}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="" label="Semua Laboratorium">Semua Laboratorium</Select.Item>
-								{#each data.labs || [] as lab (lab.id)}
-									<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
+						<div class="flex flex-col gap-2">
+							{#each data.labs || [] as lab (lab.id)}
+								{@const isChecked = selectedLabIds.includes(lab.id)}
+								<div class="flex items-center space-x-2">
+									<Checkbox
+										id={`lab-${lab.id}`}
+										checked={isChecked}
+										onCheckedChange={() => toggleLabFilter(lab.id)}
+									/>
+									<label
+										for={`lab-${lab.id}`}
+										class="cursor-pointer text-sm leading-none select-none"
+									>
+										{lab.name}
+									</label>
+								</div>
+							{/each}
+						</div>
 					</div>
 
 					<div class="relative mb-4">
@@ -236,7 +276,7 @@
 										>
 									</div>
 									<Badge variant="outline" class="ml-8 w-fit text-xs sm:ml-0">
-										Total Stok: {item.equipments?.length || 0}
+										Total Stok: {getAvailableCount(item)}
 									</Badge>
 								</div>
 
@@ -315,13 +355,7 @@
 						<Label for="unit"
 							>Unit / Organisasi / Judul Riset <span class="text-red-500">*</span></Label
 						>
-						<Input
-							id="unit"
-							name="unit"
-							bind:value={unit}
-							placeholder="e.g. Penelitian Mandiri Skripsi / UKM Seni / Panitia Seminar"
-							required
-						/>
+						<Input id="unit" name="unit" bind:value={unit} placeholder={unitPlaceholder} required />
 					</div>
 
 					<!-- Keperluan -->
@@ -416,7 +450,7 @@
 						</div>
 					</div>
 				</Card.Content>
-				<Card.Footer class="flex justify-end gap-2">
+				<Card.Footer class="grid grid-cols-2 gap-2">
 					<Button variant="outline" href="/admin/peminjaman">Batal</Button>
 					<Button
 						type="submit"

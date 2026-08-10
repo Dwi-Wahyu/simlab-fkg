@@ -155,7 +155,6 @@
 							>
 						{/if}
 					</div>
-					<p class="text-sm text-slate-500">{res.item.id}</p>
 				</div>
 			</div>
 			<div class="flex items-center gap-2">

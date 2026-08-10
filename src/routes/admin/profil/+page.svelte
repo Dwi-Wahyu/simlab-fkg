@@ -122,9 +122,9 @@
 	<div class="grid gap-6 md:grid-cols-3">
 		<!-- Profil User -->
 		<Card.Root class="h-fit md:col-span-1">
-			<Card.Header class="pb-2 text-center text-wrap">
+			<Card.Header class="pb-2 text-center">
 				<div
-					class="mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-muted"
+					class="mx-auto mb-4 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted"
 				>
 					{#if userImage}
 						<img src={userImage} alt={data.user.name} class="h-full w-full object-cover" />
@@ -132,16 +132,16 @@
 						<UserRound class="h-12 w-12 text-muted-foreground" />
 					{/if}
 				</div>
-				<Card.Title>{data.user.name}</Card.Title>
-				<Card.Description>{data.user.email}</Card.Description>
+				<Card.Title class="wrap-break-words text-wrap">{data.user.name}</Card.Title>
+				<Card.Description class="break-all">{data.user.email}</Card.Description>
 			</Card.Header>
 			<Card.Content class="space-y-4 border-t pt-4">
 				<div class="space-y-1">
 					<Label class="text-xs text-muted-foreground uppercase">Hak Akses</Label>
 
-					<div class="flex items-center gap-2 text-sm">
-						<Lock class="h-4 w-4 text-muted-foreground" />
-						{roleLabel}
+					<div class="wrap-break-words flex items-center gap-2 text-sm">
+						<Lock class="h-4 w-4 shrink-0 text-muted-foreground" />
+						<span class="wrap-break-words">{roleLabel}</span>
 					</div>
 				</div>
 			</Card.Content>

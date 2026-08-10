@@ -4,12 +4,18 @@ import { db } from '$lib/server/db';
 import { item, laboratorium, stock, stockBatch, warehouse } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url, params }) => {
+export const GET: RequestHandler = async ({ url, params, locals }) => {
+	const user = locals.user;
+	if (!user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
 	const { id } = params;
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '10');
 	const search = url.searchParams.get('search') || '';
 	const sortExp = url.searchParams.get('sortExp') || 'asc';
+	const queryLabId = url.searchParams.get('laboratoriumId');
 	const offset = (page - 1) * limit;
 
 	try {
@@ -21,7 +27,19 @@ export const GET: RequestHandler = async ({ url, params }) => {
 			throw new Error('BHP tidak ditemukan');
 		}
 
-		const baseCondition = and(eq(stock.itemId, id), eq(stockBatch.isDeleted, false));
+		const isRestrictedRole = ['kepalaLab', 'laboran'].includes(user.role);
+		const targetLabId = isRestrictedRole
+			? user.laboratorium?.id ?? 'none'
+			: queryLabId && queryLabId !== '' && queryLabId !== 'all'
+				? queryLabId
+				: null;
+
+		const baseConditions = [eq(stock.itemId, id), eq(stockBatch.isDeleted, false)];
+		if (targetLabId) {
+			baseConditions.push(eq(stock.laboratoriumId, targetLabId));
+		}
+
+		const baseCondition = and(...baseConditions);
 		const whereClause = search
 			? and(
 					baseCondition,

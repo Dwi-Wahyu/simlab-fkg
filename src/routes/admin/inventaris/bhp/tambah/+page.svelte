@@ -247,7 +247,7 @@
 								onclick={() => (isDialogOpen = true)}
 							>
 								<Search class="size-3.5" />
-								Pilih dari Referensi yang Ada
+								Pilih Referensi
 							</Button>
 						</div>
 					</div>
@@ -261,7 +261,7 @@
 					/>
 					{#if selectedBhpId}
 						<p class="text-[10px] text-muted-foreground italic">
-							Menggunakan template dari bahan yang sudah ada (hanya menambah batch stok baru).
+							Menggunakan referensi dari bahan yang sudah ada (hanya menambah batch stok baru).
 						</p>
 					{/if}
 				</div>
@@ -460,7 +460,7 @@
 				</div>
 
 				<!-- QR Code Upload -->
-				<div class="flex flex-col gap-2 md:col-span-2">
+				<!-- <div class="flex flex-col gap-2 md:col-span-2">
 					<Label for="qrCode">Kode QR (Opsional)</Label>
 					<div
 						class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 p-6 transition hover:border-[#2D5A43]"
@@ -500,7 +500,7 @@
 							</label>
 						{/if}
 					</div>
-				</div>
+				</div> -->
 
 				<!-- Deskripsi -->
 				<div class="flex flex-col gap-2 md:col-span-2">

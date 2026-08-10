@@ -27,7 +27,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page as pageStore } from '$app/state';
 	import ExportPeriodicReportDialog from '$lib/components/ExportPeriodicReportDialog.svelte';
-	import Modal from '$lib/components/Modal.svelte';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 	import { toast } from '$lib/components/toast';
 	import * as Accordion from '$lib/components/ui/accordion/index.js';
 	import { Badge } from '$lib/components/ui/badge';
@@ -240,6 +240,14 @@
 		}[];
 	} | null>(null);
 	let stockEventType = $state<'RECEIVE' | 'ISSUE' | 'ADJUSTMENT'>('RECEIVE');
+	const eventTypeOptions = [
+		{ value: 'RECEIVE', label: 'Stok Masuk (Penambahan)' },
+		{ value: 'ISSUE', label: 'Stok Keluar (Pengurangan)' },
+		{ value: 'ADJUSTMENT', label: 'Penyesuaian (Opnam)' }
+	];
+	const stockEventTrigger = $derived(
+		eventTypeOptions.find((opt) => opt.value === stockEventType)?.label ?? 'Pilih Tipe Perubahan...'
+	);
 	let stockQty = $state<number>(0);
 	let stockNotes = $state('');
 	let stockExpiryDate = $state<string>('');
@@ -266,6 +274,7 @@
 	const currentLabStocks = $derived(
 		stockItem?.stocks?.filter((s) => s.laboratoriumId === activeLabId) ?? []
 	);
+	const selectedStockRow = $derived(currentLabStocks.find((s) => s.id === selectedStockRowId));
 
 	function openStockModal(item: any) {
 		stockItem = item;
@@ -383,7 +392,7 @@
 <div class="flex flex-col gap-6 p-4 md:p-6">
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex flex-col gap-2">
-			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Inventaris Bahan Habis Pakai</h1>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Bahan Habis Pakai</h1>
 			<p class="text-slate-500">Manajemen stok bahan dan konsumsi laboratorium.</p>
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
@@ -393,7 +402,7 @@
 
 			{#if ['kepalaLab', 'laboran'].includes(data.user?.role)}
 				<Button href="/admin/inventaris/bhp/tambah">
-					<Plus /> Tambah BHP
+					<Plus /> Tambah Item
 				</Button>
 			{/if}
 		</div>
@@ -965,161 +974,190 @@
 </div>
 
 <!-- Ubah Stok Modal -->
-<Modal
-	bind:show={showStockModal}
-	title="Ubah Stok"
-	onConfirm={submitStockChange}
-	confirmLabel="Simpan"
->
-	<div class="space-y-4">
-		{#if isRestrictedLabUser}
-			<p class="text-sm text-gray-500">
-				Laboratorium: <strong>{data.user?.laboratorium?.name ?? '-'}</strong>
-			</p>
-		{:else}
-			<div class="flex flex-col gap-2">
-				<Label for="stockLab">Laboratorium</Label>
-				<Select.Root type="single" bind:value={stockLaboratoriumId}>
-					<Select.Trigger class="w-full text-left">
-						{laboratoriumList.find((l) => l.id === stockLaboratoriumId)?.name ??
-							'Pilih Laboratorium'}
-					</Select.Trigger>
-					<Select.Content>
-						{#each laboratoriumList as lab}
-							<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			</div>
-		{/if}
+<AlertDialog.Root bind:open={showStockModal}>
+	<AlertDialog.Content class="scrollbar-elegant max-h-[90vh] max-w-lg overflow-y-auto">
+		<AlertDialog.Header>
+			<AlertDialog.Title class="text-xl font-bold">Ubah Stok</AlertDialog.Title>
+			<AlertDialog.Description class="sr-only">
+				Form ubah stok Bahan Habis Pakai
+			</AlertDialog.Description>
+		</AlertDialog.Header>
 
-		<div class="flex flex-col gap-2">
-			<Label for="stockRowSelect">Merk / Varian Stok</Label>
-			{#if currentLabStocks.length === 0 && stockEventType !== 'RECEIVE'}
-				<div class="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-500">
-					Tidak ada varian/stok yang tersedia di laboratorium ini.
-				</div>
-			{:else}
-				<Select.Root
-					type="single"
-					value={isNewVariant ? 'new' : selectedStockRowId}
-					onValueChange={(val) => {
-						if (val === 'new') {
-							isNewVariant = true;
-							selectedStockRowId = '';
-						} else {
-							isNewVariant = false;
-							selectedStockRowId = val;
-						}
-					}}
-				>
-					<Select.Trigger class="w-full text-left">
-						{isNewVariant
-							? 'Tambah Merk/Varian Baru'
-							: selectedStockRow
-								? `${selectedStockRow.brand} (${selectedStockRow.variant}) - Sisa: ${selectedStockRow.qty} ${stockItem?.baseUnit}`
-								: 'Pilih Merk/Varian...'}
-					</Select.Trigger>
-					<Select.Content>
-						{#each currentLabStocks as s}
-							<Select.Item
-								value={s.id}
-								label={`${s.brand} (${s.variant}) - Sisa: ${s.qty} ${stockItem?.baseUnit}`}
-							>
-								{s.brand} ({s.variant}) - Sisa: {s.qty}
-								{stockItem?.baseUnit}
-							</Select.Item>
-						{/each}
-						{#if stockEventType === 'RECEIVE'}
-							<Select.Item value="new" label="Tambah Merk/Varian Baru">
-								+ Tambah Merk/Varian Baru
-							</Select.Item>
-						{/if}
-					</Select.Content>
-				</Select.Root>
-			{/if}
-		</div>
-
-		{#if isNewVariant && stockEventType === 'RECEIVE'}
-			<div class="grid grid-cols-2 gap-4">
-				<div class="flex flex-col gap-2">
-					<Label for="stockBrand">Merk / Brand (Contoh: OneMed)</Label>
-					<Input
-						type="text"
-						id="stockBrand"
-						bind:value={stockBrand}
-						placeholder="Masukkan merk..."
-					/>
-				</div>
-				<div class="flex flex-col gap-2">
-					<Label for="stockVariant">Varian / Ukuran (Contoh: 500ml)</Label>
-					<Input
-						type="text"
-						id="stockVariant"
-						bind:value={stockVariant}
-						placeholder="Masukkan varian..."
-					/>
-				</div>
-			</div>
-		{/if}
-
-		<div class="flex flex-col gap-2">
-			<Label for="stockType">Tipe Perubahan</Label>
-			<Select.Root type="single" bind:value={stockEventType}>
-				<Select.Trigger class="w-full text-left">{stockEventTrigger}</Select.Trigger>
-				<Select.Content>
-					{#each eventTypeOptions as opt}
-						<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
-		</div>
-
-		<div class="flex flex-col gap-2">
-			<Label for="stockQty">
-				{#if stockEventType === 'RECEIVE'}
-					Jumlah Masuk ({stockItem?.baseUnit ?? ''})
-				{:else if stockEventType === 'ISSUE'}
-					Jumlah Keluar ({stockItem?.baseUnit ?? ''})
-				{:else}
-					Stok Akhir ({stockItem?.baseUnit ?? ''})
-				{/if}
-			</Label>
-			<Input
-				type="number"
-				id="stockQty"
-				min="0"
-				bind:value={stockQty}
-				placeholder="Masukkan jumlah..."
-			/>
-			{#if stockItem}
-				<div class="text-xs text-gray-400">
-					Stok sekarang: {stockItem.totalQty} | Minimum: {stockItem.minStock}
-				</div>
-			{/if}
-		</div>
-
-		{#if stockEventType === 'RECEIVE'}
-			<div class="flex flex-col gap-2">
-				<Label for="stockExpiryDate">Tanggal Kedaluwarsa (opsional)</Label>
-				<Input type="date" id="stockExpiryDate" bind:value={stockExpiryDate} />
-				<p class="text-xs text-gray-400">
-					Kosongkan jika batch stok ini tidak memiliki tanggal kedaluwarsa.
+		<div class="space-y-4">
+			{#if isRestrictedLabUser}
+				<p class="text-sm text-gray-500">
+					Laboratorium: <strong>{data.user?.laboratorium?.name ?? '-'}</strong>
 				</p>
-			</div>
-		{/if}
+			{:else}
+				<div class="flex flex-col gap-2">
+					<Label for="stockLab">Laboratorium</Label>
+					<Select.Root type="single" bind:value={stockLaboratoriumId}>
+						<Select.Trigger class="w-full text-left">
+							{laboratoriumList.find((l) => l.id === stockLaboratoriumId)?.name ??
+								'Pilih Laboratorium'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each laboratoriumList as lab}
+								<Select.Item value={lab.id} label={lab.name}>{lab.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+			{/if}
 
-		<div class="flex flex-col gap-2">
-			<Label for="stockNotes">Catatan (Opsional)</Label>
-			<Textarea
-				id="stockNotes"
-				bind:value={stockNotes}
-				placeholder="Catatan perubahan stok..."
-				class="min-h-20"
-			/>
+			<div class="flex flex-col gap-2">
+				<Label for="stockRowSelect">Merk / Varian Stok</Label>
+				{#if currentLabStocks.length === 0 && stockEventType !== 'RECEIVE'}
+					<div class="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-500">
+						Tidak ada varian/stok yang tersedia di laboratorium ini.
+					</div>
+				{:else}
+					<Select.Root
+						type="single"
+						value={isNewVariant ? 'new' : selectedStockRowId}
+						onValueChange={(val) => {
+							if (val === 'new') {
+								isNewVariant = true;
+								selectedStockRowId = '';
+							} else {
+								isNewVariant = false;
+								selectedStockRowId = val;
+							}
+						}}
+					>
+						<Select.Trigger class="w-full text-left">
+							{#if isNewVariant}
+								Tambah Merk/Varian Baru
+							{:else if selectedStockRow}
+								{selectedStockRow.brand}
+								{#if selectedStockRow.variant}
+									({selectedStockRow.variant})
+								{/if}
+								- Sisa: {selectedStockRow.qty}
+								{stockItem?.baseUnit}
+							{:else}
+								Pilih Merk/Varian...
+							{/if}
+						</Select.Trigger>
+						<Select.Content>
+							{#each currentLabStocks as s}
+								<Select.Item
+									value={s.id}
+									label={`${s.brand} (${s.variant}) - Sisa: ${s.qty} ${stockItem?.baseUnit}`}
+								>
+									{s.brand}
+									{#if s.variant}
+										({s.variant})
+									{/if}
+									- Sisa: {s.qty}
+									{stockItem?.baseUnit}
+								</Select.Item>
+							{/each}
+							{#if stockEventType === 'RECEIVE'}
+								<Select.Item value="new" label="Tambah Merk/Varian Baru">
+									+ Tambah Merk/Varian Baru
+								</Select.Item>
+							{/if}
+						</Select.Content>
+					</Select.Root>
+				{/if}
+			</div>
+
+			{#if isNewVariant && stockEventType === 'RECEIVE'}
+				<div class="grid grid-cols-2 gap-4">
+					<div class="flex flex-col gap-2">
+						<Label for="stockBrand">Merk / Brand</Label>
+						<Input
+							type="text"
+							id="stockBrand"
+							bind:value={stockBrand}
+							placeholder="Contoh: OneMed"
+						/>
+					</div>
+					<div class="flex flex-col gap-2">
+						<Label for="stockVariant">Varian / Ukuran</Label>
+						<Input
+							type="text"
+							id="stockVariant"
+							bind:value={stockVariant}
+							placeholder="Contoh: 500ml"
+						/>
+					</div>
+				</div>
+			{/if}
+
+			<div class="flex flex-col gap-2">
+				<Label for="stockType">Tipe Perubahan</Label>
+				<Select.Root type="single" bind:value={stockEventType}>
+					<Select.Trigger class="w-full text-left">{stockEventTrigger}</Select.Trigger>
+					<Select.Content>
+						{#each eventTypeOptions as opt}
+							<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</div>
+
+			<div class="flex flex-col gap-2">
+				<Label for="stockQty">
+					{#if stockEventType === 'RECEIVE'}
+						Jumlah Masuk ({stockItem?.baseUnit ?? ''})
+					{:else if stockEventType === 'ISSUE'}
+						Jumlah Keluar ({stockItem?.baseUnit ?? ''})
+					{:else}
+						Stok Akhir ({stockItem?.baseUnit ?? ''})
+					{/if}
+				</Label>
+				<Input
+					type="number"
+					id="stockQty"
+					min="0"
+					bind:value={stockQty}
+					placeholder="Masukkan jumlah..."
+				/>
+				{#if stockItem}
+					<div class="text-xs text-gray-400">
+						Stok sekarang: {stockItem.totalQty} | Minimum: {stockItem.minStock}
+					</div>
+				{/if}
+			</div>
+
+			{#if stockEventType === 'RECEIVE'}
+				<div class="flex flex-col gap-2">
+					<Label for="stockExpiryDate">Tanggal Kedaluwarsa (Opsional)</Label>
+					<Input type="date" id="stockExpiryDate" bind:value={stockExpiryDate} />
+					<p class="text-xs text-gray-400">
+						Kosongkan jika batch stok ini tidak memiliki tanggal kedaluwarsa.
+					</p>
+				</div>
+			{/if}
+
+			<div class="flex flex-col gap-2">
+				<Label for="stockNotes">Catatan (Opsional)</Label>
+				<Textarea
+					id="stockNotes"
+					bind:value={stockNotes}
+					placeholder="Catatan perubahan stok..."
+					class="min-h-20"
+				/>
+			</div>
 		</div>
-	</div>
-</Modal>
+
+		<AlertDialog.Footer class="grid grid-cols-1 gap-2 md:grid-cols-2">
+			<AlertDialog.Cancel disabled={stockLoading}>Batal</AlertDialog.Cancel>
+			<AlertDialog.Action
+				onclick={(e) => {
+					e.preventDefault();
+					submitStockChange();
+				}}
+				disabled={stockLoading}
+				class="bg-[#2D5A43] hover:bg-[#234735]"
+			>
+				{stockLoading ? 'Menyimpan...' : 'Simpan'}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
 
 <ExportPeriodicReportDialog
 	bind:open={showExportDialog}
