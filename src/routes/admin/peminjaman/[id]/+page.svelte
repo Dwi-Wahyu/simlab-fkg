@@ -41,7 +41,7 @@
 	let rejectReason = $state('');
 	let selectedLabId = $state('');
 	$effect(() => {
-		selectedLabId = data.user?.laboratorium?.id || '';
+		selectedLabId = data.lending?.laboratoriumId || data.user?.laboratorium?.id || '';
 	});
 
 	const labTriggerContent = $derived(
@@ -114,7 +114,7 @@
 		if (!role) return '';
 		const lower = role.toLowerCase();
 		if (lower === 'dosen') return 'Dosen';
-		if (lower === 'peneliti') return 'Mahasiswa';
+		if (lower === 'mahasiswa') return 'Mahasiswa';
 		return role.charAt(0).toUpperCase() + role.slice(1);
 	}
 
@@ -166,7 +166,6 @@
 			</Button>
 			<div>
 				<h1 class="text-2xl font-bold tracking-tight">Detail Peminjaman</h1>
-				<p class="text-sm text-muted-foreground">ID: {data.lending.id}</p>
 			</div>
 		</div>
 	</div>
@@ -347,21 +346,6 @@
 			</Card.Content>
 			<Card.Footer class="flex flex-wrap gap-3">
 				{#if !isReturnMode}
-					<Button
-						href="/admin/peminjaman/{data.lending.id}/edit"
-						variant="outline"
-						class="gap-2 rounded-xl"
-					>
-						Edit Data
-					</Button>
-					{#if ['APPROVED', 'DIPINJAM'].includes(data.lending.status as string)}
-						<Button
-							onclick={startReturnMode}
-							class="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700"
-						>
-							Pengembalian Alat
-						</Button>
-					{/if}
 					{#if data.lending.status === 'RETURNED'}
 						<form
 							bind:this={deleteForm}
@@ -388,60 +372,6 @@
 							</Button>
 						</form>
 					{/if}
-				{:else}
-					<form
-						method="POST"
-						action="?/returnItems"
-						enctype="multipart/form-data"
-						use:enhance={({ formData }) => {
-							const items = Object.entries(returnData).map(([id, d]) => ({
-								lendingItemId: id,
-								equipmentId: data.lending.items.find((i: any) => i.id === id)?.equipmentId,
-								status: d.status,
-								notes: d.notes,
-								hasEvidence: !!d.evidence
-							}));
-							formData.append('itemReturnData', JSON.stringify(items));
-
-							// Append files separately
-							items.forEach((item) => {
-								const file = returnData[item.lendingItemId].evidence;
-								if (file) {
-									formData.append(`evidence_${item.lendingItemId}`, file);
-								}
-							});
-
-							return async ({ result }) => {
-								if (result.type === 'success') {
-									notificationType = 'success';
-									notificationTitle = 'Berhasil Dikembalikan';
-									notificationDescription = 'Semua alat telah berhasil dicatat pengembaliannya.';
-									showNotification = true;
-									isReturnMode = false;
-									await invalidateAll();
-								} else {
-									notificationType = 'error';
-									notificationTitle = 'Gagal';
-									notificationDescription = 'Terjadi kesalahan saat memproses pengembalian.';
-									showNotification = true;
-								}
-							};
-						}}
-					>
-						<div class="flex flex-col gap-3">
-							<Button type="submit" class="w-full gap-2 rounded-xl bg-green-600 hover:bg-green-700">
-								Konfirmasi Pengembalian
-							</Button>
-							<Button
-								type="button"
-								variant="ghost"
-								onclick={() => (isReturnMode = false)}
-								class="w-full gap-2 rounded-xl border border-slate-200"
-							>
-								Batalkan
-							</Button>
-						</div>
-					</form>
 				{/if}
 			</Card.Footer>
 		</Card.Root>
@@ -578,10 +508,85 @@
 		{#if data.lending.status !== 'RETURNED'}
 			<Card.Root class="sticky top-6 border-slate-200 shadow-lg">
 				<Card.Header>
-					<Card.Title class="text-sm font-bold text-slate-500 uppercase">Aksi Peminjaman</Card.Title
-					>
+					<Card.Title>Aksi Peminjaman</Card.Title>
 				</Card.Header>
 				<Card.Content class="flex flex-col gap-3">
+					{#if ['APPROVED', 'DIPINJAM'].includes(data.lending.status as string) && !isReturnMode}
+						<Button
+							onclick={startReturnMode}
+							class="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700"
+						>
+							Pengembalian Alat
+						</Button>
+					{/if}
+
+					{#if !isReturnMode}
+						<Button
+							href="/admin/peminjaman/{data.lending.id}/edit"
+							variant="outline"
+							class="gap-2 rounded-xl"
+						>
+							Edit Data
+						</Button>
+					{:else}
+						<form
+							method="POST"
+							action="?/returnItems"
+							enctype="multipart/form-data"
+							use:enhance={({ formData }) => {
+								const items = Object.entries(returnData).map(([id, d]) => ({
+									lendingItemId: id,
+									equipmentId: data.lending.items.find((i: any) => i.id === id)?.equipmentId,
+									status: d.status,
+									notes: d.notes,
+									hasEvidence: !!d.evidence
+								}));
+								formData.append('itemReturnData', JSON.stringify(items));
+
+								// Append files separately
+								items.forEach((item) => {
+									const file = returnData[item.lendingItemId].evidence;
+									if (file) {
+										formData.append(`evidence_${item.lendingItemId}`, file);
+									}
+								});
+
+								return async ({ result }) => {
+									if (result.type === 'success') {
+										notificationType = 'success';
+										notificationTitle = 'Berhasil Dikembalikan';
+										notificationDescription = 'Semua alat telah berhasil dicatat pengembaliannya.';
+										showNotification = true;
+										isReturnMode = false;
+										await invalidateAll();
+									} else {
+										notificationType = 'error';
+										notificationTitle = 'Gagal';
+										notificationDescription = 'Terjadi kesalahan saat memproses pengembalian.';
+										showNotification = true;
+									}
+								};
+							}}
+						>
+							<div class="flex flex-col gap-3">
+								<Button
+									type="submit"
+									class="w-full gap-2 rounded-xl bg-green-600 hover:bg-green-700"
+								>
+									Konfirmasi Pengembalian
+								</Button>
+								<Button
+									type="button"
+									variant="ghost"
+									onclick={() => (isReturnMode = false)}
+									class="w-full gap-2 rounded-xl border border-slate-200"
+								>
+									Batalkan
+								</Button>
+							</div>
+						</form>
+					{/if}
+
 					{#if ['kepalaLab', 'superadmin'].includes(data.user?.role) && data.lending.status === 'DRAFT'}
 						<Button
 							class="w-full gap-2 rounded-xl bg-green-600 text-white hover:bg-green-700"
@@ -598,13 +603,9 @@
 							<XCircle class="size-4" />
 							Tolak Pengajuan
 						</Button>
-					{:else}
-						<div class="py-4 text-center text-xs text-muted-foreground">
-							Tidak ada aksi yang tersedia
-						</div>
 					{/if}
 				</Card.Content>
-				<Card.Footer class="bg-slate-50/50 pt-4">
+				<Card.Footer>
 					<div class="w-full text-center">
 						<p class="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
 							Dibuat Pada

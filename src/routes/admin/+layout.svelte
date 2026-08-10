@@ -221,7 +221,7 @@
 			</div>
 		</header>
 
-		<div>
+		<div class="scrollbar-elegant">
 			{@render children()}
 		</div>
 	</main>

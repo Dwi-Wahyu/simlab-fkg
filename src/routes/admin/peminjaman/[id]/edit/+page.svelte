@@ -238,8 +238,8 @@
 					</div>
 
 					<div class="space-y-2">
-						<Label>Batas Pengembalian</Label>
-						<Input type="datetime-local" name="endDate" bind:value={endDate} />
+						<Label>Tanggal Kembali <span class="text-red-500">*</span></Label>
+						<Input type="datetime-local" name="endDate" bind:value={endDate} required />
 					</div>
 				</div>
 

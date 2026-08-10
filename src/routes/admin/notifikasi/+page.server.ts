@@ -7,13 +7,19 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, `/login`);
 
+	const labId = locals.user.laboratorium?.id;
+
 	const allNotifications = await db.query.notification.findMany({
 		where: (notif, { eq, or }) =>
-			or(eq(notif.userId, locals.user.id), eq(notif.organizationId, locals.user.organization.id)),
+			or(
+				eq(notif.userId, locals.user.id),
+				labId ? eq(notif.laboratoriumId, labId) : undefined
+			),
 		orderBy: [desc(notification.createdAt)]
 	});
 
 	return {
+		user: locals.user,
 		notifications: allNotifications.map((n) => ({
 			...n,
 			action: n.action ? JSON.parse(n.action) : null

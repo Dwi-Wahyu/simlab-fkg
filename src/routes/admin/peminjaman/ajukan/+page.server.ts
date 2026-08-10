@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
-import { item, equipment, lending, lendingItem } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { item, equipment, lending, lendingItem, user, laboratoriumMember } from '$lib/server/db/schema';
+import { createNotification } from '$lib/server/notification';
+import { eq, and, inArray } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
@@ -108,6 +109,66 @@ export const actions: Actions = {
 					});
 				}
 			});
+
+			// Kirim notifikasi ke Laboran & Kepala Lab
+			try {
+				const requestedItemIds = selectedItems.map((s) => s.itemId);
+				const eqRecords = await db.query.equipment.findMany({
+					where: inArray(equipment.itemId, requestedItemIds),
+					columns: { laboratoriumId: true }
+				});
+				const targetLabIds = [
+					...new Set(eqRecords.map((e) => e.laboratoriumId).filter(Boolean))
+				] as string[];
+
+				let targetStaffUsers: { id: string }[] = [];
+
+				if (targetLabIds.length > 0) {
+					const labMembers = await db.query.laboratoriumMember.findMany({
+						where: inArray(laboratoriumMember.laboratoriumId, targetLabIds),
+						with: {
+							user: {
+								columns: { id: true, role: true }
+							}
+						}
+					});
+					targetStaffUsers = labMembers
+						.map((m) => m.user)
+						.filter((u) => u && ['kepalaLab', 'laboran'].includes(u.role));
+				}
+
+				// Fallback jika tidak ditemukan staf spesifik lab: kirim ke semua kepalaLab & laboran aktif
+				if (targetStaffUsers.length === 0) {
+					targetStaffUsers = await db.query.user.findMany({
+						where: and(inArray(user.role, ['kepalaLab', 'laboran']), eq(user.isDeleted, false)),
+						columns: { id: true }
+					});
+				}
+
+				const uniqueStaffIds = [...new Set(targetStaffUsers.map((u) => u.id))];
+				const roleLabel =
+					currentUser.role === 'mahasiswa'
+						? 'Mahasiswa'
+						: currentUser.role === 'dosen'
+							? 'Dosen'
+							: currentUser.role;
+
+				for (const staffId of uniqueStaffIds) {
+					await createNotification({
+						userId: staffId,
+						title: 'Pengajuan Peminjaman Baru',
+						body: `${currentUser.name} (${roleLabel}) telah mengajukan peminjaman alat baru.`,
+						priority: 'HIGH',
+						action: {
+							type: 'LENDING_REQUESTED',
+							resourceId: lendingId,
+							webPath: `/admin/peminjaman/${lendingId}`
+						}
+					});
+				}
+			} catch (notifErr) {
+				console.error('Gagal mengirim notifikasi pengajuan peminjaman:', notifErr);
+			}
 
 			return { success: true, lendingId };
 		} catch (err: any) {

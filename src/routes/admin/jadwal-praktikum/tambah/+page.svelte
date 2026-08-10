@@ -472,7 +472,7 @@
 							variant="outline"
 							size="sm"
 							onclick={() => (showGuidanceDialog = true)}
-							class="flex w-full items-center justify-center gap-1.5 border-slate-300 bg-white text-slate-700 hover:bg-slate-100 sm:w-auto"
+							class="flex w-full items-center justify-center gap-1.5 border-none border-slate-300 bg-white text-slate-700 hover:bg-slate-100 sm:w-auto"
 							title="Panduan Pengisian"
 						>
 							<HelpCircle class="h-4 w-4 text-[#2D5A43]" />

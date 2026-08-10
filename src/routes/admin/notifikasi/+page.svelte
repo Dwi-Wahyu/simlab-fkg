@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Bell, Check, Trash2, X, Calendar, Clock, Inbox } from '@lucide/svelte';
+	import { Bell, Check, Trash2, X, Calendar, Clock, Inbox, CheckCheck } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
@@ -42,8 +42,16 @@
 		if (res.ok) invalidateAll();
 	}
 
+	async function markAllAsRead() {
+		const res = await fetch('/api/notifications', {
+			method: 'PATCH',
+			body: JSON.stringify({ markAllRead: true }),
+			headers: { 'Content-Type': 'application/json' }
+		});
+		if (res.ok) invalidateAll();
+	}
+
 	async function clearNotification(id: string) {
-		if (!confirm('Hapus notifikasi ini?')) return;
 		const res = await fetch('/api/notifications', {
 			method: 'DELETE',
 			body: JSON.stringify({ id }),
@@ -56,7 +64,7 @@
 		if (!confirm('Hapus semua notifikasi Anda?')) return;
 		const res = await fetch('/api/notifications', {
 			method: 'DELETE',
-			body: JSON.stringify({ clearAll: true, organizationId: data.user.organization.id }),
+			body: JSON.stringify({ clearAll: true }),
 			headers: { 'Content-Type': 'application/json' }
 		});
 		if (res.ok) invalidateAll();
@@ -70,21 +78,32 @@
 </script>
 
 <div class="mx-auto max-w-4xl p-8">
-	<div class="mb-8 flex items-center justify-between">
+	<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div>
 			<h1 class="text-2xl font-bold tracking-tight">Semua Notifikasi</h1>
 			<p class="text-muted-foreground">Kelola semua pemberitahuan sistem dan aktivitas Anda.</p>
 		</div>
 		{#if data.notifications.length > 0}
-			<Button
-				variant="outline"
-				size="sm"
-				class="text-destructive hover:bg-destructive/10"
-				onclick={clearAll}
-			>
-				<Trash2 />
-				Hapus Semua
-			</Button>
+			<div class="flex items-center gap-2">
+				<Button
+					variant="outline"
+					size="sm"
+					class="text-primary hover:bg-primary/10"
+					onclick={markAllAsRead}
+				>
+					<CheckCheck class="mr-1.5 h-4 w-4" />
+					Tandai Semua Dibaca
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					class="text-destructive hover:bg-destructive/10"
+					onclick={clearAll}
+				>
+					<Trash2 class="mr-1.5 h-4 w-4" />
+					Hapus Semua
+				</Button>
+			</div>
 		{/if}
 	</div>
 

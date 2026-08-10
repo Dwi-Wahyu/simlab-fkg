@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Bell, Check, X } from '@lucide/svelte';
+	import { Bell, Check, X, CheckCheck } from '@lucide/svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
 	import { invalidateAll } from '$app/navigation';
@@ -22,7 +22,7 @@
 		action?: NotificationAction | null;
 	};
 
-	let { notifications = [] as Notification[], unreadCount = 0, organizationId = '' } = $props();
+	let { notifications = [] as Notification[], unreadCount = 0 } = $props();
 
 	function formatRelativeTime(date: Date | string | number) {
 		const now = new Date().getTime();
@@ -46,7 +46,18 @@
 			headers: { 'Content-Type': 'application/json' }
 		});
 		if (res.ok) {
-			invalidateAll();
+			await invalidateAll();
+		}
+	}
+
+	async function markAllAsRead() {
+		const res = await fetch('/api/notifications', {
+			method: 'PATCH',
+			body: JSON.stringify({ markAllRead: true }),
+			headers: { 'Content-Type': 'application/json' }
+		});
+		if (res.ok) {
+			await invalidateAll();
 		}
 	}
 
@@ -57,18 +68,18 @@
 			headers: { 'Content-Type': 'application/json' }
 		});
 		if (res.ok) {
-			invalidateAll();
+			await invalidateAll();
 		}
 	}
 
 	async function clearAll() {
 		const res = await fetch('/api/notifications', {
 			method: 'DELETE',
-			body: JSON.stringify({ clearAll: true, organizationId }),
+			body: JSON.stringify({ clearAll: true }),
 			headers: { 'Content-Type': 'application/json' }
 		});
 		if (res.ok) {
-			invalidateAll();
+			await invalidateAll();
 		}
 	}
 
@@ -95,21 +106,35 @@
 		{/snippet}
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content align="end" class="w-80 overflow-hidden p-0">
-		<div class="flex items-center justify-between border-b p-4">
+		<div class="flex items-center justify-between border-b p-3">
 			<h3 class="text-sm font-semibold">Notifikasi</h3>
 			{#if notifications.length > 0}
-				<Button
-					variant="ghost"
-					size="sm"
-					class="h-auto p-0 text-xs text-primary hover:bg-transparent"
-					onclick={clearAll}
-				>
-					Hapus Semua
-				</Button>
+				<div class="flex items-center gap-2">
+					{#if unreadCount > 0}
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-auto p-0 text-[11px] text-primary hover:bg-transparent"
+							onclick={markAllAsRead}
+							title="Tandai semua dibaca"
+						>
+							Baca Semua
+						</Button>
+					{/if}
+					<Button
+						variant="ghost"
+						size="sm"
+						class="h-auto p-0 text-[11px] text-destructive hover:bg-transparent"
+						onclick={clearAll}
+						title="Hapus semua notifikasi"
+					>
+						Hapus Semua
+					</Button>
+				</div>
 			{/if}
 		</div>
 
-		<div class="max-h-[400px] overflow-y-auto">
+		<div class="max-h-[400px] overflow-y-auto scrollbar-elegant">
 			{#if notifications.length === 0}
 				<div class="flex flex-col items-center justify-center px-4 py-10 text-center">
 					<div class="mb-2 rounded-full bg-muted p-3">
@@ -185,7 +210,7 @@
 		</div>
 
 		{#if notifications.length > 0}
-			<div class="border-top bg-muted/20 p-2">
+			<div class="border-t bg-muted/20 p-2">
 				<Button
 					variant="ghost"
 					class="h-8 w-full text-xs font-medium"

@@ -107,7 +107,6 @@
 			role: ['dosen'],
 			children: []
 		},
-
 		{
 			name: 'Daftar Mahasiswa',
 			path: `/admin/users/mahasiswa`,
@@ -116,7 +115,6 @@
 			role: ['dosen'],
 			children: []
 		},
-
 		{
 			name: 'Riwayat Praktikum',
 			path: `/admin/riwayat-praktikum`,

@@ -148,7 +148,7 @@
 	function showSuccessNotification() {
 		notificationType = 'success';
 		notificationTitle = 'Berhasil!';
-		notificationDescription = 'Perubahan pengajuan peminjaman mandiri berhasil disimpan.';
+		notificationDescription = 'Perubahan pengajuan peminjaman berhasil disimpan.';
 		notificationActionLabel = 'Selesai';
 		showNotification = true;
 	}
@@ -179,11 +179,7 @@
 			<ChevronLeft class="size-5" />
 		</Button>
 		<div>
-			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Ubah Pengajuan Alat</h1>
-			<p class="text-slate-500">
-				Ubah pengajuan peminjaman alat laboratorium Anda. Pengajuan ini masih berstatus DRAFT dan
-				akan diverifikasi kembali oleh Kepala Lab.
-			</p>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Edit Pengajuan</h1>
 		</div>
 	</div>
 
@@ -222,7 +218,7 @@
 	>
 		<!-- Left Column: Daftar Alat -->
 		<div class="flex flex-col gap-6">
-			<Card.Root mobileAware={true}>
+			<Card.Root>
 				<Card.Header>
 					<Card.Title>Daftar Alat</Card.Title>
 					<Card.Description>Pilih alat yang ingin Anda ajukan untuk dipinjam</Card.Description>
@@ -247,7 +243,7 @@
 						<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
 						<Input placeholder="Cari alat..." class="pl-10" bind:value={searchAlat} />
 					</div>
-					<div class="grid max-h-[380px] content-start gap-4 overflow-y-auto p-1">
+					<div class="scrollbar-elegant grid max-h-[380px] content-start gap-4 overflow-y-auto p-1">
 						{#each paginatedAlat as item (item.id)}
 							{@const isSelected = selectedItems.some((i) => i.itemId === item.id)}
 							<div
@@ -310,7 +306,7 @@
 					</div>
 					<input type="hidden" name="items" value={JSON.stringify(selectedItems)} />
 				</Card.Content>
-				<Card.Footer class="flex flex-col items-center gap-2.5 border-t pt-4">
+				<Card.Footer class="flex flex-col items-center gap-2.5">
 					<div class="flex items-center gap-2">
 						<Button
 							type="button"
@@ -345,7 +341,7 @@
 
 		<!-- Right Column: Detail Form -->
 		<div class="flex flex-col gap-6">
-			<Card.Root mobileAware={true}>
+			<Card.Root>
 				<Card.Header class="hidden sm:block">
 					<Card.Title>Detail Pengajuan</Card.Title>
 					<Card.Description>Isi detail informasi peminjaman Anda</Card.Description>
@@ -396,8 +392,14 @@
 						</div>
 
 						<div class="space-y-2">
-							<Label for="endDate">Rencana Pengembalian</Label>
-							<Input id="endDate" type="datetime-local" name="endDate" bind:value={endDate} />
+							<Label for="endDate">Tanggal Kembali <span class="text-red-500">*</span></Label>
+							<Input
+								id="endDate"
+								type="datetime-local"
+								name="endDate"
+								bind:value={endDate}
+								required
+							/>
 						</div>
 					</div>
 
@@ -464,7 +466,7 @@
 						</div>
 					</div>
 				</Card.Content>
-				<Card.Footer class="flex justify-end gap-2 border-t pt-4">
+				<Card.Footer class="flex justify-end gap-2">
 					<Button variant="outline" href="/admin/peminjaman">Batal</Button>
 					<Button
 						type="submit"

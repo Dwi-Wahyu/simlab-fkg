@@ -30,9 +30,7 @@
 		return new Date(date).toLocaleString('id-ID', {
 			day: '2-digit',
 			month: 'short',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
+			year: 'numeric'
 		});
 	};
 
@@ -384,19 +382,19 @@
 								{#if isLoading}
 									{#each Array(3) as _}
 										<Table.Row class="flex animate-pulse flex-col border-b md:table-row">
-											<Table.Cell class="p-4 md:px-6 md:py-4">
+											<Table.Cell class="p-4 ">
 												<div class="h-4 w-32 rounded bg-slate-200"></div>
 											</Table.Cell>
-											<Table.Cell class="p-4 md:px-6 md:py-4">
+											<Table.Cell class="p-4 ">
 												<div class="h-4 w-24 rounded bg-slate-200"></div>
 											</Table.Cell>
-											<Table.Cell class="p-4 md:px-6 md:py-4">
+											<Table.Cell class="p-4 ">
 												<div class="h-4 w-24 rounded bg-slate-200"></div>
 											</Table.Cell>
-											<Table.Cell class="p-4 text-center md:px-6 md:py-4">
+											<Table.Cell class="p-4 text-center ">
 												<div class="mx-auto h-6 w-16 rounded-full bg-slate-200"></div>
 											</Table.Cell>
-											<Table.Cell class="p-4 text-right md:px-6 md:py-4">
+											<Table.Cell class="p-4 text-right ">
 												<div class="ml-auto h-8 w-12 rounded bg-slate-200"></div>
 											</Table.Cell>
 										</Table.Row>
@@ -409,7 +407,7 @@
 										>
 											<!-- Column 1: Tujuan + mobile status badge + expand chevron -->
 											<Table.Cell
-												class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
+												class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b "
 											>
 												<div class="flex flex-col">
 													<div class="flex items-center gap-2">
@@ -442,21 +440,19 @@
 											</Table.Cell>
 
 											<!-- Column 2: Tanggal Pinjam -->
-											<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4 md:pl-2">
+											<Table.Cell class="hidden md:table-cell md:border-b  md:pl-2">
 												<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
 											</Table.Cell>
 
 											<!-- Column 3: Batas Kembali -->
-											<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4 md:pl-2">
+											<Table.Cell class="hidden md:table-cell md:border-b  md:pl-2">
 												<span class="text-sm text-slate-600"
 													>{lending.endDate ? formatDate(lending.endDate) : '-'}</span
 												>
 											</Table.Cell>
 
 											<!-- Column 4: Status (desktop only) -->
-											<Table.Cell
-												class="hidden text-center md:table-cell md:border-b md:px-6 md:py-4"
-											>
+											<Table.Cell class="hidden text-center md:table-cell md:border-b ">
 												<Badge variant="outline" class={cn('mx-auto', statusInfo.class)}>
 													{statusInfo.label}
 												</Badge>
@@ -484,13 +480,13 @@
 														onclick={() =>
 															(expandedLendingsStudent[lending.id] =
 																!expandedLendingsStudent[lending.id])}
-														class="hidden h-8 w-8 md:inline-flex"
+														class="inline-flex md:hidden"
 														aria-label="Toggle detail"
 													>
 														{#if expandedLendingsStudent[lending.id]}
-															<ChevronUp class="size-5" />
+															<ChevronUp />
 														{:else}
-															<ChevronDown class="size-5" />
+															<ChevronDown />
 														{/if}
 													</Button>
 												</div>
@@ -546,7 +542,7 @@
 																	<div class="flex flex-col">
 																		<span
 																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
-																			>Rencana Pengembalian</span
+																			>Tanggal Kembali</span
 																		>
 																		<span class="mt-0.5 flex items-center gap-1.5 text-slate-900">
 																			<Calendar class="size-3.5 text-slate-400" />
@@ -773,7 +769,6 @@
 						<Table.Head class="px-6 py-4">Peminjam</Table.Head>
 						<Table.Head>Alat</Table.Head>
 						<Table.Head>Tanggal Pinjam</Table.Head>
-						<Table.Head>Batas Kembali</Table.Head>
 						<Table.Head class="hidden md:table-cell">Status</Table.Head>
 						<Table.Head class="pr-6 text-right">Aksi</Table.Head>
 					</Table.Row>
@@ -786,7 +781,7 @@
 						>
 							<!-- Column 1: Peminjam + mobile status badge + expand chevron -->
 							<Table.Cell
-								class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b md:px-6 md:py-4"
+								class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b "
 							>
 								<div class="flex flex-col">
 									<div class="flex items-center gap-2">
@@ -799,9 +794,6 @@
 										>
 											{statusInfo.label}
 										</Badge>
-									</div>
-									<div class="mt-0.5 text-xs text-muted-foreground uppercase">
-										{mapRole(lending.requestedByUser?.role)}
 									</div>
 								</div>
 								<Button
@@ -849,24 +841,18 @@
 								)}
 							>
 								<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Pinjam</span>
-								<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
-							</Table.Cell>
 
-							<!-- Column 5: Batas Kembali -->
-							<Table.Cell
-								class={cn(
-									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
-								)}
-							>
-								<span class="text-xs font-semibold text-slate-400 md:hidden">Batas Kembali</span>
-								<span class="text-sm text-slate-600"
-									>{lending.endDate ? formatDate(lending.endDate) : '-'}</span
-								>
+								<div>
+									<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
+									-
+									<span class="text-sm text-slate-600">
+										{lending.endDate ? formatDate(lending.endDate) : '-'}
+									</span>
+								</div>
 							</Table.Cell>
 
 							<!-- Column 6: Status (desktop only) -->
-							<Table.Cell class="hidden md:table-cell md:border-b md:px-6 md:py-4">
+							<Table.Cell class="hidden md:table-cell md:border-b ">
 								<Badge variant="outline" class={statusInfo.class}>
 									{statusInfo.label}
 								</Badge>

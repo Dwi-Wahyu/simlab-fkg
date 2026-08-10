@@ -1,7 +1,8 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { lending, lendingItem, equipment, item, approval } from '$lib/server/db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
+import { createNotification } from '$lib/server/notification';
+import { eq, and, isNull, or, sql } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
@@ -55,7 +56,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	let labs: any[] = [];
-	if (currentUser.role === 'superadmin') {
+	if (['superadmin', 'kepalaLab'].includes(currentUser.role)) {
 		labs = await db.query.laboratorium.findMany();
 	}
 
@@ -75,35 +76,69 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const laboratoriumId =
-			(formData.get('laboratoriumId') as string) || currentUser.laboratorium?.id || '';
+		const lendingData = await db.query.lending.findFirst({
+			where: eq(lending.id, id)
+		});
 
-		if (!laboratoriumId) {
-			return fail(400, { message: 'Laboratorium wajib ditentukan saat menyetujui' });
+		if (!lendingData) {
+			return fail(404, { message: 'Data peminjaman tidak ditemukan' });
 		}
+
+		let laboratoriumId =
+			(formData.get('laboratoriumId') as string)?.trim() ||
+			currentUser.laboratorium?.id ||
+			lendingData.laboratoriumId ||
+			'';
 
 		try {
 			await db.transaction(async (tx) => {
 				const pendingItems = await tx.query.lendingItem.findMany({
-					where: and(eq(lendingItem.lendingId, id), isNull(lendingItem.equipmentId))
+					where: and(eq(lendingItem.lendingId, id), isNull(lendingItem.equipmentId)),
+					with: {
+						requestedItem: true
+					}
 				});
 
 				for (const pending of pendingItems) {
 					if (!pending.requestedItemId) continue;
 
-					const availableEquip = await tx.query.equipment.findMany({
+					// 1. Cari equipment dengan status READY pada lab yang ditentukan (atau unassigned/NULL lab)
+					let availableEquip = await tx.query.equipment.findMany({
 						where: and(
 							eq(equipment.itemId, pending.requestedItemId),
 							eq(equipment.status, 'READY'),
-							eq(equipment.laboratoriumId, laboratoriumId)
+							eq(equipment.isDeleted, false),
+							laboratoriumId
+								? or(eq(equipment.laboratoriumId, laboratoriumId), isNull(equipment.laboratoriumId))
+								: sql`1=1`
 						),
 						limit: pending.qty ?? 1
 					});
 
+					// 2. Fallback: Jika tidak mencukupi di lab tertentu, cari seluruh equipment READY untuk item ini di lab manapun
 					if (availableEquip.length < (pending.qty ?? 1)) {
+						availableEquip = await tx.query.equipment.findMany({
+							where: and(
+								eq(equipment.itemId, pending.requestedItemId),
+								eq(equipment.status, 'READY'),
+								eq(equipment.isDeleted, false)
+							),
+							limit: pending.qty ?? 1
+						});
+					}
+
+					const itemName = pending.requestedItem?.name || 'Alat';
+					const requiredQty = pending.qty ?? 1;
+
+					if (availableEquip.length < requiredQty) {
 						throw new Error(
-							`Stok tidak cukup untuk salah satu alat yang diajukan di laboratorium ini`
+							`Stok alat "${itemName}" tidak mencukupi (dibutuhkan: ${requiredQty}, tersedia: ${availableEquip.length})`
 						);
+					}
+
+					// Jika laboratoriumId belum diisi, gunakan laboratoriumId dari alat pertama yang ditemukan
+					if (!laboratoriumId && availableEquip[0]?.laboratoriumId) {
+						laboratoriumId = availableEquip[0].laboratoriumId;
 					}
 
 					// Bind unit pertama ke baris ini, sisanya (kalau qty > 1) buat baris lendingItem baru
@@ -129,9 +164,32 @@ export const actions: Actions = {
 
 				await tx
 					.update(lending)
-					.set({ status: 'APPROVED', approvedBy: currentUser.id, laboratoriumId })
+					.set({
+						status: 'APPROVED',
+						approvedBy: currentUser.id,
+						laboratoriumId: laboratoriumId || null
+					})
 					.where(eq(lending.id, id));
 			});
+
+			// Kirim notifikasi balasan ke peminjam
+			if (lendingData.requestedBy) {
+				try {
+					await createNotification({
+						userId: lendingData.requestedBy,
+						title: 'Peminjaman Disetujui',
+						body: `Pengajuan peminjaman Anda untuk unit ${lendingData.unit} telah disetujui.`,
+						priority: 'HIGH',
+						action: {
+							type: 'LENDING_APPROVED',
+							resourceId: id,
+							webPath: `/admin/peminjaman/${id}`
+						}
+					});
+				} catch (nErr) {
+					console.error('Gagal mengirim notifikasi persetujuan ke peminjam:', nErr);
+				}
+			}
 
 			return { success: true };
 		} catch (err: any) {
@@ -152,10 +210,34 @@ export const actions: Actions = {
 		if (!reason) return fail(400, { message: 'Alasan penolakan wajib diisi' });
 
 		try {
+			const lendingData = await db.query.lending.findFirst({
+				where: eq(lending.id, id)
+			});
+
 			await db
 				.update(lending)
 				.set({ status: 'REJECTED', rejectedReason: reason, approvedBy: currentUser.id })
 				.where(eq(lending.id, id));
+
+			// Kirim notifikasi penolakan ke peminjam
+			if (lendingData?.requestedBy) {
+				try {
+					await createNotification({
+						userId: lendingData.requestedBy,
+						title: 'Peminjaman Ditolak',
+						body: `Pengajuan peminjaman Anda ditolak. Alasan: ${reason}`,
+						priority: 'HIGH',
+						action: {
+							type: 'LENDING_REJECTED',
+							resourceId: id,
+							webPath: `/admin/peminjaman/${id}`
+						}
+					});
+				} catch (nErr) {
+					console.error('Gagal mengirim notifikasi penolakan ke peminjam:', nErr);
+				}
+			}
+
 			return { success: true };
 		} catch (err: any) {
 			console.error('Error rejecting lending:', err);
