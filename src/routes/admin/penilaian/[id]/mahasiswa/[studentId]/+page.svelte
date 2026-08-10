@@ -83,31 +83,6 @@
 />
 
 <div class="flex h-full flex-col gap-4 p-4 md:p-6">
-	<!-- Header Section -->
-	<!-- <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-		<div class="flex flex-col gap-1">
-			<div class="flex items-center gap-2">
-				<Button variant="ghost" size="icon-sm" href="/admin/penilaian/{data.schedule.id}">
-					<ChevronLeft class="h-4 w-4" />
-				</Button>
-				<h1 class="text-2xl font-bold tracking-tight md:text-3xl">Catat Nilai</h1>
-			</div>
-			<p class="text-sm text-muted-foreground md:text-base">
-				Berikan penilaian untuk mahasiswa pada modul-modul kegiatan ini.
-			</p>
-		</div>
-		<div class="flex items-center gap-2">
-			<Button
-				variant="outline"
-				href="/admin/penilaian/{data.schedule.id}"
-				class="hidden md:flex"
-			>
-				<ArrowLeft />
-				Kembali ke Daftar
-			</Button>
-		</div>
-	</div> -->
-
 	<Button variant="outline" class="w-fit" href="/admin/penilaian/{data.schedule.id}">
 		<ChevronLeft />
 		Kembali

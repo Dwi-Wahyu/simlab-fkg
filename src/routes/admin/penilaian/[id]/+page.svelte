@@ -377,7 +377,7 @@
 	{/if}
 
 	<!-- Main Table -->
-	<Card.Root class="overflow-hidden border bg-white p-0 shadow-sm ring-1 ring-slate-100">
+	<Card.Root class="overflow-hidden">
 		<Card.Header class="border-b">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
