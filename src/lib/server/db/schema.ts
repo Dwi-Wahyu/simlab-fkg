@@ -469,6 +469,8 @@ export const lendingItem = mysqlTable('lending_item', {
 
 	qty: int('qty').default(1),
 
+	initialCondition: mysqlEnum('initial_condition', ['BAIK', 'RUSAK']).default('BAIK'),
+
 	// Return data
 	returnStatus: mysqlEnum('return_status', ['BAIK', 'RUSAK']),
 	returnNotes: text('return_notes'),

@@ -102,6 +102,13 @@
 		}
 	}
 
+	const formatDateOnly = (date: Date | null) => {
+		if (!date) return '-';
+		return new Intl.DateTimeFormat('id-ID', {
+			dateStyle: 'medium'
+		}).format(new Date(date));
+	};
+
 	const formatDateTime = (date: Date | null) => {
 		if (!date) return '-';
 		return new Intl.DateTimeFormat('id-ID', {
@@ -168,213 +175,208 @@
 				<h1 class="text-2xl font-bold tracking-tight">Detail Peminjaman</h1>
 			</div>
 		</div>
+		<Badge variant="secondary" class="w-fit rounded-full px-3 py-1 text-xs font-semibold sm:ml-auto">
+			{data.lending.items.length} Item
+		</Badge>
 	</div>
 
 	<div class="grid gap-6 lg:grid-cols-2">
-		<!-- Daftar Alat -->
-		<Card.Root mobileAware={true}>
-			<Card.Header class="flex flex-row items-center justify-between">
-				<Card.Title>Daftar Alat yang Dipinjam</Card.Title>
-				<Badge variant="secondary" class="rounded-full">{data.lending.items.length} Item</Badge>
-			</Card.Header>
-			<Card.Content>
-				<div class="space-y-4">
-					{#each data.lending.items as item (item.id)}
-						<div
-							class="group relative flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-md"
-						>
-							<div class="flex items-start justify-between gap-4">
-								<div class="flex items-center gap-4">
-									<div>
-										<h4 class="font-bold text-slate-900">
-											{item.equipment?.item?.name ||
-												item.requestedItem?.name ||
-												'Alat tidak diketahui'}
-										</h4>
-										<p class="text-xs tracking-wider text-muted-foreground uppercase">
-											SN: {item.equipment?.serialNumber || '-'}
-										</p>
-									</div>
-								</div>
-								<div class="text-right">
-									<div class="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-										Kondisi Awal / Qty
-									</div>
-									{#if item.equipment}
-										<Badge variant="outline" class="mt-1 text-[10px] uppercase"
-											>{item.equipment.condition}</Badge
-										>
-									{:else}
-										<Badge variant="outline" class="mt-1 text-[10px] uppercase"
-											>{item.qty} Unit</Badge
-										>
-									{/if}
-								</div>
+		<!-- Daftar Alat (Tanpa Card Wrapper) -->
+		<div class="space-y-4">
+			{#each data.lending.items as item (item.id)}
+				<div
+					class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs transition-all hover:border-slate-300 hover:shadow-md"
+				>
+					<!-- Header Item: Warna Primary & Teks Primary Foreground -->
+					<div class="bg-primary px-4 py-3 text-primary-foreground">
+						<h4 class="font-bold leading-snug text-primary-foreground">
+							{item.equipment?.item?.name ||
+								item.requestedItem?.name ||
+								'Alat tidak diketahui'}
+						</h4>
+						<p class="text-[11px] tracking-wider opacity-80 uppercase">
+							SN: {item.equipment?.serialNumber || '-'}
+						</p>
+					</div>
+
+					<div class="space-y-3 p-4">
+						<!-- Kondisi Awal & Kondisi Kembali disampingnya -->
+						<div class="flex flex-wrap items-center gap-6 text-xs">
+							<div>
+								<span class="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+									Kondisi Awal
+								</span>
+								<Badge variant="outline" class="mt-1 text-[10px] uppercase">
+									{item.initialCondition || item.equipment?.condition || 'BAIK'}
+								</Badge>
 							</div>
 
-							{#if isReturnMode && returnData[item.id]}
-								<Separator />
-								<div class="grid gap-4 sm:grid-cols-2">
-									<div class="space-y-2">
-										<Label class="text-[10px] font-bold text-slate-500 uppercase"
-											>Status Kembali</Label
-										>
-										<div class="flex gap-2">
-											<div class="flex-1">
-												<Select.Root type="single" bind:value={returnData[item.id].status}>
-													<Select.Trigger class="h-9 w-full rounded-lg text-xs">
-														{statusOptions.find((o) => o.value === returnData[item.id].status)
-															?.label}
-													</Select.Trigger>
-													<Select.Content>
-														{#each statusOptions as opt}
-															<Select.Item value={opt.value} label={opt.label}
-																>{opt.label}</Select.Item
-															>
-														{/each}
-													</Select.Content>
-												</Select.Root>
-											</div>
-											<Button
-												variant="outline"
-												size="icon"
-												class={cn(
-													'h-9 w-9 rounded-lg transition-colors',
-													returnData[item.id].showNotes &&
-														'border-slate-300 bg-slate-100 text-slate-900'
-												)}
-												onclick={() =>
-													(returnData[item.id].showNotes = !returnData[item.id].showNotes)}
-											>
-												<MessageSquare class="size-4" />
-											</Button>
-										</div>
-									</div>
-
-									<div class="space-y-2">
-										{#if returnData[item.id].status !== 'BAIK'}
-											<Label class="text-[10px] font-bold text-slate-500 uppercase"
-												>Bukti Kerusakan</Label
-											>
-											<div class="flex flex-wrap gap-3">
-												<input
-													type="file"
-													accept="image/*"
-													id="file-{item.id}"
-													class="hidden"
-													onchange={(e) => handleFileChange(item.id, e)}
-												/>
-												<label
-													for="file-{item.id}"
-													class="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-slate-400 hover:bg-slate-100"
-												>
-													<Camera class="size-5" />
-													<span class="mt-1 text-[8px] font-bold uppercase">Upload</span>
-												</label>
-
-												{#if returnData[item.id].previewUrl}
-													<div
-														class="relative h-20 w-20 overflow-hidden rounded-lg border shadow-sm"
-													>
-														<img
-															src={returnData[item.id].previewUrl}
-															alt="Preview"
-															class="h-full w-full object-cover"
-														/>
-														<button
-															class="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white shadow-md hover:bg-red-600"
-															onclick={() => {
-																returnData[item.id].evidence = null;
-																returnData[item.id].previewUrl = null;
-															}}
-														>
-															<XCircle class="size-3" />
-														</button>
-													</div>
-												{/if}
-											</div>
-										{/if}
-									</div>
-
-									{#if returnData[item.id].showNotes}
-										<div class="sm:col-span-2">
-											<Label class="text-[10px] font-bold text-slate-500 uppercase"
-												>Catatan Tambahan</Label
-											>
-											<Textarea
-												bind:value={returnData[item.id].notes}
-												placeholder="Tulis alasan jika rusak atau catatan lainnya..."
-												class="mt-1 min-h-20 rounded-lg text-xs"
-											/>
-										</div>
-									{/if}
-								</div>
-							{:else if item.returnStatus}
-								<!-- Hasil Pengembalian (jika sudah dikembalikan) -->
-								<Separator />
-								<div class="rounded-lg bg-slate-50 p-3">
-									<div class="flex items-center justify-between">
-										<div class="flex items-center gap-2">
-											<span class="text-xs font-bold text-slate-700 uppercase"
-												>Sudah Dikembalikan</span
-											>
-										</div>
-										<Badge variant="outline" class="text-[10px] uppercase"
-											>{item.returnStatus}</Badge
-										>
-									</div>
-									{#if item.returnNotes}
-										<p class="mt-2 text-xs text-slate-500 italic">"{item.returnNotes}"</p>
-									{/if}
-									{#if item.returnEvidencePath}
-										<div class="mt-3">
-											<p class="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-												Bukti:
-											</p>
-											<img
-												src={item.returnEvidencePath}
-												alt="Bukti"
-												class="mt-1 h-20 w-20 rounded-lg border object-cover shadow-sm transition-transform hover:scale-105"
-											/>
-										</div>
-									{/if}
+							{#if item.returnStatus}
+								<div>
+									<span class="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+										Kondisi Kembali
+									</span>
+									<Badge
+										variant="outline"
+										class={cn(
+											'mt-1 text-[10px] uppercase font-semibold',
+											item.returnStatus === 'RUSAK'
+												? 'border-red-300 bg-red-50 text-red-700'
+												: 'border-green-300 bg-green-50 text-green-700'
+										)}
+									>
+										{item.returnStatus}
+									</Badge>
 								</div>
 							{/if}
 						</div>
-					{/each}
+
+						{#if item.returnNotes}
+							<p class="text-xs text-slate-600 italic">"{item.returnNotes}"</p>
+						{/if}
+
+						{#if item.returnEvidencePath}
+							<div class="pt-1">
+								<p class="mb-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+									Bukti:
+								</p>
+								<img
+									src={item.returnEvidencePath}
+									alt="Bukti Pengembalian"
+									class="h-20 w-20 rounded-lg border object-cover shadow-sm transition-transform hover:scale-105"
+								/>
+							</div>
+						{/if}
+
+						{#if isReturnMode && returnData[item.id]}
+							<Separator class="my-2" />
+							<div class="grid gap-4 sm:grid-cols-2">
+								<div class="space-y-2">
+									<Label class="text-[10px] font-bold text-slate-500 uppercase"
+										>Status Kembali</Label
+									>
+									<div class="flex gap-2">
+										<div class="flex-1">
+											<Select.Root type="single" bind:value={returnData[item.id].status}>
+												<Select.Trigger class="h-9 w-full rounded-lg text-xs">
+													{statusOptions.find((o) => o.value === returnData[item.id].status)
+														?.label}
+												</Select.Trigger>
+												<Select.Content>
+													{#each statusOptions as opt}
+														<Select.Item value={opt.value} label={opt.label}
+															>{opt.label}</Select.Item
+														>
+													{/each}
+												</Select.Content>
+											</Select.Root>
+										</div>
+										<Button
+											variant="outline"
+											size="icon"
+											class={cn(
+												'h-9 w-9 rounded-lg transition-colors',
+												returnData[item.id].showNotes &&
+													'border-slate-300 bg-slate-100 text-slate-900'
+											)}
+											onclick={() =>
+												(returnData[item.id].showNotes = !returnData[item.id].showNotes)}
+										>
+											<MessageSquare class="size-4" />
+										</Button>
+									</div>
+								</div>
+
+								<div class="space-y-2">
+									{#if returnData[item.id].status !== 'BAIK'}
+										<Label class="text-[10px] font-bold text-slate-500 uppercase"
+											>Bukti Kerusakan</Label
+										>
+										<div class="flex flex-wrap gap-3">
+											<input
+												type="file"
+												accept="image/*"
+												id="file-{item.id}"
+												class="hidden"
+												onchange={(e) => handleFileChange(item.id, e)}
+											/>
+											<label
+												for="file-{item.id}"
+												class="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-slate-400 hover:bg-slate-100"
+											>
+												<Camera class="size-5" />
+												<span class="mt-1 text-[8px] font-bold uppercase">Upload</span>
+											</label>
+
+											{#if returnData[item.id].previewUrl}
+												<div
+													class="relative h-20 w-20 overflow-hidden rounded-lg border shadow-sm"
+												>
+													<img
+														src={returnData[item.id].previewUrl}
+														alt="Preview"
+														class="h-full w-full object-cover"
+													/>
+													<button
+														class="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white shadow-md hover:bg-red-600"
+														onclick={() => {
+															returnData[item.id].evidence = null;
+															returnData[item.id].previewUrl = null;
+														}}
+													>
+														<XCircle class="size-3" />
+													</button>
+												</div>
+											{/if}
+										</div>
+									{/if}
+								</div>
+
+								{#if returnData[item.id].showNotes}
+									<div class="sm:col-span-2">
+										<Label class="text-[10px] font-bold text-slate-500 uppercase"
+											>Catatan Tambahan</Label
+										>
+										<Textarea
+											bind:value={returnData[item.id].notes}
+											placeholder="Tulis alasan jika rusak atau catatan lainnya..."
+											class="mt-1 min-h-20 rounded-lg text-xs"
+										/>
+									</div>
+								{/if}
+							</div>
+						{/if}
+					</div>
 				</div>
-			</Card.Content>
-			<Card.Footer class="flex flex-wrap gap-3">
-				{#if !isReturnMode}
-					{#if data.lending.status === 'RETURNED'}
-						<form
-							bind:this={deleteForm}
-							method="POST"
-							action="?/deleteLending"
-							use:enhance={() => {
-								return async ({ result, update }) => {
-									if (result.type === 'redirect') {
-										await update();
-									} else {
-										notificationType = 'error';
-										notificationTitle = 'Gagal';
-										notificationDescription =
-											(result as any).data?.message ||
-											'Terjadi kesalahan saat menghapus peminjaman.';
-										showNotification = true;
-									}
-								};
-							}}
-						>
-							<Button type="button" variant="destructive" onclick={() => (showDeleteDialog = true)}>
-								<Trash2 />
-								Hapus Peminjaman
-							</Button>
-						</form>
-					{/if}
-				{/if}
-			</Card.Footer>
-		</Card.Root>
+			{/each}
+
+			{#if !isReturnMode && data.lending.status === 'RETURNED'}
+				<form
+					bind:this={deleteForm}
+					method="POST"
+					action="?/deleteLending"
+					use:enhance={() => {
+						return async ({ result, update }) => {
+							if (result.type === 'redirect') {
+								await update();
+							} else {
+								notificationType = 'error';
+								notificationTitle = 'Gagal';
+								notificationDescription =
+									(result as any).data?.message ||
+									'Terjadi kesalahan saat menghapus peminjaman.';
+								showNotification = true;
+							}
+						};
+					}}
+				>
+					<Button type="button" variant="destructive" onclick={() => (showDeleteDialog = true)}>
+						<Trash2 class="size-4" />
+						Hapus Peminjaman
+					</Button>
+				</form>
+			{/if}
+		</div>
 
 		<!-- Info Utama -->
 		<div class="space-y-6">
@@ -416,19 +418,10 @@
 
 						<Separator class="md:hidden" />
 
-						<div class="space-y-1">
-							<Label>Waktu Pinjam</Label>
+						<div class="space-y-1 sm:col-span-2">
+							<Label>Periode Peminjaman</Label>
 							<p class="text-sm font-medium text-slate-900">
-								{formatDateTime(data.lending.startDate)}
-							</p>
-						</div>
-
-						<Separator class="md:hidden" />
-
-						<div class="space-y-1">
-							<Label>Batas Kembali</Label>
-							<p class="text-sm font-medium text-slate-900">
-								{formatDateTime(data.lending.endDate)}
+								{formatDateOnly(data.lending.startDate)} - {formatDateOnly(data.lending.endDate)}
 							</p>
 						</div>
 

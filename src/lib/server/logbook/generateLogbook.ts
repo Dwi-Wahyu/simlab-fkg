@@ -2,6 +2,7 @@ import createReport from 'docx-templates';
 import { and, eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import path from 'path';
+// @ts-expect-error SvelteKit virtual module
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/auth.schema';
@@ -309,6 +310,18 @@ function escapeXml(str: string): string {
 
 /** Resolusi dot-path sederhana, misal 'series.laboratorium.name'. */
 function resolvePath(obj: unknown, dotPath: string): unknown {
+	if (
+		dotPath === 'student.nim' ||
+		dotPath === 'student.username' ||
+		dotPath === 'student.displayUsername'
+	) {
+		const s = (obj as any)?.student;
+		return s?.username || s?.displayUsername || s?.nim || '';
+	}
+	if (dotPath === 'student.name') {
+		const s = (obj as any)?.student;
+		return s?.name || s?.fullName || '';
+	}
 	return dotPath
 		.split('.')
 		.reduce<unknown>(
@@ -328,8 +341,9 @@ async function convertDocxToPdf(docxBuffer: Buffer, fileName: string): Promise<B
 	const formData = new FormData();
 	formData.append('files', new Blob([new Uint8Array(docxBuffer)]), fileName);
 
+	const gotenbergUrl = process.env.GOTENBERG_URL || env?.GOTENBERG_URL || 'http://localhost:4000';
 	const response = await fetch(
-		`${env.GOTENBERG_URL || 'http://localhost:4000'}/forms/libreoffice/convert`,
+		`${gotenbergUrl}/forms/libreoffice/convert`,
 		{
 			method: 'POST',
 			body: formData
@@ -515,6 +529,25 @@ export async function generateLogbookForSeries(
 			renderData[field.placeholderKey] =
 				rawValue !== undefined && rawValue !== null ? String(rawValue) : '';
 		}
+	}
+
+	// Safety fallbacks: Pastikan data utama mahasiswa & seri selalu terisi
+	if (!renderData.studentName || renderData.studentName === '-') {
+		renderData.studentName = student.name || '';
+	}
+	if (!renderData.studentNim || renderData.studentNim === '-') {
+		renderData.studentNim = student.username || student.displayUsername || '';
+	}
+	if (!renderData.seriesName) {
+		renderData.seriesName = series.name || '';
+	}
+	if (!renderData.laboratoriumName) {
+		renderData.laboratoriumName = resolvedLab?.name || '-';
+	}
+	if (!renderData.fotoMahasiswa && student.image) {
+		const imgDesc = await imageToDocxTemplateImage(student.image);
+		renderData.fotoMahasiswa = imgDesc;
+		renderData.hasPhoto = !!imgDesc;
 	}
 
 	// 8. Bagian kompleks (tabel, dsb) via builder registry (sebagai raw XML)

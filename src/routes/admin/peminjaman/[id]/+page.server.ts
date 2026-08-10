@@ -144,7 +144,11 @@ export const actions: Actions = {
 					// Bind unit pertama ke baris ini, sisanya (kalau qty > 1) buat baris lendingItem baru
 					await tx
 						.update(lendingItem)
-						.set({ equipmentId: availableEquip[0].id, qty: 1 })
+						.set({
+							equipmentId: availableEquip[0].id,
+							qty: 1,
+							initialCondition: availableEquip[0].condition || 'BAIK'
+						})
 						.where(eq(lendingItem.id, pending.id));
 
 					for (const extra of availableEquip.slice(1)) {
@@ -153,7 +157,8 @@ export const actions: Actions = {
 							lendingId: id,
 							equipmentId: extra.id,
 							requestedItemId: pending.requestedItemId,
-							qty: 1
+							qty: 1,
+							initialCondition: extra.condition || 'BAIK'
 						});
 					}
 

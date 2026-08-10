@@ -141,44 +141,46 @@
 	}
 </script>
 
-<div class="flex h-full">
-	<!-- Sidebar Filter (non-DPJP) -->
+<div class="flex flex-col md:flex-row min-h-full w-full">
+	<!-- Filter Panel (At top on mobile, left sidebar on desktop) -->
 	{#if data.role !== 'dosen'}
-		<aside class="flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
-			<div>
-				<h3 class="mb-2 text-sm font-semibold">Seri Praktikum</h3>
-				<div class="flex flex-col gap-1.5">
-					{#each data.series as s (s.id)}
-						<label class="flex cursor-pointer items-center gap-2 text-sm">
-							<Checkbox
-								checked={selectedSeriesIds.includes(s.id)}
-								onCheckedChange={() => toggleSeriesFilter(s.id)}
-							/>
-							<span class="truncate">{s.name}</span>
-						</label>
-					{/each}
+		<aside class="flex w-full md:w-64 shrink-0 flex-col gap-4 md:gap-6 border-b md:border-b-0 md:border-r p-4 bg-card/30">
+			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
+				<div>
+					<h3 class="mb-2 text-sm font-semibold">Seri Praktikum</h3>
+					<div class="flex max-h-40 md:max-h-60 flex-col gap-1.5 overflow-y-auto">
+						{#each data.series as s (s.id)}
+							<label class="flex cursor-pointer items-center gap-2 text-sm">
+								<Checkbox
+									checked={selectedSeriesIds.includes(s.id)}
+									onCheckedChange={() => toggleSeriesFilter(s.id)}
+								/>
+								<span class="truncate">{s.name}</span>
+							</label>
+						{/each}
+					</div>
 				</div>
-			</div>
 
-			<div>
-				<h3 class="mb-2 text-sm font-semibold">DPJP</h3>
-				<div class="flex max-h-60 flex-col gap-1.5">
-					{#each data.instructors as instr (instr.id)}
-						<label class="flex cursor-pointer items-center gap-2 text-sm">
-							<Checkbox
-								checked={selectedInstructorIds.includes(instr.id)}
-								onCheckedChange={() => toggleInstructorFilter(instr.id)}
-							/>
-							<span class="truncate">{instr.name}</span>
-						</label>
-					{/each}
+				<div>
+					<h3 class="mb-2 text-sm font-semibold">DPJP</h3>
+					<div class="flex max-h-40 md:max-h-60 flex-col gap-1.5 overflow-y-auto">
+						{#each data.instructors as instr (instr.id)}
+							<label class="flex cursor-pointer items-center gap-2 text-sm">
+								<Checkbox
+									checked={selectedInstructorIds.includes(instr.id)}
+									onCheckedChange={() => toggleInstructorFilter(instr.id)}
+								/>
+								<span class="truncate">{instr.name}</span>
+							</label>
+						{/each}
+					</div>
 				</div>
 			</div>
 		</aside>
 	{/if}
 
 	<!-- Main Calendar -->
-	<div class="flex flex-1 flex-col overflow-hidden p-6">
+	<div class="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
 		<!-- Dekstop Header -->
 		<div class="mb-4 hidden items-center justify-between md:flex">
 			<div class="flex items-center gap-2">

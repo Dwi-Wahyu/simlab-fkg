@@ -40,8 +40,10 @@
 		const wb = XLSX.utils.book_new();
 
 		const rows: (string | number)[][] = [
-			['FAKULTAS KEDOKTERAN GIGI'],
+			['KEMENTERIAN RISET, TEKNOLOGI, DAN PENDIDIKAN TINGGI'],
 			['UNIVERSITAS HASANUDDIN'],
+			['FAKULTAS KEDOKTERAN GIGI'],
+			['Jl. Perintis Kemerdekaan KM. 10 Makassar 90245 Tlp: (0411) 586012 Web: dent.unhas.ac.id'],
 			['LAPORAN PENILAIAN PRAKTIKUM MAHASISWA'],
 			[''],
 			['Nama Mahasiswa', data.student.name],
@@ -86,7 +88,9 @@
 		ws['!merges'] = [
 			{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
 			{ s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-			{ s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }
+			{ s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
+			{ s: { r: 3, c: 0 }, e: { r: 3, c: 5 } },
+			{ s: { r: 4, c: 0 }, e: { r: 4, c: 5 } }
 		];
 
 		// Column widths
@@ -119,14 +123,21 @@
 
 <!-- Printable Header (Visible only during window.print()) -->
 <div class="print-header hidden pt-4">
-	<div class="header-container">
-		<img src="/logo.png" alt="Logo UNHAS" class="header-logo" />
-		<div class="header-text">
-			<h1 class="font-serif text-xl font-bold tracking-wide uppercase">Fakultas Kedokteran Gigi</h1>
-			<h2 class="text-base font-semibold tracking-wider text-slate-700 uppercase">
-				Universitas Hasanuddin
+	<div class="header-container flex items-center gap-4">
+		<img src="/logo.png" alt="Logo UNHAS" class="header-logo h-20 w-auto object-contain" />
+		<div class="header-text flex flex-col">
+			<h3 class="text-xs font-bold tracking-wider text-slate-800 uppercase leading-tight">
+				KEMENTERIAN RISET, TEKNOLOGI, DAN PENDIDIKAN TINGGI
+			</h3>
+			<h2 class="text-sm font-bold tracking-wider text-slate-900 uppercase leading-tight">
+				UNIVERSITAS HASANUDDIN
 			</h2>
-			<p class="mt-1 text-xs text-slate-500">Sistem Informasi Manajemen Laboratorium (SIM-Lab)</p>
+			<h1 class="text-base font-extrabold tracking-wide text-slate-900 uppercase leading-tight">
+				FAKULTAS KEDOKTERAN GIGI
+			</h1>
+			<p class="mt-0.5 text-[10px] text-slate-600 leading-normal">
+				Jl. Perintis Kemerdekaan KM. 10 Makassar 90245 Tlp: (0411) 586012 Web: dent.unhas.ac.id
+			</p>
 		</div>
 	</div>
 	<hr class="my-3 border-t-2 border-slate-900" />
