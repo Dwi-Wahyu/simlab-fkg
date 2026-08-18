@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { lending } from '$lib/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -9,9 +9,21 @@ export const GET: RequestHandler = async ({ locals }) => {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
+	const currentUser = locals.user;
+	const isKepalaLab = currentUser.role === 'kepalaLab';
+	const userLabId = currentUser.laboratorium?.id;
+	const isStudentOrDosen = ['mahasiswa', 'dosen'].includes(currentUser.role);
+
+	let whereClause;
+	if (isStudentOrDosen) {
+		whereClause = eq(lending.requestedBy, currentUser.id);
+	} else if (isKepalaLab && userLabId) {
+		whereClause = or(eq(lending.laboratoriumId, userLabId), eq(lending.status, 'DRAFT'));
+	}
+
 	try {
 		const lendings = await db.query.lending.findMany({
-			where: eq(lending.requestedBy, locals.user.id),
+			where: whereClause,
 			with: {
 				laboratorium: true,
 				requestedByUser: true,
@@ -31,7 +43,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 		return json({ lendings });
 	} catch (error) {
-		console.error('Error fetching student lendings:', error);
+		console.error('Error fetching lendings:', error);
 		return json({ error: 'Internal Server Error' }, { status: 500 });
 	}
 };

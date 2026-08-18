@@ -414,43 +414,51 @@ export const maintenanceCostItem = mysqlTable('maintenance_cost_item', {
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
-export const lending = mysqlTable('lending', {
-	id: varchar('id', { length: 36 }).primaryKey(),
+export const lending = mysqlTable(
+	'lending',
+	{
+		id: varchar('id', { length: 36 }).primaryKey(),
 
-	unit: varchar('unit', { length: 100 }).notNull(),
-	purpose: mysqlEnum('purpose', [
-		'PRAKTIKUM',
-		'PENELITIAN_DOSEN',
-		'PENGABDIAN_MASYARAKAT',
-		'PENELITIAN_MAHASISWA',
-		'LOMBA',
-		'ORGANISASI_MAHASISWA'
-	]).notNull(),
+		unit: varchar('unit', { length: 100 }).notNull(),
+		purpose: mysqlEnum('purpose', [
+			'PRAKTIKUM',
+			'PENELITIAN_DOSEN',
+			'PENGABDIAN_MASYARAKAT',
+			'PENELITIAN_MAHASISWA',
+			'LOMBA',
+			'ORGANISASI_MAHASISWA'
+		]).notNull(),
 
-	surat: text('surat'),
-	nomorSurat: varchar('nomor_surat', { length: 255 }),
+		surat: text('surat'),
+		nomorSurat: varchar('nomor_surat', { length: 255 }),
 
-	status: mysqlEnum('status', ['DRAFT', 'APPROVED', 'REJECTED', 'DIPINJAM', 'RETURNED']).default(
-		'DRAFT'
-	),
-	rejectedReason: text('rejected_reason'),
+		status: mysqlEnum('status', ['DRAFT', 'APPROVED', 'REJECTED', 'DIPINJAM', 'RETURNED']).default(
+			'DRAFT'
+		),
+		rejectedReason: text('rejected_reason'),
 
-	requestedBy: varchar('requested_by', { length: 36 }).references(() => user.id),
-	laboratoriumId: varchar('laboratorium_id', { length: 36 }).references(() => laboratorium.id),
+		requestedBy: varchar('requested_by', { length: 36 }).references(() => user.id),
+		laboratoriumId: varchar('laboratorium_id', { length: 36 }).references(() => laboratorium.id),
 
-	approvedBy: varchar('approved_by', { length: 36 }).references(() => user.id),
+		approvedBy: varchar('approved_by', { length: 36 }).references(() => user.id),
 
-	attachmentPath: text('attachment_path'),
-	attachmentName: varchar('attachment_name', { length: 255 }),
+		attachmentPath: text('attachment_path'),
+		attachmentName: varchar('attachment_name', { length: 255 }),
 
-	startDate: timestamp('start_date').notNull(),
-	endDate: timestamp('end_date'),
+		startDate: timestamp('start_date').notNull(),
+		endDate: timestamp('end_date'),
 
-	h1ReminderSentAt: timestamp('h1_reminder_sent_at'),
-	overdueReminderSentAt: timestamp('overdue_reminder_sent_at'),
+		h1ReminderSentAt: timestamp('h1_reminder_sent_at'),
+		overdueReminderSentAt: timestamp('overdue_reminder_sent_at'),
 
-	createdAt: timestamp('created_at').defaultNow().notNull()
-});
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('lending_laboratoriumId_idx').on(table.laboratoriumId),
+		index('lending_requestedBy_idx').on(table.requestedBy),
+		index('lending_status_idx').on(table.status)
+	]
+);
 
 export const schedulerState = mysqlTable('scheduler_state', {
 	key: varchar('key', { length: 100 }).primaryKey(),

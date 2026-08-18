@@ -38,12 +38,23 @@
 	let searchAlat = $state('');
 	let alatPage = $state(1);
 	const ITEMS_PER_PAGE = 5;
-	let selectedLabIds = $state<string[]>(data.selectedLabIds || []);
+	let selectedLabIds = $state<string[]>(
+		data.selectedLabIds?.length
+			? data.selectedLabIds
+			: data.lending?.laboratoriumId
+				? [data.lending.laboratoriumId]
+				: []
+	);
 
 	$effect(() => {
-		if (data.selectedLabIds) {
+		if (data.selectedLabIds && data.selectedLabIds.length > 0) {
 			untrack(() => {
 				selectedLabIds = data.selectedLabIds;
+			});
+		} else if (data.lending?.laboratoriumId && selectedLabIds.length === 0) {
+			const labId = data.lending.laboratoriumId;
+			untrack(() => {
+				selectedLabIds = [labId];
 			});
 		}
 	});
@@ -210,7 +221,7 @@
 	}
 </script>
 
-<div class="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+<div class="mx-auto flex max-w-7xl flex-col gap-6 p-6">
 	<Button href="/admin/peminjaman" variant="outline" class="-mb-2 flex w-fit md:hidden" size="sm">
 		<ChevronLeft class="size-5" /> Kembali
 	</Button>
@@ -229,6 +240,11 @@
 		action="?/editMandiri"
 		enctype="multipart/form-data"
 		use:enhance={({ cancel }) => {
+			if (selectedLabIds.length === 0 || !selectedLabIds[0]) {
+				showErrorNotification('Pilih laboratorium terlebih dahulu');
+				cancel();
+				return;
+			}
 			if (selectedItems.length === 0) {
 				showErrorNotification('Pilih minimal satu alat');
 				cancel();
@@ -257,10 +273,11 @@
 		}}
 		class="grid gap-6 md:grid-cols-2"
 	>
+		<input type="hidden" name="laboratoriumId" value={selectedLabIds[0] || ''} />
 		<!-- Left Column: Daftar Alat -->
 		<div class="flex flex-col gap-6">
 			<Card.Root>
-				<Card.Header>
+				<Card.Header class="border-b">
 					<Card.Title>Daftar Alat</Card.Title>
 					<Card.Description>Pilih alat yang ingin Anda ajukan untuk dipinjam</Card.Description>
 				</Card.Header>
@@ -390,7 +407,7 @@
 		<!-- Right Column: Detail Form -->
 		<div class="flex flex-col gap-6">
 			<Card.Root>
-				<Card.Header class="hidden sm:block">
+				<Card.Header class="hidden border-b sm:block">
 					<Card.Title>Detail Pengajuan</Card.Title>
 					<Card.Description>Isi detail informasi peminjaman Anda</Card.Description>
 				</Card.Header>

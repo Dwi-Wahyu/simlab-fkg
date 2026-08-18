@@ -28,6 +28,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { cn } from '$lib/utils';
 	import { toast } from '$lib/components/toast';
+	import { formatLendingPurpose, getLendingStatusInfo } from '$lib/utils/peminjaman';
 
 	let { data } = $props();
 
@@ -446,8 +447,8 @@
 							<div class="space-y-1">
 								<Label>Keperluan</Label>
 								<div class="mt-1 flex items-center gap-2">
-									<Badge variant="secondary" class="text-[10px] uppercase">
-										{data.lending.purpose.replace('_', ' ')}
+									<Badge variant="secondary" class="text-[10px]">
+										{formatLendingPurpose(data.lending.purpose)}
 									</Badge>
 								</div>
 							</div>

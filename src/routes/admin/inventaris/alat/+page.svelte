@@ -233,7 +233,7 @@
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex flex-col gap-2">
+		<div>
 			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Inventaris Alat</h1>
 			<p class="text-slate-500">Manajemen aset dan peralatan laboratorium.</p>
 		</div>
@@ -361,7 +361,7 @@
 							</Button>
 						{/snippet}
 					</Dialog.Trigger>
-					<Dialog.Content class="sm:max-w-[425px]">
+					<Dialog.Content class="sm:max-w-106.25">
 						<Dialog.Header>
 							<Dialog.Title>Filter Inventaris Alat</Dialog.Title>
 							<Dialog.Description>

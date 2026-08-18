@@ -127,6 +127,13 @@
       "when": 1786342925168,
       "tag": "0017_orange_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1787000749296,
+      "tag": "0018_pale_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

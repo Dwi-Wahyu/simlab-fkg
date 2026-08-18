@@ -20,11 +20,28 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
+	import * as Accordion from '$lib/components/ui/accordion';
 	import { cn } from '$lib/utils.js';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 
-	let { data } = $props();
+	import {
+		formatLendingPurpose,
+		formatLendingStatus,
+		getLendingStatusInfo,
+		STATUS_OPTIONS
+	} from '$lib/utils/peminjaman';
+
+	let {
+		data
+	}: {
+		data: {
+			user: any;
+			notifications: any[];
+			unreadCount: number;
+			lendingsPromise: Promise<any[]>;
+		};
+	} = $props();
 
 	const formatDate = (date: Date | string) => {
 		return new Date(date).toLocaleString('id-ID', {
@@ -34,235 +51,81 @@
 		});
 	};
 
-	function formatPurpose(p: string): string {
-		if (p === 'PENELITIAN_MAHASISWA') return 'Penelitian / Skripsi Mahasiswa';
-		if (p === 'LOMBA') return 'Lomba / Kompetisi';
-		if (p === 'ORGANISASI_MAHASISWA') return 'Kegiatan Organisasi Mahasiswa';
-		if (p === 'PRAKTIKUM') return 'Praktikum';
-		if (p === 'PENELITIAN_DOSEN') return 'Penelitian Dosen';
-		if (p === 'PENGABDIAN_MASYARAKAT') return 'Pengabdian Masyarakat';
-		return p ? p.replace(/_/g, ' ') : '';
-	}
-
-	function mapRole(role: string | null | undefined): string {
-		if (!role) return '';
-		const lower = role.toLowerCase();
-		if (lower === 'dosen') return 'Dosen';
-		if (lower === 'mahasiswa') return 'Mahasiswa';
-		return role.charAt(0).toUpperCase() + role.slice(1);
-	}
-
-	// --- ADMIN STATE & LOGIC ---
 	let activeTab = $state($page.url.searchParams.get('status') || 'semua');
 	let search = $state($page.url.searchParams.get('q') || '');
 	let expandedLendingsAdmin = $state<Record<string, boolean>>({});
+	let expandedLendingsStudent = $state<Record<string, boolean>>({});
 
 	$effect(() => {
-		if (data.user.role !== 'mahasiswa' && data.user.role !== 'dosen') {
-			const url = new URL(window.location.href);
-			let changed = false;
-			if (activeTab && activeTab !== 'semua') {
-				if (url.searchParams.get('status') !== activeTab) {
-					url.searchParams.set('status', activeTab);
-					changed = true;
-				}
-			} else if (url.searchParams.has('status')) {
-				url.searchParams.delete('status');
+		const url = new URL(window.location.href);
+		let changed = false;
+		if (activeTab && activeTab !== 'semua') {
+			if (url.searchParams.get('status') !== activeTab) {
+				url.searchParams.set('status', activeTab);
 				changed = true;
 			}
+		} else if (url.searchParams.has('status')) {
+			url.searchParams.delete('status');
+			changed = true;
+		}
 
-			if (search) {
-				if (url.searchParams.get('q') !== search) {
-					url.searchParams.set('q', search);
-					changed = true;
-				}
-			} else if (url.searchParams.has('q')) {
-				url.searchParams.delete('q');
+		if (search) {
+			if (url.searchParams.get('q') !== search) {
+				url.searchParams.set('q', search);
 				changed = true;
 			}
+		} else if (url.searchParams.has('q')) {
+			url.searchParams.delete('q');
+			changed = true;
+		}
 
-			if (changed) {
-				goto(url, { replaceState: true, keepFocus: true, noScroll: true });
-			}
+		if (changed) {
+			goto(url, { replaceState: true, keepFocus: true, noScroll: true });
 		}
 	});
 
-	const filteredLendings = $derived(
-		data.lendings?.filter((l: any) => {
-			const matchesSearch =
-				(l.requestedByUser?.name?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-				(l.laboratorium?.name?.toLowerCase().includes(search.toLowerCase()) ?? false);
-
-			if (!matchesSearch) return false;
-
-			if (activeTab === 'dipinjam') return l.status === 'DIPINJAM';
-			if (activeTab === 'menunggu') return l.status === 'APPROVED';
-			if (activeTab === 'selesai') return l.status === 'RETURNED' || l.status === 'REJECTED';
-
-			return true;
-		}) ?? []
+	const selectedStatusLabel = $derived(
+		STATUS_OPTIONS.find((c) => c.value === activeTab)?.label ?? 'Semua Status'
 	);
 
-	const getStatusInfo = (status: string | null) => {
-		switch (status) {
-			case 'APPROVED':
-				return {
-					label: 'Disetujui',
-					class: 'bg-blue-100 text-blue-800 border-blue-200'
-				};
-			case 'DIPINJAM':
-				return {
-					label: 'Sedang Dipinjam',
-					class: 'bg-orange-100 text-orange-800 border-orange-200'
-				};
-			case 'RETURNED':
-				return {
-					label: 'Dikembalikan',
-					class: 'bg-green-100 text-green-800 border-green-200'
-				};
-			case 'REJECTED':
-				return {
-					label: 'Ditolak',
-					class: 'bg-red-100 text-red-800 border-red-200'
-				};
-			default:
-				return {
-					label: status || 'Unknown',
-					class: 'bg-gray-100 text-gray-800 border-gray-200'
-				};
-		}
-	};
+	function filterAdminLendings(lendings: any[]) {
+		return (
+			lendings.filter((l: any) => {
+				const matchesSearch =
+					(l.requestedByUser?.name?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+					(l.laboratorium?.name?.toLowerCase().includes(search.toLowerCase()) ?? false);
 
-	// --- MAHASISWA LAZY LOAD STATE & LOGIC ---
-	let studentLendings = $state<any[]>([]);
-	let isLoading = $state(true);
-	let error = $state<string | null>(null);
-	let expandedLendingsStudent = $state<Record<string, boolean>>({});
-	let studentSearch = $state($page.url.searchParams.get('q') || '');
-	let studentActiveTab = $state($page.url.searchParams.get('status') || 'semua');
+				if (!matchesSearch) return false;
 
-	$effect(() => {
-		if (data.user.role === 'mahasiswa' || data.user.role === 'dosen') {
-			const url = new URL(window.location.href);
-			let changed = false;
-			if (studentActiveTab && studentActiveTab !== 'semua') {
-				if (url.searchParams.get('status') !== studentActiveTab) {
-					url.searchParams.set('status', studentActiveTab);
-					changed = true;
-				}
-			} else if (url.searchParams.has('status')) {
-				url.searchParams.delete('status');
-				changed = true;
-			}
+				if (activeTab === 'dipinjam') return l.status === 'DIPINJAM';
+				if (activeTab === 'menunggu') return l.status === 'APPROVED';
+				if (activeTab === 'selesai') return l.status === 'RETURNED' || l.status === 'REJECTED';
 
-			if (studentSearch) {
-				if (url.searchParams.get('q') !== studentSearch) {
-					url.searchParams.set('q', studentSearch);
-					changed = true;
-				}
-			} else if (url.searchParams.has('q')) {
-				url.searchParams.delete('q');
-				changed = true;
-			}
-
-			if (changed) {
-				goto(url, { replaceState: true, keepFocus: true, noScroll: true });
-			}
-		}
-	});
-
-	// Fetch data on mount if student
-	$effect(() => {
-		if (data.user.role === 'mahasiswa') {
-			fetchStudentLendings();
-		} else {
-			isLoading = false;
-		}
-	});
-
-	async function fetchStudentLendings() {
-		try {
-			isLoading = true;
-			error = null;
-			const res = await fetch('/api/admin/peminjaman');
-			if (!res.ok) throw new Error('Gagal memuat data peminjaman');
-			const json = await res.json();
-			studentLendings = json.lendings || [];
-		} catch (err: any) {
-			error = err.message || 'Terjadi kesalahan saat memuat data';
-		} finally {
-			isLoading = false;
-		}
+				return true;
+			}) ?? []
+		);
 	}
 
-	const statusOptions = [
-		{ value: 'semua', label: 'Semua Status' },
-		{ value: 'dipinjam', label: 'Sedang Dipinjam' },
-		{ value: 'menunggu', label: 'Menunggu / Disetujui' },
-		{ value: 'selesai', label: 'Selesai / Ditolak' }
-	];
+	function filterStudentLendings(lendings: any[]) {
+		return (
+			lendings.filter((l: any) => {
+				const matchesSearch =
+					(l.laboratorium?.name?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+					(l.purpose?.toLowerCase().includes(search.toLowerCase()) ?? false);
 
-	const adminSelectedStatus = $derived(
-		statusOptions.find((c) => c.value === activeTab)?.label ?? 'Semua Status'
-	);
+				if (!matchesSearch) return false;
 
-	const studentSelectedStatus = $derived(
-		statusOptions.find((c) => c.value === studentActiveTab)?.label ?? 'Semua Status'
-	);
+				if (activeTab === 'dipinjam') return l.status === 'DIPINJAM';
+				if (activeTab === 'menunggu') return l.status === 'APPROVED' || l.status === 'DRAFT';
+				if (activeTab === 'selesai') return l.status === 'RETURNED' || l.status === 'REJECTED';
 
-	const studentFilteredLendings = $derived(
-		studentLendings.filter((l) => {
-			const matchesSearch =
-				(l.laboratorium?.name?.toLowerCase().includes(studentSearch.toLowerCase()) ?? false) ||
-				(l.purpose?.toLowerCase().includes(studentSearch.toLowerCase()) ?? false);
-
-			if (!matchesSearch) return false;
-
-			if (studentActiveTab === 'dipinjam') return l.status === 'DIPINJAM';
-			if (studentActiveTab === 'menunggu') return l.status === 'APPROVED' || l.status === 'DRAFT';
-			if (studentActiveTab === 'selesai') return l.status === 'RETURNED' || l.status === 'REJECTED';
-
-			return true;
-		})
-	);
-
-	const getStudentStatusInfo = (status: string | null) => {
-		switch (status) {
-			case 'DRAFT':
-				return {
-					label: 'Menunggu',
-					class: 'bg-yellow-100 text-yellow-800 border-yellow-200'
-				};
-			case 'APPROVED':
-				return {
-					label: 'Disetujui',
-					class: 'bg-blue-100 text-blue-800 border-blue-200'
-				};
-			case 'DIPINJAM':
-				return {
-					label: 'Sedang Dipinjam',
-					class: 'bg-orange-100 text-orange-800 border-orange-200'
-				};
-			case 'RETURNED':
-				return {
-					label: 'Selesai',
-					class: 'bg-green-100 text-green-800 border-green-200'
-				};
-			case 'REJECTED':
-				return {
-					label: 'Ditolak',
-					class: 'bg-red-100 text-red-800 border-red-200'
-				};
-			default:
-				return {
-					label: status || 'Unknown',
-					class: 'bg-gray-100 text-gray-800 border-gray-200'
-				};
-		}
-	};
+				return true;
+			}) ?? []
+		);
+	}
 </script>
 
-{#if data.user.role === 'mahasiswa' || data.user.role === 'dosen'}
+{#if data.user?.role === 'mahasiswa' || data.user?.role === 'dosen'}
 	<div class="mx-auto max-w-7xl space-y-8 p-4 sm:p-6">
 		<!-- Header -->
 		<div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
@@ -279,189 +142,145 @@
 			</Button>
 		</div>
 
-		<!-- Summary Cards -->
-		<div class="grid gap-4 md:grid-cols-3">
-			<Card.Root>
-				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-sm font-medium">Total Pengajuan</Card.Title>
-					<Calendar class="size-4 text-muted-foreground" />
-				</Card.Header>
-				<Card.Content>
-					{#if isLoading}
-						<div class="h-8 w-16 animate-pulse rounded bg-slate-200"></div>
-					{:else}
-						<div class="text-2xl font-bold">{studentLendings.length}</div>
-					{/if}
-				</Card.Content>
-			</Card.Root>
-			<Card.Root>
-				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-sm font-medium">Sedang Dipinjam</Card.Title>
-					<Microscope class="size-4 text-orange-600" />
-				</Card.Header>
-				<Card.Content>
-					{#if isLoading}
-						<div class="h-8 w-16 animate-pulse rounded bg-slate-200"></div>
-					{:else}
-						<div class="text-2xl font-bold">
-							{studentLendings.filter((l) => l.status === 'DIPINJAM').length}
-						</div>
-					{/if}
-				</Card.Content>
-			</Card.Root>
-			<Card.Root>
-				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-sm font-medium">Menunggu / Disetujui</Card.Title>
-					<Clock class="size-4 text-blue-600" />
-				</Card.Header>
-				<Card.Content>
-					{#if isLoading}
-						<div class="h-8 w-16 animate-pulse rounded bg-slate-200"></div>
-					{:else}
-						<div class="text-2xl font-bold">
-							{studentLendings.filter((l) => l.status === 'APPROVED' || l.status === 'DRAFT')
-								.length}
-						</div>
-					{/if}
-				</Card.Content>
-			</Card.Root>
-		</div>
+		{#await data.lendingsPromise}
+			<!-- Summary Cards Loading Skeleton -->
+			<div class="grid gap-4 md:grid-cols-3">
+				{#each Array(3) as _}
+					<Card.Root>
+						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+							<div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
+							<div class="h-4 w-4 animate-pulse rounded bg-slate-200"></div>
+						</Card.Header>
+						<Card.Content>
+							<div class="h-8 w-16 animate-pulse rounded bg-slate-200"></div>
+						</Card.Content>
+					</Card.Root>
+				{/each}
+			</div>
 
-		<!-- Main Table Card -->
-		<Card.Root mobileAware={true}>
-			<Card.Header>
-				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div class="space-y-1.5">
-						<Card.Title>Riwayat Peminjaman</Card.Title>
+			<!-- Main Table Card Skeleton -->
+			<Card.Root mobileAware={true}>
+				<Card.Header>
+					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+						<div class="h-6 w-36 animate-pulse rounded bg-slate-200"></div>
+						<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+							<div class="h-9 w-full animate-pulse rounded bg-slate-200 sm:w-64"></div>
+							<div class="h-9 w-full animate-pulse rounded bg-slate-200 sm:w-48"></div>
+						</div>
 					</div>
+				</Card.Header>
+				<Card.Content>
+					<div class="space-y-4">
+						{#each Array(4) as _}
+							<div class="h-12 w-full animate-pulse rounded bg-slate-100"></div>
+						{/each}
+					</div>
+				</Card.Content>
+			</Card.Root>
+		{:then lendings}
+			{@const filteredList = filterStudentLendings(lendings)}
 
-					<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-						<div class="relative w-full sm:w-64">
-							<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
-							<Input
-								placeholder="Cari lab atau tujuan..."
-								bind:value={studentSearch}
-								class="w-full pl-9"
-							/>
+			<!-- Summary Cards -->
+			<div class="grid gap-4 md:grid-cols-3">
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+						<Card.Title class="text-sm font-medium">Total Pengajuan</Card.Title>
+						<Calendar class="size-4 text-muted-foreground" />
+					</Card.Header>
+					<Card.Content>
+						<div class="text-2xl font-bold">{lendings.length}</div>
+					</Card.Content>
+				</Card.Root>
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+						<Card.Title class="text-sm font-medium">Sedang Dipinjam</Card.Title>
+						<Microscope class="size-4 text-orange-600" />
+					</Card.Header>
+					<Card.Content>
+						<div class="text-2xl font-bold">
+							{lendings.filter((l: any) => l.status === 'DIPINJAM').length}
 						</div>
-						<div class="w-full sm:w-48">
-							<Select.Root type="single" bind:value={studentActiveTab}>
-								<Select.Trigger class="w-full">
-									{studentSelectedStatus}
-								</Select.Trigger>
-								<Select.Content>
-									{#each statusOptions as option}
-										<Select.Item value={option.value} label={option.label}>
-											{option.label}
-										</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
+					</Card.Content>
+				</Card.Root>
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+						<Card.Title class="text-sm font-medium">Menunggu / Disetujui</Card.Title>
+						<Clock class="size-4 text-blue-600" />
+					</Card.Header>
+					<Card.Content>
+						<div class="text-2xl font-bold">
+							{lendings.filter((l: any) => l.status === 'APPROVED' || l.status === 'DRAFT').length}
 						</div>
+					</Card.Content>
+				</Card.Root>
+			</div>
+
+			<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+				<div class="space-y-1.5">
+					<Card.Title>Riwayat Peminjaman</Card.Title>
+				</div>
+
+				<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+					<div class="relative w-full sm:w-64">
+						<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
+						<Input placeholder="Cari lab atau tujuan..." bind:value={search} class="w-full pl-9" />
+					</div>
+					<div class="w-full sm:w-48">
+						<Select.Root type="single" bind:value={activeTab}>
+							<Select.Trigger class="w-full">
+								{selectedStatusLabel}
+							</Select.Trigger>
+							<Select.Content>
+								{#each STATUS_OPTIONS as option}
+									<Select.Item value={option.value} label={option.label}>
+										{option.label}
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
 					</div>
 				</div>
-			</Card.Header>
-			<Card.Content>
-				{#if error}
-					<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-800">
-						{error}
-					</div>
-				{:else}
-					<div class="overflow-x-auto">
-						<Table.Root class="block md:table">
-							<Table.Header class="hidden md:table-header-group">
-								<Table.Row class="md:table-row">
-									<Table.Head>Tujuan</Table.Head>
-									<Table.Head>Tanggal Pinjam</Table.Head>
-									<Table.Head>Batas Kembali</Table.Head>
-									<Table.Head class="hidden text-center md:table-cell">Status</Table.Head>
-									<Table.Head class="pr-6 text-right">Aksi</Table.Head>
-								</Table.Row>
-							</Table.Header>
-							<Table.Body class="block md:table-row-group">
-								{#if isLoading}
-									{#each Array(3) as _}
-										<Table.Row class="flex animate-pulse flex-col border-b md:table-row">
-											<Table.Cell class="p-4 ">
-												<div class="h-4 w-32 rounded bg-slate-200"></div>
-											</Table.Cell>
-											<Table.Cell class="p-4 ">
-												<div class="h-4 w-24 rounded bg-slate-200"></div>
-											</Table.Cell>
-											<Table.Cell class="p-4 ">
-												<div class="h-4 w-24 rounded bg-slate-200"></div>
-											</Table.Cell>
-											<Table.Cell class="p-4 text-center ">
-												<div class="mx-auto h-6 w-16 rounded-full bg-slate-200"></div>
-											</Table.Cell>
-											<Table.Cell class="p-4 text-right ">
-												<div class="ml-auto h-8 w-12 rounded bg-slate-200"></div>
-											</Table.Cell>
-										</Table.Row>
-									{/each}
-								{:else}
-									{#each studentFilteredLendings as lending (lending.id)}
-										{@const statusInfo = getStudentStatusInfo(lending.status)}
-										<Table.Row
-											class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
-										>
-											<!-- Column 1: Tujuan + mobile status badge + expand chevron -->
-											<Table.Cell
-												class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b "
-											>
-												<div class="flex flex-col">
-													<div class="flex items-center gap-2">
-														<span class="font-bold text-slate-900 md:font-medium">
-															{formatPurpose(lending.purpose)}
-														</span>
-														<Badge
-															variant="outline"
-															class={cn('px-1.5 py-0.5 text-[9px] md:hidden', statusInfo.class)}
-														>
-															{statusInfo.label}
-														</Badge>
-													</div>
-												</div>
-												<Button
-													variant="ghost"
-													size="icon"
-													class="ml-4 h-8 w-8 shrink-0 md:hidden"
-													onclick={() =>
-														(expandedLendingsStudent[lending.id] =
-															!expandedLendingsStudent[lending.id])}
-													aria-label="Expand row"
+			</div>
+
+			<!-- Main Table Card -->
+			<Card.Root mobileAware={true}>
+				<Card.Content>
+					<div class="overflow-hidden">
+						<!-- Desktop View: Table -->
+						<div class="hidden md:block">
+							<Table.Root>
+								<Table.Header>
+									<Table.Row>
+										<Table.Head>Unit</Table.Head>
+										<Table.Head>Tujuan</Table.Head>
+										<Table.Head>Tanggal Pinjam</Table.Head>
+										<Table.Head class="text-center">Status</Table.Head>
+										<Table.Head class="pr-6 text-right">Aksi</Table.Head>
+									</Table.Row>
+								</Table.Header>
+								<Table.Body>
+									{#each filteredList as lending (lending.id)}
+										{@const statusInfo = getLendingStatusInfo(lending.status)}
+										<Table.Row class="group border-b transition-colors hover:bg-slate-50/50">
+											<Table.Cell class="pl-2">{lending.unit}</Table.Cell>
+											<Table.Cell class="whitespace-normal">
+												<span class="font-medium text-slate-900"
+													>{formatLendingPurpose(lending.purpose)}</span
 												>
-													{#if expandedLendingsStudent[lending.id]}
-														<ChevronUp class="h-4 w-4" />
-													{:else}
-														<ChevronDown class="h-4 w-4" />
-													{/if}
-												</Button>
 											</Table.Cell>
-
-											<!-- Column 2: Tanggal Pinjam -->
-											<Table.Cell class="hidden md:table-cell md:border-b  md:pl-2">
+											<Table.Cell>
 												<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
-											</Table.Cell>
-
-											<!-- Column 3: Batas Kembali -->
-											<Table.Cell class="hidden md:table-cell md:border-b  md:pl-2">
+												-
 												<span class="text-sm text-slate-600"
 													>{lending.endDate ? formatDate(lending.endDate) : '-'}</span
 												>
 											</Table.Cell>
-
-											<!-- Column 4: Status (desktop only) -->
-											<Table.Cell class="hidden text-center md:table-cell md:border-b ">
+											<Table.Cell class="text-center">
 												<Badge variant="outline" class={cn('mx-auto', statusInfo.class)}>
 													{statusInfo.label}
 												</Badge>
 											</Table.Cell>
-
-											<!-- Column 5: Aksi -->
-											<Table.Cell
-												class="justify-end border-b-0 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right"
-											>
+											<Table.Cell class="pr-4 text-right">
 												<div class="flex items-center justify-end gap-2">
 													{#if lending.status === 'DRAFT'}
 														<Button
@@ -473,14 +292,12 @@
 															<Edit class="size-4" /> Edit
 														</Button>
 													{/if}
-
 													<Button
 														variant="ghost"
 														size="icon"
 														onclick={() =>
 															(expandedLendingsStudent[lending.id] =
 																!expandedLendingsStudent[lending.id])}
-														class="inline-flex md:hidden"
 														aria-label="Toggle detail"
 													>
 														{#if expandedLendingsStudent[lending.id]}
@@ -493,15 +310,13 @@
 											</Table.Cell>
 										</Table.Row>
 
-										<!-- Collapsible details row for Student (both desktop & mobile) -->
 										{#if expandedLendingsStudent[lending.id]}
 											<Table.Row class="bg-slate-50/30">
-												<Table.Cell colspan={5} class="border-b p-4 md:p-6">
+												<Table.Cell colspan={5} class="border-b p-6">
 													<div
 														class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300"
 													>
 														<div class="grid gap-6 md:grid-cols-2">
-															<!-- Left column: Metadata -->
 															<div class="space-y-4">
 																<h4
 																	class="flex items-center gap-2 text-sm font-bold text-slate-800"
@@ -516,10 +331,9 @@
 																			>Tujuan Peminjaman</span
 																		>
 																		<span class="mt-0.5 font-semibold text-slate-950"
-																			>{formatPurpose(lending.purpose)}</span
+																			>{formatLendingPurpose(lending.purpose)}</span
 																		>
 																	</div>
-
 																	<div class="flex flex-col">
 																		<span
 																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
@@ -527,7 +341,6 @@
 																		>
 																		<span class="mt-0.5 text-slate-900">{lending.unit}</span>
 																	</div>
-
 																	<div class="flex flex-col">
 																		<span
 																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
@@ -538,7 +351,6 @@
 																			{formatDate(lending.startDate)}
 																		</span>
 																	</div>
-
 																	<div class="flex flex-col">
 																		<span
 																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
@@ -549,7 +361,6 @@
 																			{lending.endDate ? formatDate(lending.endDate) : '-'}
 																		</span>
 																	</div>
-
 																	<div class="flex flex-col">
 																		<span
 																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
@@ -559,7 +370,6 @@
 																			>{lending.nomorSurat || '-'}</span
 																		>
 																	</div>
-
 																	<div class="flex flex-col">
 																		<span
 																			class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
@@ -597,7 +407,6 @@
 																{/if}
 															</div>
 
-															<!-- Right column: Items -->
 															<div class="space-y-4">
 																<h4
 																	class="flex items-center gap-2 text-sm font-bold text-slate-800"
@@ -613,7 +422,7 @@
 																			<tr>
 																				<th class="px-4 py-2">Nama Alat</th>
 																				<th class="px-4 py-2 text-center">Jumlah</th>
-																				<th class="px-4 py-2 text-right">Status</th>
+																				<!-- <th class="px-4 py-2 text-right">Status</th> -->
 																			</tr>
 																		</thead>
 																		<tbody
@@ -630,31 +439,23 @@
 																						class="px-4 py-2.5 text-center font-bold text-slate-900"
 																						>{item.qty} pcs</td
 																					>
-																					<td class="px-4 py-2.5 text-right">
+																					<!-- <td class="px-4 py-2.5 text-right">
 																						{#if item.returnStatus}
-																							<span
-																								class={cn(
-																									'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold',
-																									item.returnStatus === 'BAIK'
-																										? 'border-emerald-100 bg-emerald-50 text-emerald-700'
-																										: 'border-red-100 bg-red-50 text-red-700'
-																								)}
-																							>
+																							<span class={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold', item.returnStatus === 'BAIK' ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-red-100 bg-red-50 text-red-700')}>
 																								{item.returnStatus}
 																							</span>
 																						{:else}
 																							<span class="text-slate-400 italic">Dipinjam</span>
 																						{/if}
-																					</td>
+																					</td> -->
 																				</tr>
 																			{:else}
 																				<tr>
 																					<td
 																						colspan={3}
 																						class="px-4 py-3 text-center text-slate-400"
+																						>Tidak ada rincian alat</td
 																					>
-																						Tidak ada rincian alat
-																					</td>
 																				</tr>
 																			{/each}
 																		</tbody>
@@ -667,22 +468,180 @@
 											</Table.Row>
 										{/if}
 									{:else}
-										<Table.Row class="flex flex-col md:table-row">
-											<Table.Cell
-												colspan={6}
-												class="py-10 text-center text-muted-foreground md:table-cell"
-											>
+										<Table.Row>
+											<Table.Cell colspan={5} class="py-10 text-center text-muted-foreground">
 												Tidak ada data peminjaman ditemukan.
 											</Table.Cell>
 										</Table.Row>
 									{/each}
-								{/if}
-							</Table.Body>
-						</Table.Root>
+								</Table.Body>
+							</Table.Root>
+						</div>
+
+						<!-- Mobile View: Accordion -->
+						<div class="block md:hidden">
+							{#if filteredList.length === 0}
+								<div class="py-10 text-center text-muted-foreground">
+									Tidak ada data peminjaman ditemukan.
+								</div>
+							{:else}
+								<Accordion.Root type="multiple" class="w-full">
+									{#each filteredList as lending (lending.id)}
+										{@const statusInfo = getLendingStatusInfo(lending.status)}
+										<Accordion.Item value={lending.id}>
+											<Accordion.Trigger
+												class="px-4 py-3 transition-colors hover:bg-slate-50/50 hover:no-underline"
+											>
+												<div class="flex w-full flex-col items-start gap-1.5 text-left">
+													<div class="flex w-full items-center justify-between gap-2">
+														<span class="font-bold text-slate-900"
+															>{formatLendingPurpose(lending.purpose)}</span
+														>
+														<Badge
+															variant="outline"
+															class={cn('shrink-0 px-1.5 py-0.5 text-[10px]', statusInfo.class)}
+														>
+															{statusInfo.label}
+														</Badge>
+													</div>
+													<div class="flex flex-col gap-0.5 text-xs text-slate-500">
+														<span class="font-medium text-slate-700">{lending.unit}</span>
+														<span
+															>{formatDate(lending.startDate)} - {lending.endDate
+																? formatDate(lending.endDate)
+																: '...'}</span
+														>
+													</div>
+												</div>
+											</Accordion.Trigger>
+											<Accordion.Content class="px-4 pb-4">
+												<div class="space-y-4 pt-2">
+													<div class="space-y-3 text-sm">
+														<div class="flex flex-col">
+															<span
+																class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																>Nomor Surat</span
+															>
+															<span class="mt-0.5 text-slate-900">{lending.nomorSurat || '-'}</span>
+														</div>
+														<div class="flex flex-col">
+															<span
+																class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+																>Surat Pengajuan</span
+															>
+															{#if lending.surat}
+																<a
+																	href="/uploads/letter/{lending.surat}"
+																	target="_blank"
+																	class="mt-0.5 flex w-fit items-center gap-1 font-semibold text-[#006a34] hover:underline"
+																>
+																	<FileText class="size-3.5" />
+																	Lihat Surat
+																</a>
+															{:else}
+																<span class="mt-0.5 text-slate-400">-</span>
+															{/if}
+														</div>
+													</div>
+
+													{#if lending.status === 'REJECTED' && lending.rejectedReason}
+														<div class="rounded-lg border border-red-100 bg-red-50 p-3">
+															<div class="flex gap-2">
+																<AlertTriangle class="size-4 shrink-0 text-red-600" />
+																<div>
+																	<h5 class="text-xs font-bold text-red-800">Alasan Penolakan</h5>
+																	<p class="mt-0.5 text-xs text-red-700 italic">
+																		"{lending.rejectedReason}"
+																	</p>
+																</div>
+															</div>
+														</div>
+													{/if}
+
+													<div class="space-y-2">
+														<h4 class="flex items-center gap-2 text-xs font-bold text-slate-800">
+															<Microscope class="size-3.5 text-emerald-600" />
+															Alat yang Dipinjam
+														</h4>
+														<div class="overflow-hidden rounded-md border border-slate-200">
+															<table class="w-full text-left text-xs">
+																<thead
+																	class="bg-slate-50 font-bold tracking-wider text-slate-600 uppercase"
+																>
+																	<tr>
+																		<th class="px-2 py-2">Alat</th>
+																		<th class="px-2 py-2 text-center">Jml</th>
+																		<!-- <th class="px-2 py-2 text-right">Status</th> -->
+																	</tr>
+																</thead>
+																<tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+																	{#each lending.items as item (item.id)}
+																		<tr>
+																			<td class="px-2 py-2 font-medium"
+																				>{item.equipment?.item?.name ||
+																					item.requestedItem?.name ||
+																					'Alat tidak diketahui'}</td
+																			>
+																			<td class="px-2 py-2 text-center font-bold text-slate-900"
+																				>{item.qty}</td
+																			>
+																			<!-- <td class="px-2 py-2 text-right">
+																				{#if item.returnStatus}
+																					<span
+																						class={cn(
+																							'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold',
+																							item.returnStatus === 'BAIK'
+																								? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+																								: 'border-red-100 bg-red-50 text-red-700'
+																						)}
+																					>
+																						{item.returnStatus}
+																					</span>
+																				{:else}
+																					<span class="text-slate-400 italic">Dipinjam</span>
+																				{/if}
+																			</td> -->
+																		</tr>
+																	{:else}
+																		<tr>
+																			<td colspan={3} class="px-2 py-2 text-center text-slate-400"
+																				>Tidak ada rincian alat</td
+																			>
+																		</tr>
+																	{/each}
+																</tbody>
+															</table>
+														</div>
+													</div>
+
+													{#if lending.status === 'DRAFT'}
+														<div class="pt-2">
+															<Button
+																variant="outline"
+																size="sm"
+																href="/admin/peminjaman/{lending.id}/edit-mandiri"
+																class="w-full gap-1 border-[#006a34] text-[#006a34] hover:bg-[#006a34]/10"
+															>
+																<Edit class="size-4" /> Edit Peminjaman
+															</Button>
+														</div>
+													{/if}
+												</div>
+											</Accordion.Content>
+										</Accordion.Item>
+									{/each}
+								</Accordion.Root>
+							{/if}
+						</div>
 					</div>
-				{/if}
-			</Card.Content>
-		</Card.Root>
+				</Card.Content>
+			</Card.Root>
+		{:catch err}
+			<div class="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-800">
+				<p class="font-medium">Gagal memuat data peminjaman.</p>
+				<p class="mt-1 text-xs text-red-600">{err?.message || 'Terjadi kesalahan pada server.'}</p>
+			</div>
+		{/await}
 	</div>
 {:else}
 	<div class="mx-auto max-w-7xl space-y-8 p-4 sm:p-6">
@@ -697,193 +656,251 @@
 					<FileDown class="size-4" />
 					Export
 				</Button>
-				<Button href="/admin/peminjaman/baru" class="w-full gap-2  sm:w-fit">
+				<Button href="/admin/peminjaman/baru" class="w-full gap-2 sm:w-fit">
 					<Plus class="size-4" />
 					Peminjaman Baru
 				</Button>
 			</div>
 		</div>
 
-		<!-- Summary Cards -->
-		<div class="grid gap-4 md:grid-cols-3">
-			<Card.Root>
-				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-sm font-medium">Total Peminjaman</Card.Title>
-					<Calendar class="size-4 text-muted-foreground" />
-				</Card.Header>
-				<Card.Content>
-					<div class="text-2xl font-bold">{data.lendings.length}</div>
-				</Card.Content>
-			</Card.Root>
-			<Card.Root>
-				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-sm font-medium">Sedang Dipinjam</Card.Title>
-					<Microscope class="size-4 text-orange-600" />
-				</Card.Header>
-				<Card.Content>
-					<div class="text-2xl font-bold">
-						{data.lendings.filter((l: any) => l.status === 'DIPINJAM').length}
-					</div>
-				</Card.Content>
-			</Card.Root>
-			<Card.Root>
-				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-sm font-medium">Menunggu Pengembalian</Card.Title>
-					<User class="size-4 text-blue-600" />
-				</Card.Header>
-				<Card.Content>
-					<div class="text-2xl font-bold">
-						{data.lendings.filter((l: any) => l.status === 'APPROVED').length}
-					</div>
-				</Card.Content>
-			</Card.Root>
-		</div>
-
-		<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-			<div class="relative w-full sm:w-64">
-				<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
-				<Input placeholder="Cari peminjam..." bind:value={search} class="w-full pl-9" />
+		{#await data.lendingsPromise}
+			<!-- Summary Cards Skeleton -->
+			<div class="grid gap-4 md:grid-cols-3">
+				{#each Array(3) as _}
+					<Card.Root>
+						<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+							<div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
+							<div class="h-4 w-4 animate-pulse rounded bg-slate-200"></div>
+						</Card.Header>
+						<Card.Content>
+							<div class="h-8 w-16 animate-pulse rounded bg-slate-200"></div>
+						</Card.Content>
+					</Card.Root>
+				{/each}
 			</div>
-			<div class="w-full sm:w-48">
-				<Select.Root type="single" bind:value={activeTab}>
-					<Select.Trigger class="w-full">
-						{adminSelectedStatus}
-					</Select.Trigger>
-					<Select.Content>
-						{#each statusOptions as option}
-							<Select.Item value={option.value} label={option.label}>
-								{option.label}
-							</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+
+			<!-- Filter Controls Skeleton -->
+			<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+				<div class="h-9 w-full animate-pulse rounded bg-slate-200 sm:w-64"></div>
+				<div class="h-9 w-full animate-pulse rounded bg-slate-200 sm:w-48"></div>
 			</div>
-		</div>
 
-		<!-- Main Table Card -->
+			<!-- Table Skeleton -->
+			<div class="space-y-3 rounded-md border bg-white p-4 shadow-sm">
+				{#each Array(5) as _}
+					<div class="h-12 w-full animate-pulse rounded bg-slate-100"></div>
+				{/each}
+			</div>
+		{:then lendings}
+			{@const filteredList = filterAdminLendings(lendings)}
 
-		<div class="rounded-md border bg-white shadow-sm">
-			<Table.Root class="block md:table">
-				<Table.Header class="hidden md:table-header-group">
-					<Table.Row class="md:table-row">
-						<Table.Head class="px-6 py-4">Peminjam</Table.Head>
-						<Table.Head>Alat</Table.Head>
-						<Table.Head>Tanggal Pinjam</Table.Head>
-						<Table.Head class="hidden md:table-cell">Status</Table.Head>
-						<Table.Head class="pr-6 text-right">Aksi</Table.Head>
-					</Table.Row>
-				</Table.Header>
-				<Table.Body class="block md:table-row-group">
-					{#each filteredLendings as lending (lending.id)}
-						{@const statusInfo = getStatusInfo(lending.status)}
-						<Table.Row
-							class="group flex flex-col border-b transition-colors last:border-0 hover:bg-slate-50/50 md:table-row md:border-b"
-						>
-							<!-- Column 1: Peminjam + mobile status badge + expand chevron -->
-							<Table.Cell
-								class="flex items-center justify-between border-b-0 p-4 whitespace-normal md:table-cell md:border-b "
-							>
-								<div class="flex flex-col">
-									<div class="flex items-center gap-2">
-										<span class="font-bold text-slate-900 md:font-medium"
+			<!-- Summary Cards -->
+			<div class="grid gap-4 md:grid-cols-3">
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+						<Card.Title class="text-sm font-medium">Total Peminjaman</Card.Title>
+						<Calendar class="size-4 text-muted-foreground" />
+					</Card.Header>
+					<Card.Content>
+						<div class="text-2xl font-bold">{lendings.length}</div>
+					</Card.Content>
+				</Card.Root>
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+						<Card.Title class="text-sm font-medium">Sedang Dipinjam</Card.Title>
+						<Microscope class="size-4 text-orange-600" />
+					</Card.Header>
+					<Card.Content>
+						<div class="text-2xl font-bold">
+							{lendings.filter((l: any) => l.status === 'DIPINJAM').length}
+						</div>
+					</Card.Content>
+				</Card.Root>
+				<Card.Root>
+					<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+						<Card.Title class="text-sm font-medium">Menunggu Pengembalian</Card.Title>
+						<User class="size-4 text-blue-600" />
+					</Card.Header>
+					<Card.Content>
+						<div class="text-2xl font-bold">
+							{lendings.filter((l: any) => l.status === 'APPROVED').length}
+						</div>
+					</Card.Content>
+				</Card.Root>
+			</div>
+
+			<!-- Filter Controls -->
+			<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+				<div class="relative w-full sm:w-64">
+					<Search class="absolute top-3 left-2.5 size-4 text-muted-foreground" />
+					<Input placeholder="Cari peminjam..." bind:value={search} class="w-full pl-9" />
+				</div>
+				<div class="w-full sm:w-48">
+					<Select.Root type="single" bind:value={activeTab}>
+						<Select.Trigger class="w-full">
+							{selectedStatusLabel}
+						</Select.Trigger>
+						<Select.Content>
+							{#each STATUS_OPTIONS as option}
+								<Select.Item value={option.value} label={option.label}>
+									{option.label}
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+			</div>
+
+			<!-- Main Table Card -->
+			<div class="overflow-hidden rounded-md border bg-white shadow-sm">
+				<!-- Desktop View: Table -->
+				<div class="hidden md:block">
+					<Table.Root>
+						<Table.Header>
+							<Table.Row>
+								<Table.Head class="px-6 py-4">Peminjam</Table.Head>
+								<Table.Head>Alat</Table.Head>
+								<Table.Head>Tanggal Pinjam</Table.Head>
+								<Table.Head>Status</Table.Head>
+								<Table.Head class="pr-6 text-right">Aksi</Table.Head>
+							</Table.Row>
+						</Table.Header>
+						<Table.Body>
+							{#each filteredList as lending (lending.id)}
+								{@const statusInfo = getLendingStatusInfo(lending.status)}
+								<Table.Row class="group border-b transition-colors hover:bg-slate-50/50">
+									<Table.Cell class="p-4 whitespace-normal">
+										<span class="font-medium text-slate-900"
 											>{lending.requestedByUser?.name || 'Unknown'}</span
 										>
-										<Badge
-											variant="outline"
-											class={cn('px-1.5 py-0.5 text-[9px] md:hidden', statusInfo.class)}
+									</Table.Cell>
+									<Table.Cell class="py-4 pl-2">
+										<div class="flex flex-wrap gap-1">
+											{#each lending.items as item (item.id)}
+												<Badge variant="outline" class="px-1 py-0 text-[10px]">
+													{item.equipment?.item?.name ||
+														item.requestedItem?.name ||
+														'Alat tidak diketahui'}
+												</Badge>
+											{:else}
+												<span class="text-xs text-muted-foreground">Tidak ada alat</span>
+											{/each}
+										</div>
+									</Table.Cell>
+									<Table.Cell class="py-4 pl-2">
+										<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
+										-
+										<span class="text-sm text-slate-600"
+											>{lending.endDate ? formatDate(lending.endDate) : '-'}</span
 										>
+									</Table.Cell>
+									<Table.Cell>
+										<Badge variant="outline" class={statusInfo.class}>
 											{statusInfo.label}
 										</Badge>
-									</div>
-								</div>
-								<Button
-									variant="ghost"
-									size="icon"
-									class="ml-4 h-8 w-8 shrink-0 md:hidden"
-									onclick={() =>
-										(expandedLendingsAdmin[lending.id] = !expandedLendingsAdmin[lending.id])}
-									aria-label="Expand row"
-								>
-									{#if expandedLendingsAdmin[lending.id]}
-										<ChevronUp class="h-4 w-4" />
-									{:else}
-										<ChevronDown class="h-4 w-4" />
-									{/if}
-								</Button>
-							</Table.Cell>
+									</Table.Cell>
+									<Table.Cell class="p-4 pl-2 text-right">
+										<Button
+											variant="ghost"
+											size="sm"
+											href="/admin/peminjaman/{lending.id}"
+											class="w-fit text-[#2D5A43] hover:bg-slate-100 hover:text-[#234735]"
+										>
+											Detail
+										</Button>
+									</Table.Cell>
+								</Table.Row>
+							{:else}
+								<Table.Row>
+									<Table.Cell colspan={5} class="py-10 text-center text-muted-foreground">
+										Tidak ada data peminjaman ditemukan.
+									</Table.Cell>
+								</Table.Row>
+							{/each}
+						</Table.Body>
+					</Table.Root>
+				</div>
 
-							<!-- Column 3: Alat -->
-							<Table.Cell
-								class={cn(
-									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
-								)}
-							>
-								<span class="text-xs font-semibold text-slate-400 md:hidden">Alat</span>
-								<div class="flex flex-wrap gap-1">
-									{#each lending.items as item (item.id)}
-										<Badge variant="outline" class="px-1 py-0 text-[10px]">
-											{item.equipment?.item?.name ||
-												item.requestedItem?.name ||
-												'Alat tidak diketahui'}
-										</Badge>
-									{:else}
-										<span class="text-xs text-muted-foreground">Tidak ada alat</span>
-									{/each}
-								</div>
-							</Table.Cell>
-
-							<!-- Column 4: Tanggal Pinjam -->
-							<Table.Cell
-								class={cn(
-									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-									'flex-col gap-1 border-b-0 bg-slate-50/50 px-4 py-2 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2'
-								)}
-							>
-								<span class="text-xs font-semibold text-slate-400 md:hidden">Tanggal Pinjam</span>
-
-								<div>
-									<span class="text-sm text-slate-600">{formatDate(lending.startDate)}</span>
-									-
-									<span class="text-sm text-slate-600">
-										{lending.endDate ? formatDate(lending.endDate) : '-'}
-									</span>
-								</div>
-							</Table.Cell>
-
-							<!-- Column 6: Status (desktop only) -->
-							<Table.Cell class="hidden md:table-cell md:border-b ">
-								<Badge variant="outline" class={statusInfo.class}>
-									{statusInfo.label}
-								</Badge>
-							</Table.Cell>
-
-							<!-- Column 7: Aksi -->
-							<Table.Cell
-								class={cn(
-									expandedLendingsAdmin[lending.id] ? 'flex' : 'hidden',
-									'justify-end border-b-0 bg-slate-50/50 p-4 md:table-cell md:border-b md:bg-transparent md:py-4 md:pl-2 md:text-right'
-								)}
-							>
-								<Button
-									variant="ghost"
-									size="sm"
-									href="/admin/peminjaman/{lending.id}"
-									class="w-full text-[#2D5A43] hover:bg-slate-100 hover:text-[#234735] sm:w-fit"
-								>
-									Detail
-								</Button>
-							</Table.Cell>
-						</Table.Row>
+				<!-- Mobile View: Accordion -->
+				<div class="block md:hidden">
+					{#if filteredList.length === 0}
+						<div class="py-10 text-center text-muted-foreground">
+							Tidak ada data peminjaman ditemukan.
+						</div>
 					{:else}
-						<Table.Row class="flex flex-col md:table-row">
-							<Table.Cell colspan={7} class="py-10 text-center text-muted-foreground md:table-cell">
-								Tidak ada data peminjaman ditemukan.
-							</Table.Cell>
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			</Table.Root>
-		</div>
+						<Accordion.Root type="multiple" class="w-full">
+							{#each filteredList as lending (lending.id)}
+								{@const statusInfo = getLendingStatusInfo(lending.status)}
+								<Accordion.Item value={lending.id}>
+									<Accordion.Trigger
+										class="px-4 py-3 transition-colors hover:bg-slate-50/50 hover:no-underline"
+									>
+										<div class="flex w-full flex-col items-start gap-1.5 text-left">
+											<div class="flex w-full items-center justify-between gap-2">
+												<span class="font-bold text-slate-900"
+													>{lending.requestedByUser?.name || 'Unknown'}</span
+												>
+												<Badge
+													variant="outline"
+													class={cn('shrink-0 px-1.5 py-0.5 text-[10px]', statusInfo.class)}
+												>
+													{statusInfo.label}
+												</Badge>
+											</div>
+											<div class="flex flex-col gap-0.5 text-xs text-slate-500">
+												<span class="font-medium text-slate-700"
+													>{formatLendingPurpose(lending.purpose)}</span
+												>
+												<span
+													>{formatDate(lending.startDate)} - {lending.endDate
+														? formatDate(lending.endDate)
+														: '...'}</span
+												>
+											</div>
+										</div>
+									</Accordion.Trigger>
+									<Accordion.Content class="px-4 pb-4">
+										<div class="space-y-4 pt-2">
+											<div class="space-y-2">
+												<span class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
+													>Alat</span
+												>
+												<div class="flex flex-wrap gap-1">
+													{#each lending.items as item (item.id)}
+														<Badge variant="outline" class="bg-white px-1.5 py-0.5 text-[10px]">
+															{item.equipment?.item?.name ||
+																item.requestedItem?.name ||
+																'Alat tidak diketahui'}
+														</Badge>
+													{:else}
+														<span class="text-xs text-muted-foreground">Tidak ada alat</span>
+													{/each}
+												</div>
+											</div>
+
+											<div class="pt-2">
+												<Button
+													variant="outline"
+													size="sm"
+													href="/admin/peminjaman/{lending.id}"
+													class="w-full text-[#2D5A43] hover:bg-slate-100 hover:text-[#234735]"
+												>
+													Detail Peminjaman
+												</Button>
+											</div>
+										</div>
+									</Accordion.Content>
+								</Accordion.Item>
+							{/each}
+						</Accordion.Root>
+					{/if}
+				</div>
+			</div>
+		{:catch err}
+			<div class="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-800">
+				<p class="font-medium">Gagal memuat data peminjaman.</p>
+				<p class="mt-1 text-xs text-red-600">{err?.message || 'Terjadi kesalahan pada server.'}</p>
+			</div>
+		{/await}
 	</div>
 {/if}

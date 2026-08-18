@@ -126,16 +126,16 @@
 	<div class="header-container flex items-center gap-4">
 		<img src="/logo.png" alt="Logo UNHAS" class="header-logo h-20 w-auto object-contain" />
 		<div class="header-text flex flex-col">
-			<h3 class="text-xs font-bold tracking-wider text-slate-800 uppercase leading-tight">
+			<h3 class="text-xs leading-tight font-bold tracking-wider text-slate-800 uppercase">
 				KEMENTERIAN RISET, TEKNOLOGI, DAN PENDIDIKAN TINGGI
 			</h3>
-			<h2 class="text-sm font-bold tracking-wider text-slate-900 uppercase leading-tight">
+			<h2 class="text-sm leading-tight font-bold tracking-wider text-slate-900 uppercase">
 				UNIVERSITAS HASANUDDIN
 			</h2>
-			<h1 class="text-base font-extrabold tracking-wide text-slate-900 uppercase leading-tight">
+			<h1 class="text-base leading-tight font-extrabold tracking-wide text-slate-900 uppercase">
 				FAKULTAS KEDOKTERAN GIGI
 			</h1>
-			<p class="mt-0.5 text-[10px] text-slate-600 leading-normal">
+			<p class="mt-0.5 text-[10px] leading-normal text-slate-600">
 				Jl. Perintis Kemerdekaan KM. 10 Makassar 90245 Tlp: (0411) 586012 Web: dent.unhas.ac.id
 			</p>
 		</div>
@@ -261,7 +261,7 @@
 
 		<!-- Lending History Card -->
 		<Card.Root class="col-span-2 shadow-sm">
-			<Card.Header class="border-b pb-4">
+			<Card.Header class="border-b">
 				<div class="flex items-center gap-2">
 					<ClipboardList class="h-5 w-5 text-[#2D5A43]" />
 					<Card.Title class="text-lg">Riwayat Peminjaman</Card.Title>
@@ -270,7 +270,7 @@
 					Daftar riwayat peminjaman alat dan bahan laboratorium oleh mahasiswa.
 				</Card.Description>
 			</Card.Header>
-			<Card.Content class="p-0 md:p-6">
+			<Card.Content>
 				{#if data.lendings.length === 0}
 					<div class="py-12 text-center text-slate-500">
 						<ClipboardList class="mx-auto mb-2 h-10 w-10 text-slate-300" />

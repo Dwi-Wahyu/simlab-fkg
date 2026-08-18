@@ -106,9 +106,10 @@ export const actions: Actions = {
 		const nomorSurat = formData.get('nomorSurat') as string;
 		const surat = formData.get('surat') as File;
 		const itemDataRaw = formData.get('items') as string; // [{itemId, qty}]
+		const laboratoriumId = (formData.get('laboratoriumId') as string)?.trim() || null;
 
-		if (!unit || !purpose || !startDate || !itemDataRaw) {
-			return fail(400, { message: 'Data pengajuan belum lengkap' });
+		if (!unit || !purpose || !startDate || !itemDataRaw || !laboratoriumId) {
+			return fail(400, { message: 'Data pengajuan belum lengkap. Pastikan laboratorium telah dipilih.' });
 		}
 
 		const selectedItems = JSON.parse(itemDataRaw) as { itemId: string; qty: number }[];
@@ -154,7 +155,8 @@ export const actions: Actions = {
 						nomorSurat: nomorSurat || null,
 						surat: fileName,
 						startDate: new Date(startDate),
-						endDate: endDate ? new Date(endDate) : null
+						endDate: endDate ? new Date(endDate) : null,
+						laboratoriumId: laboratoriumId
 					})
 					.where(eq(lending.id, id));
 

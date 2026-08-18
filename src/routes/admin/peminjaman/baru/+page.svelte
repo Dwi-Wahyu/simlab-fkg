@@ -12,6 +12,8 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 
+	import { PURPOSE_OPTIONS, formatLendingPurpose } from '$lib/utils/peminjaman';
+
 	let { data } = $props();
 
 	let selectedRequesters = $state<string[]>([]);
@@ -96,13 +98,8 @@
 	const labTriggerContent = $derived(
 		data.labs.find((l) => l.id === labId)?.name ?? 'Pilih laboratorium'
 	);
-	const purposeOptions = [
-		{ value: 'PRAKTIKUM', label: 'Praktikum' },
-		{ value: 'PENELITIAN_DOSEN', label: 'Penelitian Dosen' },
-		{ value: 'PENGABDIAN_MASYARAKAT', label: 'Pengabdian Masyarakat' }
-	];
 	const purposeTriggerContent = $derived(
-		purposeOptions.find((p) => p.value === purpose)?.label ?? 'Pilih keperluan'
+		PURPOSE_OPTIONS.find((p) => p.value === purpose)?.label ?? 'Pilih keperluan'
 	);
 
 	const toggleRequester = (id: string) => {
@@ -463,7 +460,7 @@
 								{purposeTriggerContent}
 							</Select.Trigger>
 							<Select.Content>
-								{#each purposeOptions as option (option.value)}
+								{#each PURPOSE_OPTIONS as option (option.value)}
 									<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item
 									>
 								{/each}

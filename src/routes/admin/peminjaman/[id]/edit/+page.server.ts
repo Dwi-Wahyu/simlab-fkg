@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				columns: { name: true, username: true, role: true }
 			},
 			laboratorium: {
-				columns: { name: true }
+				columns: { id: true, name: true }
 			},
 			items: {
 				with: {
@@ -39,7 +39,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	// Fetch all ready equipment in this specific lab to populate the "Tambah Alat" dialog
 	const availableEquipments = await db.query.equipment.findMany({
 		where: and(
-			eq(equipment.laboratoriumId, lendingData.laboratoriumId),
+			lendingData.laboratoriumId
+				? eq(equipment.laboratoriumId, lendingData.laboratoriumId)
+				: undefined,
 			eq(equipment.status, 'READY')
 		),
 		with: {
@@ -47,9 +49,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		}
 	});
 
+	const labs = await db.query.laboratorium.findMany();
+
 	return {
 		lending: lendingData,
-		availableEquipments
+		availableEquipments,
+		labs
 	};
 };
 
@@ -67,6 +72,7 @@ export const actions: Actions = {
 		const nomorSurat = formData.get('nomorSurat') as string;
 		const surat = formData.get('surat') as File;
 		const equipmentIdsRaw = formData.get('equipmentIds') as string; // JSON array of equipment IDs currently in the loan
+		const laboratoriumId = (formData.get('laboratoriumId') as string)?.trim();
 
 		if (!startDate || !purpose || !equipmentIdsRaw) {
 			return fail(400, { message: 'Data tidak lengkap' });
@@ -115,7 +121,8 @@ export const actions: Actions = {
 						endDate: endDate ? new Date(endDate) : null,
 						purpose,
 						nomorSurat: nomorSurat || null,
-						surat: suratPath
+						surat: suratPath,
+						laboratoriumId: laboratoriumId || lendingData.laboratoriumId
 					})
 					.where(eq(lending.id, id));
 

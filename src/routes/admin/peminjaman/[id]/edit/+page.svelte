@@ -3,6 +3,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Label } from '$lib/components/ui/label';
 	import { Input } from '$lib/components/ui/input';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Select from '$lib/components/ui/select';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { ChevronLeft, FileText, Search, Trash2 } from '@lucide/svelte';
@@ -10,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { untrack } from 'svelte';
 	import NotificationDialog from '$lib/components/NotificationDialog.svelte';
+	import { PURPOSE_OPTIONS, formatLendingPurpose } from '$lib/utils/peminjaman';
 
 	let { data } = $props();
 
@@ -19,6 +21,7 @@
 	let suratFile = $state<File | null>(null);
 	let startDate = $state('');
 	let endDate = $state('');
+	let selectedLabId = $state('');
 
 	// Current list of equipment IDs in the loan
 	let currentEquipments = $state<
@@ -47,6 +50,7 @@
 				nomorSurat = lending.nomorSurat || '';
 				startDate = toDatetimeLocal(lending.startDate);
 				endDate = toDatetimeLocal(lending.endDate);
+				selectedLabId = lending.laboratoriumId || '';
 				currentEquipments = lending.items.map((item: any) => ({
 					id: item.equipment.id,
 					serialNumber: item.equipment.serialNumber,
@@ -120,13 +124,8 @@
 		Math.ceil(filteredEquipments.length / EQUIPMENT_PAGE_SIZE) || 1
 	);
 
-	const purposeOptions = [
-		{ value: 'PRAKTIKUM', label: 'Praktikum' },
-		{ value: 'PENELITIAN_DOSEN', label: 'Penelitian Dosen' },
-		{ value: 'PENGABDIAN_MASYARAKAT', label: 'Pengabdian Masyarakat' }
-	];
 	const purposeTriggerContent = $derived(
-		purposeOptions.find((p) => p.value === purpose)?.label ?? 'Pilih keperluan'
+		PURPOSE_OPTIONS.find((p) => p.value === purpose)?.label ?? 'Pilih keperluan'
 	);
 
 	let isSubmitting = $state(false);
@@ -147,7 +146,7 @@
 	<title>Edit Peminjaman | SIM LAB</title>
 </svelte:head>
 
-<div class="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+<div class="mx-auto flex max-w-7xl flex-col gap-6 p-6">
 	<Button
 		variant="outline"
 		href="/admin/peminjaman/{data.lending.id}"
@@ -211,7 +210,7 @@
 		/>
 
 		<Card.Root>
-			<Card.Header>
+			<Card.Header class="border-b">
 				<Card.Title>Detail Peminjaman</Card.Title>
 			</Card.Header>
 			<Card.Content class="space-y-6">
@@ -228,8 +227,28 @@
 
 				<div class="grid gap-6 md:grid-cols-3">
 					<div class="space-y-2">
-						<Label>Laboratorium</Label>
-						<Input value={data.lending.laboratorium?.name} disabled class="bg-slate-50" />
+						<Label>Laboratorium <span class="text-red-500">*</span></Label>
+						<div class="flex flex-col gap-2">
+							{#each data.labs || [] as lab (lab.id)}
+								{@const isChecked = selectedLabId === lab.id}
+								<div class="flex items-center space-x-2">
+									<Checkbox
+										id={`edit-lab-${lab.id}`}
+										checked={isChecked}
+										onCheckedChange={(checked) => {
+											selectedLabId = checked ? lab.id : '';
+										}}
+									/>
+									<label
+										for={`edit-lab-${lab.id}`}
+										class="cursor-pointer text-sm leading-none select-none"
+									>
+										{lab.name}
+									</label>
+								</div>
+							{/each}
+						</div>
+						<input type="hidden" name="laboratoriumId" value={selectedLabId} />
 					</div>
 
 					<div class="space-y-2">
@@ -251,7 +270,7 @@
 								{purposeTriggerContent}
 							</Select.Trigger>
 							<Select.Content>
-								{#each purposeOptions as option (option.value)}
+								{#each PURPOSE_OPTIONS as option (option.value)}
 									<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item
 									>
 								{/each}
@@ -301,7 +320,7 @@
 
 		<!-- Card Daftar Alat -->
 		<Card.Root>
-			<Card.Header class="flex flex-row items-center justify-between">
+			<Card.Header class="flex flex-row items-center justify-between border-b">
 				<div>
 					<Card.Title>Daftar Alat yang Dipinjam</Card.Title>
 					<Card.Description>Kelola perlengkapan yang diajukan peminjam</Card.Description>

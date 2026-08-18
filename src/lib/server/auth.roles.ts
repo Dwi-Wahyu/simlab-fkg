@@ -2,9 +2,11 @@ import { createAccessControl } from 'better-auth/plugins/access';
 
 // Menentukan apa saja yang bisa dilakukan (Permissions)
 const statement = {
+	kelompokMahasiswa: ['create', 'update', 'delete', 'view'],
 	member: ['create', 'update', 'delete', 'view'],
-	inventory: ['create', 'update', 'delete', 'view'],
-	report: ['generate', 'view'],
+	item: ['create', 'update', 'delete', 'view'],
+	equipment: ['create', 'update', 'delete', 'view'],
+	inventoryReport: ['generate', 'view'],
 	user: [
 		'create',
 		'list',
@@ -24,7 +26,7 @@ export const accessControl = createAccessControl(statement);
 
 // Secara deklaratif mendefinisikan Role dan kemampuannya
 export const superadmin = accessControl.newRole({
-	inventory: ['create', 'update', 'view'],
+	item: ['create', 'update', 'view'],
 	member: ['create', 'update', 'delete', 'view'],
 	user: [
 		'create',
@@ -41,31 +43,47 @@ export const superadmin = accessControl.newRole({
 });
 
 export const koordinator = accessControl.newRole({
-	inventory: ['create', 'update', 'view'],
-	member: ['create']
+	item: ['create', 'update', 'view'],
+	member: ['create'],
+	kelompokMahasiswa: ['view']
 });
 
 export const kepalaLab = accessControl.newRole({
-	inventory: ['view', 'update'],
+	item: ['view', 'update'],
 	member: ['create']
 });
 
 export const dosen = accessControl.newRole({
-	inventory: ['view', 'update']
+	item: ['view', 'update'],
+	user: ['get'],
+	kelompokMahasiswa: ['view']
 });
 
 export const mahasiswa = accessControl.newRole({
-	inventory: ['view', 'update']
+	item: ['view', 'update']
 });
 
 export const teknisi = accessControl.newRole({
-	inventory: ['view', 'update']
+	item: ['view', 'update']
 });
 
 export const spmi = accessControl.newRole({
-	inventory: ['view', 'update']
+	item: ['view', 'update']
 });
 
 export const laboran = accessControl.newRole({
-	inventory: ['create', 'update', 'delete', 'view']
+	item: ['create', 'update', 'delete', 'view']
 });
+
+export const rolesMap = {
+	superadmin,
+	koordinator,
+	kepalaLab,
+	dosen,
+	mahasiswa,
+	teknisi,
+	spmi,
+	laboran
+} as const;
+
+export type RoleName = keyof typeof rolesMap;

@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { item, equipment, lending, lendingItem, user, laboratoriumMember } from '$lib/server/db/schema';
-import { createNotification } from '$lib/server/notification';
+import { createNotification, sendLendingSubmittedNotification } from '$lib/server/notification';
 import { eq, and, inArray } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import { v4 as uuidv4 } from 'uuid';
@@ -56,9 +56,10 @@ export const actions: Actions = {
 		const nomorSurat = formData.get('nomorSurat') as string;
 		const surat = formData.get('surat') as File;
 		const itemDataRaw = formData.get('items') as string; // [{itemId, qty}]
+		const laboratoriumId = (formData.get('laboratoriumId') as string)?.trim() || null;
 
-		if (!unit || !purpose || !startDate || !itemDataRaw) {
-			return fail(400, { message: 'Data pengajuan belum lengkap' });
+		if (!unit || !purpose || !startDate || !itemDataRaw || !laboratoriumId) {
+			return fail(400, { message: 'Data pengajuan belum lengkap. Pastikan laboratorium telah dipilih.' });
 		}
 
 		if (!surat || surat.size === 0) {
@@ -89,7 +90,7 @@ export const actions: Actions = {
 				await tx.insert(lending).values({
 					id: lendingId,
 					requestedBy: currentUser.id,
-					laboratoriumId: null, // ditentukan saat approval
+					laboratoriumId: laboratoriumId,
 					unit,
 					purpose: purpose as any,
 					nomorSurat: nomorSurat || null,
@@ -111,62 +112,12 @@ export const actions: Actions = {
 				}
 			});
 
-			// Kirim notifikasi ke Laboran & Kepala Lab
+			// Kirim notifikasi ke user (kepalaLab & laboran) yang terhubung ke laboratoriumId tersebut
 			try {
-				const requestedItemIds = selectedItems.map((s) => s.itemId);
-				const eqRecords = await db.query.equipment.findMany({
-					where: inArray(equipment.itemId, requestedItemIds),
-					columns: { laboratoriumId: true }
+				await sendLendingSubmittedNotification(lendingId, laboratoriumId, {
+					name: currentUser.name,
+					role: currentUser.role
 				});
-				const targetLabIds = [
-					...new Set(eqRecords.map((e) => e.laboratoriumId).filter(Boolean))
-				] as string[];
-
-				let targetStaffUsers: { id: string }[] = [];
-
-				if (targetLabIds.length > 0) {
-					const labMembers = await db.query.laboratoriumMember.findMany({
-						where: inArray(laboratoriumMember.laboratoriumId, targetLabIds),
-						with: {
-							user: {
-								columns: { id: true, role: true }
-							}
-						}
-					});
-					targetStaffUsers = labMembers
-						.map((m) => m.user)
-						.filter((u) => u && ['kepalaLab', 'laboran'].includes(u.role));
-				}
-
-				// Fallback jika tidak ditemukan staf spesifik lab: kirim ke semua kepalaLab & laboran aktif
-				if (targetStaffUsers.length === 0) {
-					targetStaffUsers = await db.query.user.findMany({
-						where: and(inArray(user.role, ['kepalaLab', 'laboran']), eq(user.isDeleted, false)),
-						columns: { id: true }
-					});
-				}
-
-				const uniqueStaffIds = [...new Set(targetStaffUsers.map((u) => u.id))];
-				const roleLabel =
-					currentUser.role === 'mahasiswa'
-						? 'Mahasiswa'
-						: currentUser.role === 'dosen'
-							? 'Dosen'
-							: currentUser.role;
-
-				for (const staffId of uniqueStaffIds) {
-					await createNotification({
-						userId: staffId,
-						title: 'Pengajuan Peminjaman Baru',
-						body: `${currentUser.name} (${roleLabel}) telah mengajukan peminjaman alat baru.`,
-						priority: 'HIGH',
-						action: {
-							type: 'LENDING_REQUESTED',
-							resourceId: lendingId,
-							webPath: `/admin/peminjaman/${lendingId}`
-						}
-					});
-				}
 			} catch (notifErr) {
 				console.error('Gagal mengirim notifikasi pengajuan peminjaman:', notifErr);
 			}

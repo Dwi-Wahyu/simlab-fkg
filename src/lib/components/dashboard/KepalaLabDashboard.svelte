@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { KepalaLabDashboardData } from '$lib/types/dashboard';
+	import { formatLendingPurpose } from '$lib/utils/peminjaman';
 
 	let { data }: { data: KepalaLabDashboardData } = $props();
 
@@ -144,8 +145,8 @@
 								class="block rounded border p-2 transition-colors hover:bg-muted/50"
 							>
 								<p class="text-sm font-medium">{lending.requesterName}</p>
-								<p class="text-xs text-muted-foreground capitalize">
-									{lending.purpose.toLowerCase().replace(/_/g, ' ')}
+								<p class="text-xs text-muted-foreground">
+									{formatLendingPurpose(lending.purpose)}
 								</p>
 							</a>
 						{/each}

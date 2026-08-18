@@ -88,12 +88,12 @@
 	const purposeOptions = $derived(
 		isDosen
 			? [
-					{ value: 'PENELITIAN_DOSEN', label: 'Penelitian Dosen' },
+					{ value: 'PENELITIAN_DOSEN', label: 'Penelitian' },
 					{ value: 'PENGABDIAN_MASYARAKAT', label: 'Pengabdian Masyarakat' },
 					{ value: 'PRAKTIKUM', label: 'Praktikum / Pengajaran' }
 				]
 			: [
-					{ value: 'PENELITIAN_MAHASISWA', label: 'Penelitian / Skripsi Mahasiswa' },
+					{ value: 'PENELITIAN_MAHASISWA', label: 'Penelitian / Skripsi' },
 					{ value: 'LOMBA', label: 'Lomba / Kompetisi' },
 					{ value: 'ORGANISASI_MAHASISWA', label: 'Kegiatan Organisasi Mahasiswa' }
 				]
@@ -164,7 +164,7 @@
 	}
 </script>
 
-<div class="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+<div class="mx-auto flex max-w-7xl flex-col gap-6 p-6">
 	<Button href="/admin/peminjaman" variant="outline" class="-mb-2 flex w-fit md:hidden" size="sm">
 		<ChevronLeft class="size-5" /> Kembali
 	</Button>
@@ -183,6 +183,11 @@
 		action="?/ajukan"
 		enctype="multipart/form-data"
 		use:enhance={({ cancel }) => {
+			if (selectedLabIds.length === 0 || !selectedLabIds[0]) {
+				showErrorNotification('Pilih laboratorium terlebih dahulu');
+				cancel();
+				return;
+			}
 			if (selectedItems.length === 0) {
 				showErrorNotification('Pilih minimal satu alat');
 				cancel();
@@ -216,16 +221,17 @@
 		}}
 		class="grid gap-6 md:grid-cols-2"
 	>
+		<input type="hidden" name="laboratoriumId" value={selectedLabIds[0] || ''} />
 		<!-- Left Column: Daftar Alat -->
 		<div class="flex flex-col gap-6">
 			<Card.Root>
-				<Card.Header>
+				<Card.Header class="border-b">
 					<Card.Title>Daftar Alat</Card.Title>
 					<Card.Description>Pilih alat yang ingin Anda ajukan untuk dipinjam</Card.Description>
 				</Card.Header>
 				<Card.Content>
 					<div class="mb-4 space-y-2">
-						<Label>Filter Laboratorium</Label>
+						<Label>Filter / Pilih Laboratorium <span class="text-red-500">*</span></Label>
 						<div class="flex flex-col gap-2">
 							{#each data.labs || [] as lab (lab.id)}
 								{@const isChecked = selectedLabIds.includes(lab.id)}
@@ -345,7 +351,7 @@
 		<!-- Right Column: Detail Form -->
 		<div class="flex flex-col gap-6">
 			<Card.Root>
-				<Card.Header class="hidden sm:block">
+				<Card.Header class="hidden border-b sm:block">
 					<Card.Title>Detail Pengajuan</Card.Title>
 					<Card.Description>Isi detail informasi peminjaman Anda</Card.Description>
 				</Card.Header>
