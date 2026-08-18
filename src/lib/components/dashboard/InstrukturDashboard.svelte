@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { AlertTriangle, ArrowRight, BookOpen, CalendarDays, ClipboardCheck } from '@lucide/svelte';
+	import {
+		AlertTriangle,
+		ArrowRight,
+		BookOpen,
+		CalendarDays,
+		ClipboardCheck
+	} from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { InstrukturDashboardData } from '$lib/types/dashboard';
 	import { cn } from '$lib/utils';
+	import { formatLendingPurpose } from '$lib/utils/peminjaman';
 
 	let { data }: { data: InstrukturDashboardData } = $props();
 </script>
@@ -36,7 +43,9 @@
 								{:else}
 									Masa peminjaman alat akan segera berakhir.
 								{/if}
-								Alat: <span class="font-medium"
+								Tujuan: <span class="font-medium">{formatLendingPurpose(alert.purpose)}</span>
+								({alert.unit || '-'}). Alat:
+								<span class="font-medium"
 									>{alert.items.map((i) => `${i.name} (${i.qty} pcs)`).join(', ')}</span
 								>. Jatuh tempo:
 								<span class="font-semibold"
@@ -56,9 +65,7 @@
 						href="/admin/peminjaman/{alert.id}"
 						class={cn(
 							'w-full shrink-0 gap-1 border-current bg-transparent hover:bg-white md:w-auto',
-							isOverdue
-								? 'text-red-900 hover:text-red-900'
-								: 'text-amber-900 hover:text-amber-900'
+							isOverdue ? 'text-red-900 hover:text-red-900' : 'text-amber-900 hover:text-amber-900'
 						)}
 					>
 						Kembalikan Sekarang
@@ -135,7 +142,7 @@
 				{#if data.pendingAssessments.length === 0}
 					<p class="py-4 text-center text-sm text-muted-foreground">Semua penilaian selesai</p>
 				{:else}
-					<div class="space-y-2">
+					<div class="space-y-3">
 						{#each data.pendingAssessments as assessment}
 							<a
 								href="/admin/penilaian/{assessment.id}"

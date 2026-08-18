@@ -106,6 +106,8 @@ export interface InstrukturDashboardData {
 	returnAlerts?: {
 		id: string;
 		dueDate: Date | null;
+		purpose?: string;
+		unit?: string;
 		items: {
 			name: string;
 			qty: number;
@@ -117,7 +119,8 @@ export interface InstrukturDashboardData {
 export interface PenelitiDashboardData {
 	activeLendings: {
 		id: string;
-		equipmentName: string;
+		purpose: string;
+		unit: string;
 		dueDate: Date | null;
 		status: string;
 	}[];
@@ -137,6 +140,8 @@ export interface PenelitiDashboardData {
 	returnAlerts?: {
 		id: string;
 		dueDate: Date | null;
+		purpose?: string;
+		unit?: string;
 		items: {
 			name: string;
 			qty: number;

@@ -54,7 +54,7 @@
 
 <div class="flex flex-col gap-6 p-4 md:p-6">
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="space-y-1">
+		<div>
 			<h1 class="text-2xl font-bold tracking-tight text-slate-900">Kategori Item</h1>
 			<p class="text-slate-500">Kelola kategori untuk pengelompokan alat dan bahan habis pakai.</p>
 		</div>

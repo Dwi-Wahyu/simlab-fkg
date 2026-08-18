@@ -5,15 +5,9 @@
 	import { Package, BookOpen, History, AlertTriangle, ArrowRight } from '@lucide/svelte';
 	import type { PenelitiDashboardData } from '$lib/types/dashboard';
 	import { cn } from '$lib/utils';
+	import { getLendingStatusInfo, formatLendingPurpose } from '$lib/utils/peminjaman';
 
 	let { data }: { data: PenelitiDashboardData } = $props();
-
-	const statusColor = (status: string) => {
-		if (status === 'DIPINJAM') return 'bg-blue-100 text-blue-800';
-		if (status === 'APPROVED') return 'bg-green-100 text-green-800';
-		if (status === 'DRAFT') return 'bg-gray-100 text-gray-800';
-		return 'bg-yellow-100 text-yellow-800';
-	};
 </script>
 
 <div class="space-y-6">
@@ -43,7 +37,9 @@
 								{:else}
 									Masa peminjaman alat akan segera berakhir.
 								{/if}
-								Alat: <span class="font-medium"
+								Tujuan: <span class="font-medium">{formatLendingPurpose(alert.purpose)}</span>
+								({alert.unit || '-'}). Alat:
+								<span class="font-medium"
 									>{alert.items.map((i) => `${i.name} (${i.qty} pcs)`).join(', ')}</span
 								>. Jatuh tempo:
 								<span class="font-semibold"
@@ -63,9 +59,7 @@
 						href="/admin/peminjaman/{alert.id}"
 						class={cn(
 							'w-full shrink-0 gap-1 border-current bg-transparent hover:bg-white md:w-auto',
-							isOverdue
-								? 'text-red-900 hover:text-red-900'
-								: 'text-amber-900 hover:text-amber-900'
+							isOverdue ? 'text-red-900 hover:text-red-900' : 'text-amber-900 hover:text-amber-900'
 						)}
 					>
 						Kembalikan Sekarang
@@ -114,23 +108,27 @@
 				{#if data.activeLendings.length === 0}
 					<p class="py-4 text-center text-sm text-muted-foreground">Tidak ada peminjaman aktif</p>
 				{:else}
-					<div>
+					<div class="flex flex-col gap-3">
 						{#each data.activeLendings as lending}
+							{@const statusInfo = getLendingStatusInfo(lending.status)}
 							<div class="flex items-center gap-3 rounded border p-2">
 								<Package class="h-4 w-4 shrink-0 text-muted-foreground" />
 								<div class="min-w-0 flex-1">
-									<p class="truncate text-sm font-medium">{lending.equipmentName}</p>
+									<p class="truncate text-sm font-medium">
+										{formatLendingPurpose(lending.purpose)}
+									</p>
+									<p class="truncate text-xs text-muted-foreground">{lending.unit}</p>
 									{#if lending.dueDate}
-										<p class="text-xs text-muted-foreground">
+										<p class="mt-0.5 text-xs text-muted-foreground">
 											Kembali: {new Date(lending.dueDate).toLocaleDateString('id-ID', {
 												dateStyle: 'medium'
 											})}
 										</p>
 									{/if}
 								</div>
-								<span class="rounded-full px-2 py-0.5 text-xs {statusColor(lending.status)}"
-									>{lending.status}</span
-								>
+								<Badge variant="outline" class={cn('shrink-0', statusInfo.class)}>
+									{statusInfo.label}
+								</Badge>
 							</div>
 						{/each}
 					</div>
@@ -147,7 +145,7 @@
 				{#if data.myLogbooks.length === 0}
 					<p class="py-4 text-center text-sm text-muted-foreground">Belum ada logbook</p>
 				{:else}
-					<div class="space-y-2">
+					<div class="space-y-3">
 						{#each data.myLogbooks as lb}
 							<a
 								href="/admin/logbook-saya/{lb.id}"

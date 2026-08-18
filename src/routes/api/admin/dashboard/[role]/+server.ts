@@ -433,6 +433,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					returnAlerts: dueSoonOrOverdue.map((l) => ({
 						id: l.id,
 						dueDate: l.endDate,
+						purpose: l.purpose ?? '-',
+						unit: l.unit ?? '-',
 						items: l.items.map((i) => ({
 							name: i.equipment?.item?.name || 'Alat',
 							qty: i.qty
@@ -477,7 +479,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 				data: {
 					activeLendings: activeLendingsList.map((l) => ({
 						id: l.id,
-						equipmentName: l.items?.[0]?.equipment?.item?.name ?? '-',
+						purpose: l.purpose ?? '-',
+						unit: l.unit ?? '-',
 						dueDate: l.endDate ?? null,
 						status: l.status ?? 'DRAFT'
 					})),
@@ -492,6 +495,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					returnAlerts: dueSoonOrOverdue.map((l) => ({
 						id: l.id,
 						dueDate: l.endDate,
+						purpose: l.purpose ?? '-',
+						unit: l.unit ?? '-',
 						items: l.items.map((i) => ({
 							name: i.equipment?.item?.name || 'Alat',
 							qty: i.qty
